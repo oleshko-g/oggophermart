@@ -6,53 +6,58 @@ var _ = API("gophermart", func() {
 	HTTP(func() {
 		Path("/api")
 		Consumes("text/plain", "application/json")
-		Response("unAuthorized", StatusUnauthorized)
 	})
-
-	Error("badRequest", ErrorResult, "invalid request format.")
-	Error("unAuthorized", ErrorResult, "invalid request format.")
 })
 
-var _ = Service("oggophermart", func() {
-	HTTP(func() {
-		Response("badRequest", StatusBadRequest, func() {
-			Description("the user is not authorized")
-		})
-	})
+var _ = Service("gophermart", func() {
 	Method("post order", func() {
 		Result(PostOrderResult)
 		HTTP(func() {
 			POST("/api/user/orders")
 			Response(StatusOK, func() {
-				Tag("successCode", "OK")
+				Tag("statusCode", "200")
 				Description("The order number has already been uploaded by this user.")
 				Body(Empty)
 			})
 			Response(StatusAccepted, func() {
-				Tag("successCode", "Accepted")
+				Tag("statusCode", "202")
 				Description("The new order number has been processed.")
 				Body(Empty)
 			})
-			Response(StatusInternalServerError, func() {
+			Response(StatusBadRequest, func() {
+				Tag("statusCode", "400")
+				Description("invalid request format")
 				Body(Empty)
 			})
-			// 409 — the order number has already been uploaded by another user;
-			// 422 - invalid order number format;
-			// 500 — internal server error.
+			Response(StatusConflict, func() {
+				Tag("statusCode", "409")
+				Description("The order number has already been uploaded by another user")
+				Body(Empty)
+			})
+			Response(StatusUnprocessableEntity, func() {
+				Tag("statusCode", "422")
+				Description("Invalid order number format.")
+				Body(Empty)
+			})
+			Response(StatusUnauthorized, func() {
+				Tag("statusCode", "401")
+				Description("User is not authenticated")
+				Body(Empty)
+			})
+			Response(StatusInternalServerError, func() {
+				// not tag for default case
+				Description("Internal server error")
+				Body(Empty)
+			})
 		})
 	})
 })
 
 var PostOrderResult = Type("PostOrderResult", func() {
-	Attribute("successCode", String, func() {
-		Enum("OK")
-		Enum("Accepted")
+	Attribute("statusCode", func() {
+		Meta("struct:tag:json", "-") // hide from response
+		Meta("openapi:generate", "false")
+		Meta("openapi:example", "false") // hide from swagger
 	})
-})
-
-var APIResponse = Type("APIErrResponse", func() {
-	Attribute("resErrCode", String, func() {
-		Enum("badRequest")
-		Enum("unAuthorized")
-	})
+	Meta("openapi:example", "false") // hide from swagger
 })

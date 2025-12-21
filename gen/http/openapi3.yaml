@@ -9,37 +9,27 @@ paths:
     /api/api/user/orders:
         post:
             tags:
-                - oggophermart
-            summary: post order oggophermart
-            operationId: oggophermart#post order
+                - gophermart
+            summary: post order gophermart
+            operationId: gophermart#post order
             responses:
                 "200":
                     description: The order number has already been uploaded by this user.
                 "202":
                     description: The new order number has been processed.
+                "400":
+                    description: invalid request format
+                "401":
+                    description: User is not authenticated
+                "409":
+                    description: The order number has already been uploaded by another user
+                "422":
+                    description: Invalid order number format.
                 "500":
-                    description: Internal Server Error response.
+                    description: Internal server error
 components:
     schemas:
-        APIErrResponse:
-            type: object
-            properties:
-                resErrCode:
-                    type: string
-                    example: unAuthorized
-                    enum:
-                        - unAuthorized
-            example:
-                resErrCode: unAuthorized
         PostOrderResult:
             type: object
-            properties:
-                successCode:
-                    type: string
-                    example: Accepted
-                    enum:
-                        - Accepted
-            example:
-                successCode: Accepted
 tags:
-    - name: oggophermart
+    - name: gophermart
