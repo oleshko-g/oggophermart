@@ -6,12 +6,30 @@ servers:
     - url: http://localhost:80
       description: Default server for gophermart
 paths:
+    /api/api/user/login:
+        post:
+            tags:
+                - user
+            summary: login user
+            operationId: user#login
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/LoginPass'
+                        example:
+                            login: Odio eius repellendus amet.
+                            password: Eveniet fugiat dolores doloremque.
+            responses:
+                "200":
+                    description: OK response.
     /api/api/user/orders:
         post:
             tags:
-                - gophermart
-            summary: post order gophermart
-            operationId: gophermart#post order
+                - balance
+            summary: post order balance
+            operationId: balance#post order
             responses:
                 "200":
                     description: The order number has already been uploaded by this user.
@@ -27,9 +45,46 @@ paths:
                     description: Invalid order number format.
                 "500":
                     description: Internal server error
+    /api/api/user/register:
+        post:
+            tags:
+                - user
+            summary: register user
+            operationId: user#register
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/LoginPass'
+                        example:
+                            login: Laboriosam est impedit expedita sunt.
+                            password: Reprehenderit quaerat quibusdam eos.
+            responses:
+                "200":
+                    description: OK response.
 components:
     schemas:
+        LoginPass:
+            type: object
+            properties:
+                login:
+                    type: string
+                    example: Sed odit vel architecto natus voluptatem.
+                password:
+                    type: string
+                    example: Illum a explicabo cum incidunt libero.
+            example:
+                login: Commodi a asperiores.
+                password: Illo at occaecati illum dolor.
+            required:
+                - login
+                - password
         PostOrderResult:
             type: object
+        UserServiceResult:
+            type: object
+            example: {}
 tags:
-    - name: gophermart
+    - name: balance
+    - name: user

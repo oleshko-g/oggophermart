@@ -9,7 +9,32 @@ var _ = API("gophermart", func() {
 	})
 })
 
-var _ = Service("gophermart", func() {
+var _ = Service("user", func() {
+	Method("register", func() {
+		Payload(LoginPass)
+		Result(userServiceResult)
+		HTTP(func() {
+			POST("/api/user/register")
+			Response(StatusOK, func() {
+				Body(Empty)
+			})
+		})
+
+	})
+	Method("login", func() {
+		Payload(LoginPass)
+		Result(userServiceResult)
+		HTTP(func() {
+			POST("/api/user/login")
+			Response(StatusOK, func() {
+				Body(Empty)
+			})
+		})
+	})
+
+})
+
+var _ = Service("balance", func() {
 	Method("post order", func() {
 		Result(PostOrderResult)
 		HTTP(func() {
@@ -60,4 +85,19 @@ var PostOrderResult = Type("PostOrderResult", func() {
 		Meta("openapi:example", "false") // hide from swagger
 	})
 	Meta("openapi:example", "false") // hide from swagger
+})
+
+var LoginPass = Type("LoginPass", func() {
+	Attribute("login", String)
+	Attribute("password", String)
+	Required("login", "password")
+})
+
+var userServiceResult = Type("userServiceResult", func() {
+
+	Attribute("statusCode", func() {
+		Meta("struct:tag:json", "-") // hide from response
+		Meta("openapi:generate", "false")
+		Meta("openapi:example", "false") // hide from swagger
+	})
 })

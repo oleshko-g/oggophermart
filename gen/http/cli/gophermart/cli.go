@@ -13,7 +13,8 @@ import (
 	"net/http"
 	"os"
 
-	gophermartc "github.com/oleshko-g/oggophermart/gen/http/gophermart/client"
+	balancec "github.com/oleshko-g/oggophermart/gen/http/balance/client"
+	userc "github.com/oleshko-g/oggophermart/gen/http/user/client"
 	goahttp "goa.design/goa/v3/http"
 	goa "goa.design/goa/v3/pkg"
 )
@@ -23,13 +24,15 @@ import (
 //	command (subcommand1|subcommand2|...)
 func UsageCommands() []string {
 	return []string{
-		"gophermart post-order",
+		"balance post-order",
+		"user (register|login)",
 	}
 }
 
 // UsageExamples produces an example of a valid invocation of the CLI tool.
 func UsageExamples() string {
-	return os.Args[0] + " " + "gophermart post-order" + "\n" +
+	return os.Args[0] + " " + "balance post-order" + "\n" +
+		os.Args[0] + " " + "user register --body '{\n      \"login\": \"Laboriosam est impedit expedita sunt.\",\n      \"password\": \"Reprehenderit quaerat quibusdam eos.\"\n   }'" + "\n" +
 		""
 }
 
@@ -43,12 +46,24 @@ func ParseEndpoint(
 	restore bool,
 ) (goa.Endpoint, any, error) {
 	var (
-		gophermartFlags = flag.NewFlagSet("gophermart", flag.ContinueOnError)
+		balanceFlags = flag.NewFlagSet("balance", flag.ContinueOnError)
 
-		gophermartPostOrderFlags = flag.NewFlagSet("post-order", flag.ExitOnError)
+		balancePostOrderFlags = flag.NewFlagSet("post-order", flag.ExitOnError)
+
+		userFlags = flag.NewFlagSet("user", flag.ContinueOnError)
+
+		userRegisterFlags    = flag.NewFlagSet("register", flag.ExitOnError)
+		userRegisterBodyFlag = userRegisterFlags.String("body", "REQUIRED", "")
+
+		userLoginFlags    = flag.NewFlagSet("login", flag.ExitOnError)
+		userLoginBodyFlag = userLoginFlags.String("body", "REQUIRED", "")
 	)
-	gophermartFlags.Usage = gophermartUsage
-	gophermartPostOrderFlags.Usage = gophermartPostOrderUsage
+	balanceFlags.Usage = balanceUsage
+	balancePostOrderFlags.Usage = balancePostOrderUsage
+
+	userFlags.Usage = userUsage
+	userRegisterFlags.Usage = userRegisterUsage
+	userLoginFlags.Usage = userLoginUsage
 
 	if err := flag.CommandLine.Parse(os.Args[1:]); err != nil {
 		return nil, nil, err
@@ -65,8 +80,10 @@ func ParseEndpoint(
 	{
 		svcn = flag.Arg(0)
 		switch svcn {
-		case "gophermart":
-			svcf = gophermartFlags
+		case "balance":
+			svcf = balanceFlags
+		case "user":
+			svcf = userFlags
 		default:
 			return nil, nil, fmt.Errorf("unknown service %q", svcn)
 		}
@@ -82,10 +99,20 @@ func ParseEndpoint(
 	{
 		epn = svcf.Arg(0)
 		switch svcn {
-		case "gophermart":
+		case "balance":
 			switch epn {
 			case "post-order":
-				epf = gophermartPostOrderFlags
+				epf = balancePostOrderFlags
+
+			}
+
+		case "user":
+			switch epn {
+			case "register":
+				epf = userRegisterFlags
+
+			case "login":
+				epf = userLoginFlags
 
 			}
 
@@ -109,11 +136,21 @@ func ParseEndpoint(
 	)
 	{
 		switch svcn {
-		case "gophermart":
-			c := gophermartc.NewClient(scheme, host, doer, enc, dec, restore)
+		case "balance":
+			c := balancec.NewClient(scheme, host, doer, enc, dec, restore)
 			switch epn {
 			case "post-order":
 				endpoint = c.PostOrder()
+			}
+		case "user":
+			c := userc.NewClient(scheme, host, doer, enc, dec, restore)
+			switch epn {
+			case "register":
+				endpoint = c.Register()
+				data, err = userc.BuildRegisterPayload(*userRegisterBodyFlag)
+			case "login":
+				endpoint = c.Login()
+				data, err = userc.BuildLoginPayload(*userLoginBodyFlag)
 			}
 		}
 	}
@@ -124,20 +161,19 @@ func ParseEndpoint(
 	return endpoint, data, nil
 }
 
-// gophermartUsage displays the usage of the gophermart command and its
-// subcommands.
-func gophermartUsage() {
-	fmt.Fprintln(os.Stderr, `Service is the gophermart service interface.`)
-	fmt.Fprintf(os.Stderr, "Usage:\n    %s [globalflags] gophermart COMMAND [flags]\n\n", os.Args[0])
+// balanceUsage displays the usage of the balance command and its subcommands.
+func balanceUsage() {
+	fmt.Fprintln(os.Stderr, `Service is the balance service interface.`)
+	fmt.Fprintf(os.Stderr, "Usage:\n    %s [globalflags] balance COMMAND [flags]\n\n", os.Args[0])
 	fmt.Fprintln(os.Stderr, "COMMAND:")
 	fmt.Fprintln(os.Stderr, `    post-order: PostOrder implements post order.`)
 	fmt.Fprintln(os.Stderr)
 	fmt.Fprintln(os.Stderr, "Additional help:")
-	fmt.Fprintf(os.Stderr, "    %s gophermart COMMAND --help\n", os.Args[0])
+	fmt.Fprintf(os.Stderr, "    %s balance COMMAND --help\n", os.Args[0])
 }
-func gophermartPostOrderUsage() {
+func balancePostOrderUsage() {
 	// Header with flags
-	fmt.Fprintf(os.Stderr, "%s [flags] gophermart post-order", os.Args[0])
+	fmt.Fprintf(os.Stderr, "%s [flags] balance post-order", os.Args[0])
 	fmt.Fprintln(os.Stderr)
 
 	// Description
@@ -148,5 +184,52 @@ func gophermartPostOrderUsage() {
 
 	fmt.Fprintln(os.Stderr)
 	fmt.Fprintln(os.Stderr, "Example:")
-	fmt.Fprintf(os.Stderr, "    %s %s\n", os.Args[0], "gophermart post-order")
+	fmt.Fprintf(os.Stderr, "    %s %s\n", os.Args[0], "balance post-order")
+}
+
+// userUsage displays the usage of the user command and its subcommands.
+func userUsage() {
+	fmt.Fprintln(os.Stderr, `Service is the user service interface.`)
+	fmt.Fprintf(os.Stderr, "Usage:\n    %s [globalflags] user COMMAND [flags]\n\n", os.Args[0])
+	fmt.Fprintln(os.Stderr, "COMMAND:")
+	fmt.Fprintln(os.Stderr, `    register: Register implements register.`)
+	fmt.Fprintln(os.Stderr, `    login: Login implements login.`)
+	fmt.Fprintln(os.Stderr)
+	fmt.Fprintln(os.Stderr, "Additional help:")
+	fmt.Fprintf(os.Stderr, "    %s user COMMAND --help\n", os.Args[0])
+}
+func userRegisterUsage() {
+	// Header with flags
+	fmt.Fprintf(os.Stderr, "%s [flags] user register", os.Args[0])
+	fmt.Fprint(os.Stderr, " -body JSON")
+	fmt.Fprintln(os.Stderr)
+
+	// Description
+	fmt.Fprintln(os.Stderr)
+	fmt.Fprintln(os.Stderr, `Register implements register.`)
+
+	// Flags list
+	fmt.Fprintln(os.Stderr, `    -body JSON: `)
+
+	fmt.Fprintln(os.Stderr)
+	fmt.Fprintln(os.Stderr, "Example:")
+	fmt.Fprintf(os.Stderr, "    %s %s\n", os.Args[0], "user register --body '{\n      \"login\": \"Laboriosam est impedit expedita sunt.\",\n      \"password\": \"Reprehenderit quaerat quibusdam eos.\"\n   }'")
+}
+
+func userLoginUsage() {
+	// Header with flags
+	fmt.Fprintf(os.Stderr, "%s [flags] user login", os.Args[0])
+	fmt.Fprint(os.Stderr, " -body JSON")
+	fmt.Fprintln(os.Stderr)
+
+	// Description
+	fmt.Fprintln(os.Stderr)
+	fmt.Fprintln(os.Stderr, `Login implements login.`)
+
+	// Flags list
+	fmt.Fprintln(os.Stderr, `    -body JSON: `)
+
+	fmt.Fprintln(os.Stderr)
+	fmt.Fprintln(os.Stderr, "Example:")
+	fmt.Fprintf(os.Stderr, "    %s %s\n", os.Args[0], "user login --body '{\n      \"login\": \"Odio eius repellendus amet.\",\n      \"password\": \"Eveniet fugiat dolores doloremque.\"\n   }'")
 }
