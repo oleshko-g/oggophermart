@@ -11,6 +11,8 @@ import (
 // The example methods log the requests and return zero values.
 type usersrvc struct{}
 
+var _ user.Service = (*usersrvc)(nil)
+
 // NewUser returns the user service implementation.
 func NewUser() user.Service {
 	return &usersrvc{}

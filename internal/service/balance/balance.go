@@ -12,6 +12,8 @@ import (
 // The example methods log the requests and return zero values.
 type balancesrvc struct{}
 
+var _ balance.Service = (*balancesrvc)(nil)
+
 // NewBalance returns the balance service implementation.
 func NewBalance() balance.Service {
 	return &balancesrvc{}
