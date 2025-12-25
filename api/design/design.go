@@ -3,9 +3,11 @@ package design
 import . "goa.design/goa/v3/dsl"
 
 var _ = API("gophermart", func() {
+	Error("badRequest", OggophermartErrorType)
 	HTTP(func() {
 		Path("/api")
 		Consumes("text/plain", "application/json")
+		Response("badRequest", StatusBadRequest)
 	})
 })
 
@@ -35,6 +37,7 @@ var _ = Service("user", func() {
 })
 
 var _ = Service("balance", func() {
+	Error("badRequest", OggophermartErrorType)
 	Method("post order", func() {
 		Result(PostOrderResult)
 		HTTP(func() {
@@ -94,10 +97,31 @@ var LoginPass = Type("LoginPass", func() {
 })
 
 var userServiceResult = Type("userServiceResult", func() {
-
 	Attribute("statusCode", func() {
 		Meta("struct:tag:json", "-") // hide from response
 		Meta("openapi:generate", "false")
 		Meta("openapi:example", "false") // hide from swagger
 	})
 })
+
+var OggophermartErrorType = Type("OggophermartError", func(){
+	ErrorName("name", String, "identifier to map an error to HTTP status codes")
+	Required("name")
+})
+
+// var TestType = Type("TestType", func(){
+// 	Attribute("att", String)
+// })
+
+
+	   // var CustomErrorType = Type("CustomError", func() {
+	   //     // The "name" attribute is used to select the error response.
+	   //     // name should be set to either "internal_error" or "bad_request" by
+	   //     // the service method returning the error.
+	   //     ErrorName("name", String, "Name of error.")
+	   //     Attribute("message", String, "Message of error.")
+	   //     Attribute("occurred_at", String, "Time error occurred.", func() {
+	   //         Format(FormatDateTime)
+	   //     })
+	   //     Required("name", "message", "occurred_at")
+	   // })

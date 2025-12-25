@@ -12,6 +12,39 @@ produces:
     - application/xml
     - application/gob
 paths:
+    /:
+        get:
+            tags:
+                - MyService
+            summary: Method MyService
+            operationId: MyService#Method
+            parameters:
+                - name: string
+                  in: body
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "204":
+                    description: No Content response.
+                "400":
+                    description: Bad Request response.
+                    schema:
+                        $ref: '#/definitions/CustomError'
+                        required:
+                            - name
+                            - message
+                            - occurred_at
+                "500":
+                    description: Internal Server Error response.
+                    schema:
+                        $ref: '#/definitions/CustomError'
+                        required:
+                            - name
+                            - message
+                            - occurred_at
+            schemes:
+                - http
     /api/user/login:
         post:
             tags:
@@ -44,7 +77,11 @@ paths:
                 "202":
                     description: The new order number has been processed.
                 "400":
-                    description: invalid request format
+                    description: Bad Request response.
+                    schema:
+                        $ref: '#/definitions/OggophermartError'
+                        required:
+                            - name
                 "401":
                     description: User is not authenticated
                 "409":
@@ -76,19 +113,56 @@ paths:
             schemes:
                 - http
 definitions:
+    CustomError:
+        title: CustomError
+        type: object
+        properties:
+            message:
+                type: string
+                description: Message of error.
+                example: Magnam sint odit provident.
+            name:
+                type: string
+                description: Name of error.
+                example: Id ad.
+            occurred_at:
+                type: string
+                description: Time error occurred.
+                example: "1993-11-09T12:44:31Z"
+                format: date-time
+        example:
+            message: Soluta molestias at quia repellat officiis.
+            name: Eius asperiores reprehenderit.
+            occurred_at: "1995-08-08T15:28:45Z"
+        required:
+            - name
+            - message
+            - occurred_at
     LoginPass:
         title: LoginPass
         type: object
         properties:
             login:
                 type: string
-                example: Sunt distinctio porro ex atque.
+                example: Praesentium nobis.
             password:
                 type: string
-                example: Dolore facilis id est aut dolores nam.
+                example: Magnam eos soluta dignissimos.
         example:
-            login: Expedita a laborum.
-            password: Earum voluptates.
+            login: Impedit ut ratione.
+            password: Culpa corrupti tempora qui.
         required:
             - login
             - password
+    OggophermartError:
+        title: OggophermartError
+        type: object
+        properties:
+            name:
+                type: string
+                description: identifier to map an error to HTTP status codes
+                example: Cupiditate voluptatem ullam.
+        example:
+            name: Laudantium ut eum.
+        required:
+            - name
