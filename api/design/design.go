@@ -10,7 +10,10 @@ var _ = API("gophermart", func() {
 })
 
 var _ = Service("user", func() {
-	Error("invalidInputParameter", OggophermartErrorType)
+	Error("invalid input parameter", OggophermartErrorType)
+	Error("unauthorized", OggophermartErrorType)
+	Error("internal service error", OggophermartErrorType)
+
 	Method("register", func() {
 		Payload(LoginPass)
 		Result(userServiceResult)
@@ -19,7 +22,10 @@ var _ = Service("user", func() {
 			Response(StatusOK, func() {
 				Body(Empty)
 			})
-			Response("invalidInputParameter", func() {
+			Response("invalid input parameter", StatusBadRequest, func() {
+				Body(Empty)
+			})
+			Response("internal service error", StatusInternalServerError, func() {
 				Body(Empty)
 			})
 		})
@@ -33,7 +39,10 @@ var _ = Service("user", func() {
 			Response(StatusOK, func() {
 				Body(Empty)
 			})
-			Response("invalidInputParameter", func() {
+			Response("invalid input parameter", StatusBadRequest, func() {
+				Body(Empty)
+			})
+			Response("internal service error", StatusInternalServerError, func() {
 				Body(Empty)
 			})
 		})
@@ -43,42 +52,40 @@ var _ = Service("user", func() {
 
 var _ = Service("balance", func() {
 	Error("invalid input parameter", OggophermartErrorType)
+	Error("unauthorized", OggophermartErrorType)
+	Error("internal service error", OggophermartErrorType)
+
 	Method("post order", func() {
 		Result(PostOrderResult)
+		Error("already uploaded", OggophermartErrorType)
+		Error("invalid order number", OggophermartErrorType)
 		HTTP(func() {
 			POST("/api/user/orders")
 			Response(StatusOK, func() {
-				Tag("statusCode", "200")
 				Description("The order number has already been uploaded by this user.")
 				Body(Empty)
 			})
 			Response(StatusAccepted, func() {
-				Tag("statusCode", "202")
+				Tag("uploadedBefore", "yes")
 				Description("The new order number has been processed.")
 				Body(Empty)
 			})
-			Response("invalid input parameter", StatusBadGateway, func() {
-				Description("aaaa")
+			Response("invalid input parameter", StatusBadRequest, func() {
 				Body(Empty)
 			})
-			Response(StatusConflict, func() {
-				Tag("statusCode", "409")
+			Response("already uploaded", StatusConflict, func() {
 				Description("The order number has already been uploaded by another user")
 				Body(Empty)
 			})
-			Response(StatusUnprocessableEntity, func() {
-				Tag("statusCode", "422")
-				Description("Invalid order number format.")
+			Response("invalid order number", StatusUnprocessableEntity, func() {
+				Description("invalid format")
 				Body(Empty)
 			})
-			Response(StatusUnauthorized, func() {
-				Tag("statusCode", "401")
+			Response("unauthorized", StatusUnauthorized, func() {
 				Description("User is not authenticated")
 				Body(Empty)
 			})
-			Response(StatusInternalServerError, func() {
-				// not tag for default case
-				Description("Internal server error")
+			Response("internal service error", StatusInternalServerError, func() {
 				Body(Empty)
 			})
 		})
@@ -86,12 +93,12 @@ var _ = Service("balance", func() {
 })
 
 var PostOrderResult = Type("PostOrderResult", func() {
-	Attribute("statusCode", func() {
-		Meta("struct:tag:json", "-") // hide from response
+	Attribute("uploadedBefore", func() {
+		Meta("struct:tag:json", "-")
 		Meta("openapi:generate", "false")
-		Meta("openapi:example", "false") // hide from swagger
+		Meta("openapi:example", "false")
 	})
-	Meta("openapi:example", "false") // hide from swagger
+	Meta("openapi:example", "false")
 })
 
 var LoginPass = Type("LoginPass", func() {
@@ -102,37 +109,21 @@ var LoginPass = Type("LoginPass", func() {
 
 var userServiceResult = Type("userServiceResult", func() {
 	Attribute("statusCode", func() {
-		Meta("struct:tag:json", "-") // hide from response
+		Meta("struct:tag:json", "-")
 		Meta("openapi:generate", "false")
-		Meta("openapi:example", "false") // hide from swagger
+		Meta("openapi:example", "false")
 	})
 })
 
 var OggophermartErrorType = Type("OggophermartError", func(){
 	ErrorName("name", func(){
 		Description("identifier to map an error to HTTP status codes")
-		Meta("struct:tag:json", "-") // hide from response
+		Meta("struct:tag:json", "-")
 		Meta("openapi:generate", "false")
-		Meta("openapi:example", "false") // hide from swagger
+		Meta("openapi:example", "false")
 	})
-	Meta("openapi:generate", "false")
-	Meta("openapi:example", "false") // hide from swagger
 	Required("name")
+	Meta("openapi:generate", "false")
+	Meta("openapi:example", "false")
+	Meta("struct:pkg:path", "service")
 })
-
-// var TestType = Type("TestType", func(){
-// 	Attribute("att", String)
-// })
-
-
-	   // var CustomErrorType = Type("CustomError", func() {
-	   //     // The "name" attribute is used to select the error response.
-	   //     // name should be set to either "internal_error" or "bad_request" by
-	   //     // the service method returning the error.
-	   //     ErrorName("name", String, "Name of error.")
-	   //     Attribute("message", String, "Message of error.")
-	   //     Attribute("occurred_at", String, "Time error occurred.", func() {
-	   //         Format(FormatDateTime)
-	   //     })
-	   //     Required("name", "message", "occurred_at")
-	   // })

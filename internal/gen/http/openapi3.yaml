@@ -25,7 +25,9 @@ paths:
                 "200":
                     description: OK response.
                 "400":
-                    description: 'invalidInputParameter: Bad Request response.'
+                    description: 'invalid input parameter: Bad Request response.'
+                "500":
+                    description: 'internal service error: Internal Server Error response.'
     /api/api/user/orders:
         post:
             tags:
@@ -37,16 +39,16 @@ paths:
                     description: The order number has already been uploaded by this user.
                 "202":
                     description: The new order number has been processed.
+                "400":
+                    description: 'invalid input parameter: Bad Request response.'
                 "401":
-                    description: User is not authenticated
+                    description: 'unauthorized: User is not authenticated'
                 "409":
-                    description: The order number has already been uploaded by another user
+                    description: 'already uploaded: The order number has already been uploaded by another user'
                 "422":
-                    description: Invalid order number format.
+                    description: 'invalid order number: invalid format'
                 "500":
-                    description: Internal server error
-                "502":
-                    description: 'invalid input parameter: aaaa'
+                    description: 'internal service error: Internal Server Error response.'
     /api/api/user/register:
         post:
             tags:
@@ -66,7 +68,9 @@ paths:
                 "200":
                     description: OK response.
                 "400":
-                    description: 'invalidInputParameter: Bad Request response.'
+                    description: 'invalid input parameter: Bad Request response.'
+                "500":
+                    description: 'internal service error: Internal Server Error response.'
 components:
     schemas:
         LoginPass:

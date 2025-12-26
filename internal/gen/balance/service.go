@@ -33,29 +33,7 @@ const ServiceName = "balance"
 // MethodKey key.
 var MethodNames = [1]string{"post order"}
 
-type OggophermartError struct {
-	// identifier to map an error to HTTP status codes
-	Name string `json:"-"`
-}
-
 // PostOrderResult is the result type of the balance service post order method.
 type PostOrderResult struct {
-	StatusCode *string `json:"-"`
-}
-
-// Error returns an error description.
-func (e *OggophermartError) Error() string {
-	return ""
-}
-
-// ErrorName returns "OggophermartError".
-//
-// Deprecated: Use GoaErrorName - https://github.com/goadesign/goa/issues/3105
-func (e *OggophermartError) ErrorName() string {
-	return e.GoaErrorName()
-}
-
-// GoaErrorName returns "OggophermartError".
-func (e *OggophermartError) GoaErrorName() string {
-	return e.Name
+	UploadedBefore *string `json:"-"`
 }

@@ -13,6 +13,7 @@ import (
 	"io"
 	"net/http"
 
+	service "github.com/oleshko-g/oggophermart/internal/gen/service"
 	user "github.com/oleshko-g/oggophermart/internal/gen/user"
 	goahttp "goa.design/goa/v3/http"
 	goa "goa.design/goa/v3/pkg"
@@ -66,11 +67,17 @@ func EncodeRegisterError(encoder func(context.Context, http.ResponseWriter) goah
 			return encodeError(ctx, w, v)
 		}
 		switch en.GoaErrorName() {
-		case "invalidInputParameter":
-			var res *user.OggophermartError
+		case "invalid input parameter":
+			var res *service.OggophermartError
 			errors.As(v, &res)
 			w.Header().Set("goa-error", res.GoaErrorName())
 			w.WriteHeader(http.StatusBadRequest)
+			return nil
+		case "internal service error":
+			var res *service.OggophermartError
+			errors.As(v, &res)
+			w.Header().Set("goa-error", res.GoaErrorName())
+			w.WriteHeader(http.StatusInternalServerError)
 			return nil
 		default:
 			return encodeError(ctx, w, v)
@@ -126,11 +133,17 @@ func EncodeLoginError(encoder func(context.Context, http.ResponseWriter) goahttp
 			return encodeError(ctx, w, v)
 		}
 		switch en.GoaErrorName() {
-		case "invalidInputParameter":
-			var res *user.OggophermartError
+		case "invalid input parameter":
+			var res *service.OggophermartError
 			errors.As(v, &res)
 			w.Header().Set("goa-error", res.GoaErrorName())
 			w.WriteHeader(http.StatusBadRequest)
+			return nil
+		case "internal service error":
+			var res *service.OggophermartError
+			errors.As(v, &res)
+			w.Header().Set("goa-error", res.GoaErrorName())
+			w.WriteHeader(http.StatusInternalServerError)
 			return nil
 		default:
 			return encodeError(ctx, w, v)

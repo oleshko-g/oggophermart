@@ -13,6 +13,7 @@ import (
 	"net/http"
 
 	balance "github.com/oleshko-g/oggophermart/internal/gen/balance"
+	service "github.com/oleshko-g/oggophermart/internal/gen/service"
 	goahttp "goa.design/goa/v3/http"
 	goa "goa.design/goa/v3/pkg"
 )
@@ -22,27 +23,11 @@ import (
 func EncodePostOrderResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
 	return func(ctx context.Context, w http.ResponseWriter, v any) error {
 		res, _ := v.(*balance.PostOrderResult)
-		if res.StatusCode != nil && *res.StatusCode == "200" {
-			w.WriteHeader(http.StatusOK)
-			return nil
-		}
-		if res.StatusCode != nil && *res.StatusCode == "202" {
+		if res.UploadedBefore != nil && *res.UploadedBefore == "yes" {
 			w.WriteHeader(http.StatusAccepted)
 			return nil
 		}
-		if res.StatusCode != nil && *res.StatusCode == "409" {
-			w.WriteHeader(http.StatusConflict)
-			return nil
-		}
-		if res.StatusCode != nil && *res.StatusCode == "422" {
-			w.WriteHeader(http.StatusUnprocessableEntity)
-			return nil
-		}
-		if res.StatusCode != nil && *res.StatusCode == "401" {
-			w.WriteHeader(http.StatusUnauthorized)
-			return nil
-		}
-		w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(http.StatusOK)
 		return nil
 	}
 }
@@ -58,10 +43,34 @@ func EncodePostOrderError(encoder func(context.Context, http.ResponseWriter) goa
 		}
 		switch en.GoaErrorName() {
 		case "invalid input parameter":
-			var res *balance.OggophermartError
+			var res *service.OggophermartError
 			errors.As(v, &res)
 			w.Header().Set("goa-error", res.GoaErrorName())
-			w.WriteHeader(http.StatusBadGateway)
+			w.WriteHeader(http.StatusBadRequest)
+			return nil
+		case "already uploaded":
+			var res *service.OggophermartError
+			errors.As(v, &res)
+			w.Header().Set("goa-error", res.GoaErrorName())
+			w.WriteHeader(http.StatusConflict)
+			return nil
+		case "invalid order number":
+			var res *service.OggophermartError
+			errors.As(v, &res)
+			w.Header().Set("goa-error", res.GoaErrorName())
+			w.WriteHeader(http.StatusUnprocessableEntity)
+			return nil
+		case "unauthorized":
+			var res *service.OggophermartError
+			errors.As(v, &res)
+			w.Header().Set("goa-error", res.GoaErrorName())
+			w.WriteHeader(http.StatusUnauthorized)
+			return nil
+		case "internal service error":
+			var res *service.OggophermartError
+			errors.As(v, &res)
+			w.Header().Set("goa-error", res.GoaErrorName())
+			w.WriteHeader(http.StatusInternalServerError)
 			return nil
 		default:
 			return encodeError(ctx, w, v)

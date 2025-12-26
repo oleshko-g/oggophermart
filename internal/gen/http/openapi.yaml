@@ -32,6 +32,8 @@ paths:
                     description: OK response.
                 "400":
                     description: Bad Request response.
+                "500":
+                    description: Internal Server Error response.
             schemes:
                 - http
     /api/user/orders:
@@ -45,16 +47,16 @@ paths:
                     description: The order number has already been uploaded by this user.
                 "202":
                     description: The new order number has been processed.
+                "400":
+                    description: Bad Request response.
                 "401":
                     description: User is not authenticated
                 "409":
                     description: The order number has already been uploaded by another user
                 "422":
-                    description: Invalid order number format.
+                    description: invalid format
                 "500":
-                    description: Internal server error
-                "502":
-                    description: aaaa
+                    description: Internal Server Error response.
             schemes:
                 - http
     /api/user/register:
@@ -77,6 +79,8 @@ paths:
                     description: OK response.
                 "400":
                     description: Bad Request response.
+                "500":
+                    description: Internal Server Error response.
             schemes:
                 - http
 definitions:

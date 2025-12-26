@@ -41,29 +41,7 @@ type LoginPass struct {
 	Password string
 }
 
-type OggophermartError struct {
-	// identifier to map an error to HTTP status codes
-	Name string `json:"-"`
-}
-
 // UserServiceResult is the result type of the user service register method.
 type UserServiceResult struct {
 	StatusCode *string `json:"-"`
-}
-
-// Error returns an error description.
-func (e *OggophermartError) Error() string {
-	return ""
-}
-
-// ErrorName returns "OggophermartError".
-//
-// Deprecated: Use GoaErrorName - https://github.com/goadesign/goa/issues/3105
-func (e *OggophermartError) ErrorName() string {
-	return e.GoaErrorName()
-}
-
-// GoaErrorName returns "OggophermartError".
-func (e *OggophermartError) GoaErrorName() string {
-	return e.Name
 }
