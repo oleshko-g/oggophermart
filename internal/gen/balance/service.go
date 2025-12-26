@@ -35,7 +35,7 @@ var MethodNames = [1]string{"post order"}
 
 type OggophermartError struct {
 	// identifier to map an error to HTTP status codes
-	Name string
+	Name string `json:"-"`
 }
 
 // PostOrderResult is the result type of the balance service post order method.

@@ -6,23 +6,3 @@
 // $ goa gen github.com/oleshko-g/oggophermart/api/design -o internal/
 
 package server
-
-import (
-	balance "github.com/oleshko-g/oggophermart/internal/gen/balance"
-)
-
-// PostOrderBadRequestResponseBody is the type of the "balance" service "post
-// order" endpoint HTTP response body for the "badRequest" error.
-type PostOrderBadRequestResponseBody struct {
-	// identifier to map an error to HTTP status codes
-	Name string `form:"name" json:"name" xml:"name"`
-}
-
-// NewPostOrderBadRequestResponseBody builds the HTTP response body from the
-// result of the "post order" endpoint of the "balance" service.
-func NewPostOrderBadRequestResponseBody(res *balance.OggophermartError) *PostOrderBadRequestResponseBody {
-	body := &PostOrderBadRequestResponseBody{
-		Name: res.Name,
-	}
-	return body
-}

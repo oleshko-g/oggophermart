@@ -12,39 +12,6 @@ produces:
     - application/xml
     - application/gob
 paths:
-    /:
-        get:
-            tags:
-                - MyService
-            summary: Method MyService
-            operationId: MyService#Method
-            parameters:
-                - name: string
-                  in: body
-                  required: true
-                  schema:
-                    type: string
-            responses:
-                "204":
-                    description: No Content response.
-                "400":
-                    description: Bad Request response.
-                    schema:
-                        $ref: '#/definitions/CustomError'
-                        required:
-                            - name
-                            - message
-                            - occurred_at
-                "500":
-                    description: Internal Server Error response.
-                    schema:
-                        $ref: '#/definitions/CustomError'
-                        required:
-                            - name
-                            - message
-                            - occurred_at
-            schemes:
-                - http
     /api/user/login:
         post:
             tags:
@@ -63,6 +30,8 @@ paths:
             responses:
                 "200":
                     description: OK response.
+                "400":
+                    description: Bad Request response.
             schemes:
                 - http
     /api/user/orders:
@@ -76,12 +45,6 @@ paths:
                     description: The order number has already been uploaded by this user.
                 "202":
                     description: The new order number has been processed.
-                "400":
-                    description: Bad Request response.
-                    schema:
-                        $ref: '#/definitions/OggophermartError'
-                        required:
-                            - name
                 "401":
                     description: User is not authenticated
                 "409":
@@ -90,6 +53,8 @@ paths:
                     description: Invalid order number format.
                 "500":
                     description: Internal server error
+                "502":
+                    description: aaaa
             schemes:
                 - http
     /api/user/register:
@@ -110,59 +75,24 @@ paths:
             responses:
                 "200":
                     description: OK response.
+                "400":
+                    description: Bad Request response.
             schemes:
                 - http
 definitions:
-    CustomError:
-        title: CustomError
-        type: object
-        properties:
-            message:
-                type: string
-                description: Message of error.
-                example: Magnam sint odit provident.
-            name:
-                type: string
-                description: Name of error.
-                example: Id ad.
-            occurred_at:
-                type: string
-                description: Time error occurred.
-                example: "1993-11-09T12:44:31Z"
-                format: date-time
-        example:
-            message: Soluta molestias at quia repellat officiis.
-            name: Eius asperiores reprehenderit.
-            occurred_at: "1995-08-08T15:28:45Z"
-        required:
-            - name
-            - message
-            - occurred_at
     LoginPass:
         title: LoginPass
         type: object
         properties:
             login:
                 type: string
-                example: Praesentium nobis.
+                example: Sunt distinctio porro ex atque.
             password:
                 type: string
-                example: Magnam eos soluta dignissimos.
+                example: Dolore facilis id est aut dolores nam.
         example:
-            login: Impedit ut ratione.
-            password: Culpa corrupti tempora qui.
+            login: Expedita a laborum.
+            password: Earum voluptates.
         required:
             - login
             - password
-    OggophermartError:
-        title: OggophermartError
-        type: object
-        properties:
-            name:
-                type: string
-                description: identifier to map an error to HTTP status codes
-                example: Cupiditate voluptatem ullam.
-        example:
-            name: Laudantium ut eum.
-        required:
-            - name

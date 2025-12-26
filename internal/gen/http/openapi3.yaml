@@ -6,43 +6,6 @@ servers:
     - url: http://localhost:80
       description: Default server for gophermart
 paths:
-    /api/:
-        get:
-            tags:
-                - MyService
-            summary: Method MyService
-            operationId: MyService#Method
-            requestBody:
-                required: true
-                content:
-                    application/json:
-                        schema:
-                            type: string
-                            example: Provident vel qui occaecati voluptates.
-                        example: Dolor et sunt rem occaecati rerum enim.
-            responses:
-                "204":
-                    description: No Content response.
-                "400":
-                    description: 'bad_request: Bad Request response.'
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/CustomError'
-                            example:
-                                message: Sed aperiam omnis placeat et quia velit.
-                                name: Voluptas sit.
-                                occurred_at: "1976-11-16T10:53:37Z"
-                "500":
-                    description: 'internal_error: Internal Server Error response.'
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/CustomError'
-                            example:
-                                message: Quas minus ab ex.
-                                name: Quam ut.
-                                occurred_at: "1997-04-23T16:42:19Z"
     /api/api/user/login:
         post:
             tags:
@@ -56,11 +19,13 @@ paths:
                         schema:
                             $ref: '#/components/schemas/LoginPass'
                         example:
-                            login: Enim magnam odit accusamus laborum ipsam.
-                            password: Sed repellat temporibus.
+                            login: Odio eius repellendus amet.
+                            password: Eveniet fugiat dolores doloremque.
             responses:
                 "200":
                     description: OK response.
+                "400":
+                    description: 'invalidInputParameter: Bad Request response.'
     /api/api/user/orders:
         post:
             tags:
@@ -72,12 +37,6 @@ paths:
                     description: The order number has already been uploaded by this user.
                 "202":
                     description: The new order number has been processed.
-                "400":
-                    description: 'badRequest: Bad Request response.'
-                    content:
-                        application/json:
-                            example:
-                                name: Sit asperiores consequuntur earum ut.
                 "401":
                     description: User is not authenticated
                 "409":
@@ -86,6 +45,8 @@ paths:
                     description: Invalid order number format.
                 "500":
                     description: Internal server error
+                "502":
+                    description: 'invalid input parameter: aaaa'
     /api/api/user/register:
         post:
             tags:
@@ -99,69 +60,37 @@ paths:
                         schema:
                             $ref: '#/components/schemas/LoginPass'
                         example:
-                            login: Voluptate et.
-                            password: Maxime sequi qui accusamus aperiam rem.
+                            login: Laboriosam est impedit expedita sunt.
+                            password: Reprehenderit quaerat quibusdam eos.
             responses:
                 "200":
                     description: OK response.
+                "400":
+                    description: 'invalidInputParameter: Bad Request response.'
 components:
     schemas:
-        CustomError:
-            type: object
-            properties:
-                message:
-                    type: string
-                    description: Message of error.
-                    example: Modi qui ea.
-                name:
-                    type: string
-                    description: Name of error.
-                    example: Qui earum ab.
-                occurred_at:
-                    type: string
-                    description: Time error occurred.
-                    example: "2010-08-23T22:22:06Z"
-                    format: date-time
-            example:
-                message: Placeat consectetur harum ea.
-                name: Tempora nihil rerum quod.
-                occurred_at: "2001-02-07T18:33:13Z"
-            required:
-                - name
-                - message
-                - occurred_at
         LoginPass:
             type: object
             properties:
                 login:
                     type: string
-                    example: Laudantium dolorem.
+                    example: Sed odit vel architecto natus voluptatem.
                 password:
                     type: string
-                    example: Quod quia expedita maiores.
+                    example: Illum a explicabo cum incidunt libero.
             example:
-                login: Nam ullam error et saepe.
-                password: Adipisci alias molestiae qui voluptas inventore id.
+                login: Commodi a asperiores.
+                password: Illo at occaecati illum dolor.
             required:
                 - login
                 - password
         OggophermartError:
             type: object
-            properties:
-                name:
-                    type: string
-                    description: identifier to map an error to HTTP status codes
-                    example: Dolor sit et inventore possimus quis velit.
-            example:
-                name: At architecto.
-            required:
-                - name
         PostOrderResult:
             type: object
         UserServiceResult:
             type: object
             example: {}
 tags:
-    - name: MyService
     - name: user
     - name: balance

@@ -3,21 +3,23 @@ package design
 import . "goa.design/goa/v3/dsl"
 
 var _ = API("gophermart", func() {
-	Error("badRequest", OggophermartErrorType)
 	HTTP(func() {
 		Path("/api")
 		Consumes("text/plain", "application/json")
-		Response("badRequest", StatusBadRequest)
 	})
 })
 
 var _ = Service("user", func() {
+	Error("invalidInputParameter", OggophermartErrorType)
 	Method("register", func() {
 		Payload(LoginPass)
 		Result(userServiceResult)
 		HTTP(func() {
 			POST("/api/user/register")
 			Response(StatusOK, func() {
+				Body(Empty)
+			})
+			Response("invalidInputParameter", func() {
 				Body(Empty)
 			})
 		})
@@ -31,13 +33,16 @@ var _ = Service("user", func() {
 			Response(StatusOK, func() {
 				Body(Empty)
 			})
+			Response("invalidInputParameter", func() {
+				Body(Empty)
+			})
 		})
 	})
 
 })
 
 var _ = Service("balance", func() {
-	Error("badRequest", OggophermartErrorType)
+	Error("invalid input parameter", OggophermartErrorType)
 	Method("post order", func() {
 		Result(PostOrderResult)
 		HTTP(func() {
@@ -52,9 +57,8 @@ var _ = Service("balance", func() {
 				Description("The new order number has been processed.")
 				Body(Empty)
 			})
-			Response(StatusBadRequest, func() {
-				Tag("statusCode", "400")
-				Description("invalid request format")
+			Response("invalid input parameter", StatusBadGateway, func() {
+				Description("aaaa")
 				Body(Empty)
 			})
 			Response(StatusConflict, func() {
@@ -105,7 +109,14 @@ var userServiceResult = Type("userServiceResult", func() {
 })
 
 var OggophermartErrorType = Type("OggophermartError", func(){
-	ErrorName("name", String, "identifier to map an error to HTTP status codes")
+	ErrorName("name", func(){
+		Description("identifier to map an error to HTTP status codes")
+		Meta("struct:tag:json", "-") // hide from response
+		Meta("openapi:generate", "false")
+		Meta("openapi:example", "false") // hide from swagger
+	})
+	Meta("openapi:generate", "false")
+	Meta("openapi:example", "false") // hide from swagger
 	Required("name")
 })
 

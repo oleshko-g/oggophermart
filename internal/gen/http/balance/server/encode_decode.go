@@ -30,10 +30,6 @@ func EncodePostOrderResponse(encoder func(context.Context, http.ResponseWriter) 
 			w.WriteHeader(http.StatusAccepted)
 			return nil
 		}
-		if res.StatusCode != nil && *res.StatusCode == "400" {
-			w.WriteHeader(http.StatusBadRequest)
-			return nil
-		}
 		if res.StatusCode != nil && *res.StatusCode == "409" {
 			w.WriteHeader(http.StatusConflict)
 			return nil
@@ -61,19 +57,12 @@ func EncodePostOrderError(encoder func(context.Context, http.ResponseWriter) goa
 			return encodeError(ctx, w, v)
 		}
 		switch en.GoaErrorName() {
-		case "badRequest":
+		case "invalid input parameter":
 			var res *balance.OggophermartError
 			errors.As(v, &res)
-			enc := encoder(ctx, w)
-			var body any
-			if formatter != nil {
-				body = formatter(ctx, res)
-			} else {
-				body = NewPostOrderBadRequestResponseBody(res)
-			}
 			w.Header().Set("goa-error", res.GoaErrorName())
-			w.WriteHeader(http.StatusBadRequest)
-			return enc.Encode(body)
+			w.WriteHeader(http.StatusBadGateway)
+			return nil
 		default:
 			return encodeError(ctx, w, v)
 		}
