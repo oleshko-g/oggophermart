@@ -67,13 +67,13 @@ func EncodeRegisterError(encoder func(context.Context, http.ResponseWriter) goah
 			return encodeError(ctx, w, v)
 		}
 		switch en.GoaErrorName() {
-		case "invalid input parameter":
+		case "Invalid input parameter":
 			var res *service.OggophermartError
 			errors.As(v, &res)
 			w.Header().Set("goa-error", res.GoaErrorName())
 			w.WriteHeader(http.StatusBadRequest)
 			return nil
-		case "internal service error":
+		case "Internal service error":
 			var res *service.OggophermartError
 			errors.As(v, &res)
 			w.Header().Set("goa-error", res.GoaErrorName())
@@ -133,13 +133,13 @@ func EncodeLoginError(encoder func(context.Context, http.ResponseWriter) goahttp
 			return encodeError(ctx, w, v)
 		}
 		switch en.GoaErrorName() {
-		case "invalid input parameter":
+		case "Invalid input parameter":
 			var res *service.OggophermartError
 			errors.As(v, &res)
 			w.Header().Set("goa-error", res.GoaErrorName())
 			w.WriteHeader(http.StatusBadRequest)
 			return nil
-		case "internal service error":
+		case "Internal service error":
 			var res *service.OggophermartError
 			errors.As(v, &res)
 			w.Header().Set("goa-error", res.GoaErrorName())

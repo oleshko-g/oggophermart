@@ -25,9 +25,9 @@ paths:
                 "200":
                     description: OK response.
                 "400":
-                    description: 'invalid input parameter: Bad Request response.'
+                    description: 'Invalid input parameter: Bad Request response.'
                 "500":
-                    description: 'internal service error: Internal Server Error response.'
+                    description: 'Internal service error: Internal Server Error response.'
     /api/api/user/orders:
         post:
             tags:
@@ -36,19 +36,19 @@ paths:
             operationId: balance#post order
             responses:
                 "200":
-                    description: The order number has already been uploaded by this user.
+                    description: The order has been accepted for processing before.
                 "202":
-                    description: The new order number has been processed.
+                    description: The order has been accepted for processing.
                 "400":
-                    description: 'invalid input parameter: Bad Request response.'
+                    description: 'Invalid input parameter: Bad Request response.'
                 "401":
-                    description: 'unauthorized: User is not authenticated'
+                    description: 'User is not authenticated: Unauthorized response.'
                 "409":
-                    description: 'already uploaded: The order number has already been uploaded by another user'
+                    description: 'The order belongs to another user: Conflict response.'
                 "422":
-                    description: 'invalid order number: invalid format'
+                    description: 'Invalid order number: Unprocessable Entity response.'
                 "500":
-                    description: 'internal service error: Internal Server Error response.'
+                    description: 'Internal service error: Internal Server Error response.'
     /api/api/user/register:
         post:
             tags:
@@ -68,9 +68,9 @@ paths:
                 "200":
                     description: OK response.
                 "400":
-                    description: 'invalid input parameter: Bad Request response.'
+                    description: 'Invalid input parameter: Bad Request response.'
                 "500":
-                    description: 'internal service error: Internal Server Error response.'
+                    description: 'Internal service error: Internal Server Error response.'
 components:
     schemas:
         LoginPass:

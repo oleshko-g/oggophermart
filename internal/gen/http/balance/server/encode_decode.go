@@ -23,7 +23,7 @@ import (
 func EncodePostOrderResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
 	return func(ctx context.Context, w http.ResponseWriter, v any) error {
 		res, _ := v.(*balance.PostOrderResult)
-		if res.UploadedBefore != nil && *res.UploadedBefore == "yes" {
+		if res.Accepted != nil && *res.Accepted == "yes" {
 			w.WriteHeader(http.StatusAccepted)
 			return nil
 		}
@@ -42,31 +42,31 @@ func EncodePostOrderError(encoder func(context.Context, http.ResponseWriter) goa
 			return encodeError(ctx, w, v)
 		}
 		switch en.GoaErrorName() {
-		case "invalid input parameter":
+		case "Invalid input parameter":
 			var res *service.OggophermartError
 			errors.As(v, &res)
 			w.Header().Set("goa-error", res.GoaErrorName())
 			w.WriteHeader(http.StatusBadRequest)
 			return nil
-		case "already uploaded":
+		case "The order belongs to another user":
 			var res *service.OggophermartError
 			errors.As(v, &res)
 			w.Header().Set("goa-error", res.GoaErrorName())
 			w.WriteHeader(http.StatusConflict)
 			return nil
-		case "invalid order number":
+		case "Invalid order number":
 			var res *service.OggophermartError
 			errors.As(v, &res)
 			w.Header().Set("goa-error", res.GoaErrorName())
 			w.WriteHeader(http.StatusUnprocessableEntity)
 			return nil
-		case "unauthorized":
+		case "User is not authenticated":
 			var res *service.OggophermartError
 			errors.As(v, &res)
 			w.Header().Set("goa-error", res.GoaErrorName())
 			w.WriteHeader(http.StatusUnauthorized)
 			return nil
-		case "internal service error":
+		case "Internal service error":
 			var res *service.OggophermartError
 			errors.As(v, &res)
 			w.Header().Set("goa-error", res.GoaErrorName())

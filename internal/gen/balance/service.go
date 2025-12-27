@@ -35,5 +35,5 @@ var MethodNames = [1]string{"post order"}
 
 // PostOrderResult is the result type of the balance service post order method.
 type PostOrderResult struct {
-	UploadedBefore *string `json:"-"`
+	Accepted *string `json:"-"`
 }

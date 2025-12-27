@@ -10,9 +10,9 @@ var _ = API("gophermart", func() {
 })
 
 var _ = Service("user", func() {
-	Error("invalid input parameter", OggophermartErrorType)
-	Error("unauthorized", OggophermartErrorType)
-	Error("internal service error", OggophermartErrorType)
+	Error("Invalid input parameter", OggophermartErrorType)
+	Error("User is not authenticated", OggophermartErrorType)
+	Error("Internal service error", OggophermartErrorType)
 
 	Method("register", func() {
 		Payload(LoginPass)
@@ -22,10 +22,10 @@ var _ = Service("user", func() {
 			Response(StatusOK, func() {
 				Body(Empty)
 			})
-			Response("invalid input parameter", StatusBadRequest, func() {
+			Response("Invalid input parameter", StatusBadRequest, func() {
 				Body(Empty)
 			})
-			Response("internal service error", StatusInternalServerError, func() {
+			Response("Internal service error", StatusInternalServerError, func() {
 				Body(Empty)
 			})
 		})
@@ -39,10 +39,10 @@ var _ = Service("user", func() {
 			Response(StatusOK, func() {
 				Body(Empty)
 			})
-			Response("invalid input parameter", StatusBadRequest, func() {
+			Response("Invalid input parameter", StatusBadRequest, func() {
 				Body(Empty)
 			})
-			Response("internal service error", StatusInternalServerError, func() {
+			Response("Internal service error", StatusInternalServerError, func() {
 				Body(Empty)
 			})
 		})
@@ -51,41 +51,38 @@ var _ = Service("user", func() {
 })
 
 var _ = Service("balance", func() {
-	Error("invalid input parameter", OggophermartErrorType)
-	Error("unauthorized", OggophermartErrorType)
-	Error("internal service error", OggophermartErrorType)
+	Error("Invalid input parameter", OggophermartErrorType)
+	Error("User is not authenticated", OggophermartErrorType)
+	Error("Internal service error", OggophermartErrorType)
 
 	Method("post order", func() {
 		Result(PostOrderResult)
-		Error("already uploaded", OggophermartErrorType)
-		Error("invalid order number", OggophermartErrorType)
+		Error("The order belongs to another user", OggophermartErrorType)
+		Error("Invalid order number", OggophermartErrorType)
 		HTTP(func() {
 			POST("/api/user/orders")
 			Response(StatusOK, func() {
-				Description("The order number has already been uploaded by this user.")
+				Description("The order has been accepted for processing before.")
 				Body(Empty)
 			})
 			Response(StatusAccepted, func() {
-				Tag("uploadedBefore", "yes")
-				Description("The new order number has been processed.")
+				Tag("accepted", "yes")
+				Description("The order has been accepted for processing.")
 				Body(Empty)
 			})
-			Response("invalid input parameter", StatusBadRequest, func() {
+			Response("Invalid input parameter", StatusBadRequest, func() {
 				Body(Empty)
 			})
-			Response("already uploaded", StatusConflict, func() {
-				Description("The order number has already been uploaded by another user")
+			Response("The order belongs to another user", StatusConflict, func() {
 				Body(Empty)
 			})
-			Response("invalid order number", StatusUnprocessableEntity, func() {
-				Description("invalid format")
+			Response("Invalid order number", StatusUnprocessableEntity, func() {
 				Body(Empty)
 			})
-			Response("unauthorized", StatusUnauthorized, func() {
-				Description("User is not authenticated")
+			Response("User is not authenticated", StatusUnauthorized, func() {
 				Body(Empty)
 			})
-			Response("internal service error", StatusInternalServerError, func() {
+			Response("Internal service error", StatusInternalServerError, func() {
 				Body(Empty)
 			})
 		})
@@ -93,7 +90,7 @@ var _ = Service("balance", func() {
 })
 
 var PostOrderResult = Type("PostOrderResult", func() {
-	Attribute("uploadedBefore", func() {
+	Attribute("accepted", func() {
 		Meta("struct:tag:json", "-")
 		Meta("openapi:generate", "false")
 		Meta("openapi:example", "false")

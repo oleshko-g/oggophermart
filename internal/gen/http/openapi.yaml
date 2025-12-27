@@ -44,17 +44,17 @@ paths:
             operationId: balance#post order
             responses:
                 "200":
-                    description: The order number has already been uploaded by this user.
+                    description: The order has been accepted for processing before.
                 "202":
-                    description: The new order number has been processed.
+                    description: The order has been accepted for processing.
                 "400":
                     description: Bad Request response.
                 "401":
-                    description: User is not authenticated
+                    description: Unauthorized response.
                 "409":
-                    description: The order number has already been uploaded by another user
+                    description: Conflict response.
                 "422":
-                    description: invalid format
+                    description: Unprocessable Entity response.
                 "500":
                     description: Internal Server Error response.
             schemes:
