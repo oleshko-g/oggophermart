@@ -5,6 +5,7 @@ import (
 	"context"
 
 	genUser "github.com/oleshko-g/oggophermart/internal/gen/user"
+	"github.com/oleshko-g/oggophermart/internal/service/errors"
 )
 
 // user service example implementation.
@@ -20,12 +21,10 @@ func NewUser() genUser.Service {
 
 // Register implements register.
 func (s *userSvc) Register(ctx context.Context, p *genUser.LoginPass) (res *genUser.UserServiceResult, err error) {
-	res = &genUser.UserServiceResult{}
-	return
+	return nil, errors.NotImplemented
 }
 
 // Login implements login.
 func (s *userSvc) Login(ctx context.Context, p *genUser.LoginPass) (res *genUser.UserServiceResult, err error) {
-	res = &genUser.UserServiceResult{}
-	return
+	return nil, errors.NotImplemented
 }

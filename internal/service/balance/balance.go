@@ -5,6 +5,7 @@ import (
 	"context"
 
 	genBalance "github.com/oleshko-g/oggophermart/internal/gen/balance"
+	"github.com/oleshko-g/oggophermart/internal/service/errors"
 )
 
 // balance service example implementation.
@@ -20,6 +21,5 @@ func NewBalance() genBalance.Service {
 
 // PostOrder implements post order.
 func (s *balanceSvc) PostOrder(ctx context.Context) (res *genBalance.PostOrderResult, err error) {
-	res = &genBalance.PostOrderResult{}
-	return
+	return nil, errors.NotImplemented
 }

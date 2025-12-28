@@ -36,6 +36,8 @@ paths:
                     description: Unauthorized response.
                 "500":
                     description: Internal Server Error response.
+                "501":
+                    description: Not Implemented response.
             schemes:
                 - http
     /api/user/orders:
@@ -59,6 +61,8 @@ paths:
                     description: Unprocessable Entity response.
                 "500":
                     description: Internal Server Error response.
+                "501":
+                    description: Not Implemented response.
             schemes:
                 - http
     /api/user/register:
@@ -83,6 +87,8 @@ paths:
                     description: Bad Request response.
                 "500":
                     description: Internal Server Error response.
+                "501":
+                    description: Not Implemented response.
             schemes:
                 - http
 definitions:

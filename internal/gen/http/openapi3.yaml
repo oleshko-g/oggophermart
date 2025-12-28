@@ -30,6 +30,8 @@ paths:
                     description: 'User is not authenticated: Unauthorized response.'
                 "500":
                     description: 'Internal service error: Internal Server Error response.'
+                "501":
+                    description: 'Not implemented: Not Implemented response.'
     /api/api/user/orders:
         post:
             tags:
@@ -51,6 +53,8 @@ paths:
                     description: 'Invalid order number: Unprocessable Entity response.'
                 "500":
                     description: 'Internal service error: Internal Server Error response.'
+                "501":
+                    description: 'Not implemented: Not Implemented response.'
     /api/api/user/register:
         post:
             tags:
@@ -73,6 +77,8 @@ paths:
                     description: 'Invalid input parameter: Bad Request response.'
                 "500":
                     description: 'Internal service error: Internal Server Error response.'
+                "501":
+                    description: 'Not implemented: Not Implemented response.'
 components:
     schemas:
         GophermartError:

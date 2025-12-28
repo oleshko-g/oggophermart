@@ -34,4 +34,6 @@ var (
 	UserIsNotAuthenticated = New("User is not authenticated")
 	// InternalServiceError is the error value which is used to map to the 500 Internal Server Error HTTP Status code
 	InternalServiceError = New("Internal service error")
+	// NotImplemented is the error value which is used to map to the 501 Not Implemented HTTP Status code
+	NotImplemented = New("Not Implemented")
 )

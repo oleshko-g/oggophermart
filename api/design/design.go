@@ -13,6 +13,7 @@ var _ = Service("user", func() {
 	Error("Invalid input parameter", ErrorType)
 	Error("User is not authenticated", ErrorType)
 	Error("Internal service error", ErrorType)
+	Error("Not implemented", ErrorType)
 
 	Method("register", func() {
 		Payload(LoginPass)
@@ -28,6 +29,9 @@ var _ = Service("user", func() {
 			Response("Internal service error", StatusInternalServerError, func() {
 				Body(Empty)
 			})
+			Response("Not implemented", StatusNotImplemented, func() {
+				Body(Empty)
+			})
 		})
 
 	})
@@ -37,6 +41,9 @@ var _ = Service("user", func() {
 		HTTP(func() {
 			POST("/api/user/login")
 			Response(StatusOK, func() {
+				Body(Empty)
+			})
+			Response("Not implemented", StatusNotImplemented, func() {
 				Body(Empty)
 			})
 			Response("Invalid input parameter", StatusBadRequest, func() {
@@ -57,6 +64,7 @@ var _ = Service("balance", func() {
 	Error("Invalid input parameter", ErrorType)
 	Error("User is not authenticated", ErrorType)
 	Error("Internal service error", ErrorType)
+	Error("Not implemented", ErrorType)
 
 	Method("post order", func() {
 		Result(PostOrderResult)
@@ -86,6 +94,9 @@ var _ = Service("balance", func() {
 				Body(Empty)
 			})
 			Response("Internal service error", StatusInternalServerError, func() {
+				Body(Empty)
+			})
+			Response("Not implemented", StatusNotImplemented, func() {
 				Body(Empty)
 			})
 		})

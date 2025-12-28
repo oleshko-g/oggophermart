@@ -39,9 +39,6 @@ func NewMux(ctx context.Context,
 	// server packages contains code generated from the design which maps
 	// the service input and output data structures to HTTP requests and
 	// responses.
-
-	// TODO: read code error handler does
-	// eh := errorHandler(ctx)
 	balanceServer := balanceHTTP.New(balanceEndpoints, mux, dec, enc /*eh */, nil, nil)
 	userServer := userHTTP.New(userEndpoints, mux, dec, enc /*eh */, nil, nil)
 
