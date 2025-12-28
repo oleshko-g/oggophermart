@@ -10,9 +10,9 @@ var _ = API("gophermart", func() {
 })
 
 var _ = Service("user", func() {
-	Error("Invalid input parameter", OggophermartErrorType)
-	Error("User is not authenticated", OggophermartErrorType)
-	Error("Internal service error", OggophermartErrorType)
+	Error("Invalid input parameter", ErrorType)
+	Error("User is not authenticated", ErrorType)
+	Error("Internal service error", ErrorType)
 
 	Method("register", func() {
 		Payload(LoginPass)
@@ -51,14 +51,14 @@ var _ = Service("user", func() {
 })
 
 var _ = Service("balance", func() {
-	Error("Invalid input parameter", OggophermartErrorType)
-	Error("User is not authenticated", OggophermartErrorType)
-	Error("Internal service error", OggophermartErrorType)
+	Error("Invalid input parameter", ErrorType)
+	Error("User is not authenticated", ErrorType)
+	Error("Internal service error", ErrorType)
 
 	Method("post order", func() {
 		Result(PostOrderResult)
-		Error("The order belongs to another user", OggophermartErrorType)
-		Error("Invalid order number", OggophermartErrorType)
+		Error("The order belongs to another user", ErrorType)
+		Error("Invalid order number", ErrorType)
 		HTTP(func() {
 			POST("/api/user/orders")
 			Response(StatusOK, func() {
@@ -112,7 +112,7 @@ var userServiceResult = Type("userServiceResult", func() {
 	})
 })
 
-var OggophermartErrorType = Type("OggophermartError", func(){
+var ErrorType = Type("GophermartError", func(){
 	ErrorName("name", func(){
 		Description("identifier to map an error to HTTP status codes")
 		Meta("struct:tag:json", "-")

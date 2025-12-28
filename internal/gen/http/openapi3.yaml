@@ -73,6 +73,8 @@ paths:
                     description: 'Internal service error: Internal Server Error response.'
 components:
     schemas:
+        GophermartError:
+            type: object
         LoginPass:
             type: object
             properties:
@@ -88,8 +90,6 @@ components:
             required:
                 - login
                 - password
-        OggophermartError:
-            type: object
         PostOrderResult:
             type: object
         UserServiceResult:

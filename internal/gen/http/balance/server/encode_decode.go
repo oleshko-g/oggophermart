@@ -43,31 +43,31 @@ func EncodePostOrderError(encoder func(context.Context, http.ResponseWriter) goa
 		}
 		switch en.GoaErrorName() {
 		case "Invalid input parameter":
-			var res *service.OggophermartError
+			var res *service.GophermartError
 			errors.As(v, &res)
 			w.Header().Set("goa-error", res.GoaErrorName())
 			w.WriteHeader(http.StatusBadRequest)
 			return nil
 		case "The order belongs to another user":
-			var res *service.OggophermartError
+			var res *service.GophermartError
 			errors.As(v, &res)
 			w.Header().Set("goa-error", res.GoaErrorName())
 			w.WriteHeader(http.StatusConflict)
 			return nil
 		case "Invalid order number":
-			var res *service.OggophermartError
+			var res *service.GophermartError
 			errors.As(v, &res)
 			w.Header().Set("goa-error", res.GoaErrorName())
 			w.WriteHeader(http.StatusUnprocessableEntity)
 			return nil
 		case "User is not authenticated":
-			var res *service.OggophermartError
+			var res *service.GophermartError
 			errors.As(v, &res)
 			w.Header().Set("goa-error", res.GoaErrorName())
 			w.WriteHeader(http.StatusUnauthorized)
 			return nil
 		case "Internal service error":
-			var res *service.OggophermartError
+			var res *service.GophermartError
 			errors.As(v, &res)
 			w.Header().Set("goa-error", res.GoaErrorName())
 			w.WriteHeader(http.StatusInternalServerError)

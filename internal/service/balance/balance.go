@@ -1,5 +1,5 @@
 // Package balance is the implementation of [balance]
-package gophermart
+package oggophermart
 
 import (
 	"context"

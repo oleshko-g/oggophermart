@@ -7,24 +7,24 @@
 
 package service
 
-type OggophermartError struct {
+type GophermartError struct {
 	// identifier to map an error to HTTP status codes
 	Name string `json:"-"`
 }
 
 // Error returns an error description.
-func (e *OggophermartError) Error() string {
+func (e *GophermartError) Error() string {
 	return ""
 }
 
-// ErrorName returns "OggophermartError".
+// ErrorName returns "GophermartError".
 //
 // Deprecated: Use GoaErrorName - https://github.com/goadesign/goa/issues/3105
-func (e *OggophermartError) ErrorName() string {
+func (e *GophermartError) ErrorName() string {
 	return e.GoaErrorName()
 }
 
-// GoaErrorName returns "OggophermartError".
-func (e *OggophermartError) GoaErrorName() string {
+// GoaErrorName returns "GophermartError".
+func (e *GophermartError) GoaErrorName() string {
 	return e.Name
 }
