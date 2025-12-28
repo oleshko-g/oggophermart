@@ -15,9 +15,32 @@ import (
 	genUser "github.com/oleshko-g/oggophermart/internal/gen/user"
 	balance "github.com/oleshko-g/oggophermart/internal/service/balance"
 	user "github.com/oleshko-g/oggophermart/internal/service/user"
+	"github.com/oleshko-g/oggophermart/internal/storage/db"
+	"github.com/oleshko-g/oggophermart/internal/transport/http"
 	"goa.design/clue/debug"
 	"goa.design/clue/log"
 )
+
+type app struct {
+	httpConfig http.Config
+	dbConfig   db.Config
+}
+
+var a app
+
+func (a *app) setup() error {
+	a.httpConfig.Address()
+
+	a.httpConfig.Address().Set("localhost:8080")
+	flag.Var(a.httpConfig.Address(), "a", "Address gophermart host")
+
+	a.dbConfig.DSN().Set("")
+	flag.Var(a.dbConfig.DSN(), "d", "Database connection address")
+
+	flag.Parse()
+
+	return nil
+}
 
 func main() {
 	// Define command line flags, add any other flag required to configure the
