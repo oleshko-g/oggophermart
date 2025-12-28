@@ -26,6 +26,8 @@ paths:
                     description: OK response.
                 "400":
                     description: 'Invalid input parameter: Bad Request response.'
+                "401":
+                    description: 'User is not authenticated: Unauthorized response.'
                 "500":
                     description: 'Internal service error: Internal Server Error response.'
     /api/api/user/orders:

@@ -42,6 +42,9 @@ var _ = Service("user", func() {
 			Response("Invalid input parameter", StatusBadRequest, func() {
 				Body(Empty)
 			})
+			Response("User is not authenticated", StatusUnauthorized, func() {
+				Body(Empty)
+			})
 			Response("Internal service error", StatusInternalServerError, func() {
 				Body(Empty)
 			})
@@ -112,8 +115,8 @@ var userServiceResult = Type("userServiceResult", func() {
 	})
 })
 
-var ErrorType = Type("GophermartError", func(){
-	ErrorName("name", func(){
+var ErrorType = Type("GophermartError", func() {
+	ErrorName("name", func() {
 		Description("identifier to map an error to HTTP status codes")
 		Meta("struct:tag:json", "-")
 		Meta("openapi:generate", "false")

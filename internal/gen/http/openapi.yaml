@@ -32,6 +32,8 @@ paths:
                     description: OK response.
                 "400":
                     description: Bad Request response.
+                "401":
+                    description: Unauthorized response.
                 "500":
                     description: Internal Server Error response.
             schemes:

@@ -139,6 +139,12 @@ func EncodeLoginError(encoder func(context.Context, http.ResponseWriter) goahttp
 			w.Header().Set("goa-error", res.GoaErrorName())
 			w.WriteHeader(http.StatusBadRequest)
 			return nil
+		case "User is not authenticated":
+			var res *service.GophermartError
+			errors.As(v, &res)
+			w.Header().Set("goa-error", res.GoaErrorName())
+			w.WriteHeader(http.StatusUnauthorized)
+			return nil
 		case "Internal service error":
 			var res *service.GophermartError
 			errors.As(v, &res)

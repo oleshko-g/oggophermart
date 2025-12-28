@@ -28,10 +28,10 @@ func New(name string) error {
 }
 
 var (
-	// InvalidInputParameter is the error value which is used to map to 400 HTTP Status code
+	// InvalidInputParameter is the error value which is used to map to the 400 Bad Request HTTP Status code
 	InvalidInputParameter = New("Invalid input parameter")
-	// UserIsNotAuthenticated is the error value which is used to map to 401 HTTP Status code
+	// UserIsNotAuthenticated is the error value which is used to map to the 401 Unauthorized HTTP Status code
 	UserIsNotAuthenticated = New("User is not authenticated")
-	// InternalServiceError is the error value which is used to map to 500 HTTP Status code
+	// InternalServiceError is the error value which is used to map to the 500 Internal Server Error HTTP Status code
 	InternalServiceError = New("Internal service error")
 )
