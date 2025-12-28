@@ -11,6 +11,7 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/joho/godotenv"
 	genBalance "github.com/oleshko-g/oggophermart/internal/gen/balance"
 	genUser "github.com/oleshko-g/oggophermart/internal/gen/user"
 	balance "github.com/oleshko-g/oggophermart/internal/service/balance"
@@ -28,16 +29,49 @@ type app struct {
 
 var a app
 
-func (a *app) setup() error {
-	a.httpConfig.Address()
+func (a *app) setup() (err error) {
+	err = godotenv.Load(".env")
+	if err != nil {
+		return err
+	}
 
-	a.httpConfig.Address().Set("localhost:8080")
-	flag.Var(a.httpConfig.Address(), "a", "Address gophermart host")
+	// HTTP host address
+	aF := a.httpConfig.Address()
+	flag.Var(aF, "a", "The host address of the gophermart")
 
-	a.dbConfig.DSN().Set("")
-	flag.Var(a.dbConfig.DSN(), "d", "Database connection address")
+	err = aF.Set("localhost:8080") // default
+	if err != nil {
+		return err
+	}
 
-	flag.Parse()
+	err = aF.Set(os.Getenv("RUN_ADDRESS")) // override the default
+	if err != nil {
+		return err
+	}
+
+	// DB
+	dF := a.dbConfig.DSN()
+	flag.Var(dF, "d", "Database connection address")
+	err = dF.Set("DATABASE_URI") // override the default
+	if err != nil {
+		return err
+	}
+
+	// The axcrual system host address
+	rF := a.httpConfig.AccrualAddress()
+	flag.Var(rF, "r", "Address of the accrual system")
+
+	err = rF.Set("localhost:8081") // default
+	if err != nil {
+		return err
+	}
+
+	err = rF.Set(os.Getenv("ACCRUAL_SYSTEM_ADDRESS")) // override the default
+	if err != nil {
+		return err
+	}
+
+	flag.Parse() // if any of the flags are set they override the defaults or env vars
 
 	return nil
 }

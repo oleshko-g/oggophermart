@@ -1,4 +1,3 @@
-
 // Package db is the base package for db servers
 package db
 
@@ -28,12 +27,10 @@ type dataSource struct {
 func (d *dataSource) Set(s string) error {
 	url, err := url.Parse(s)
 	if err != nil {
-		_ = url
 		return err
 	}
 
 	if url.Scheme != string(DriverNamePostgres) {
-		_ = url
 		return storageErrors.ErrUnsupportedDataSource
 	}
 	d.DriverName = DriverName(url.Scheme)

@@ -3,6 +3,7 @@ module github.com/oleshko-g/oggophermart
 go 1.25.5
 
 require (
+	github.com/joho/godotenv v1.5.1
 	goa.design/clue v1.2.3
 	goa.design/goa/v3 v3.23.4
 )
