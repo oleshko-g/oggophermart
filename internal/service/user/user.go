@@ -3,31 +3,31 @@ package oggophermart
 import (
 	"context"
 
-	user "github.com/oleshko-g/oggophermart/internal/gen/user"
+	genUser "github.com/oleshko-g/oggophermart/internal/gen/user"
 	"goa.design/clue/log"
 )
 
 // user service example implementation.
 // The example methods log the requests and return zero values.
-type usersrvc struct{}
+type userSvc struct{}
 
-var _ user.Service = (*usersrvc)(nil)
+var _ genUser.Service = (*userSvc)(nil)
 
 // NewUser returns the user service implementation.
-func NewUser() user.Service {
-	return &usersrvc{}
+func NewUser() genUser.Service {
+	return &userSvc{}
 }
 
 // Register implements register.
-func (s *usersrvc) Register(ctx context.Context, p *user.LoginPass) (res *user.UserServiceResult, err error) {
-	res = &user.UserServiceResult{}
+func (s *userSvc) Register(ctx context.Context, p *genUser.LoginPass) (res *genUser.UserServiceResult, err error) {
+	res = &genUser.UserServiceResult{}
 	log.Printf(ctx, "user.register")
 	return
 }
 
 // Login implements login.
-func (s *usersrvc) Login(ctx context.Context, p *user.LoginPass) (res *user.UserServiceResult, err error) {
-	res = &user.UserServiceResult{}
+func (s *userSvc) Login(ctx context.Context, p *genUser.LoginPass) (res *genUser.UserServiceResult, err error) {
+	res = &genUser.UserServiceResult{}
 	log.Printf(ctx, "user.login")
 	return
 }

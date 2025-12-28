@@ -10,17 +10,17 @@ import (
 
 // balance service example implementation.
 // The example methods log the requests and return zero values.
-type balancesrvc struct{}
+type balanceSvc struct{}
 
-var _ balance.Service = (*balancesrvc)(nil)
+var _ balance.Service = (*balanceSvc)(nil)
 
 // NewBalance returns the balance service implementation.
 func NewBalance() balance.Service {
-	return &balancesrvc{}
+	return &balanceSvc{}
 }
 
 // PostOrder implements post order.
-func (s *balancesrvc) PostOrder(ctx context.Context) (res *balance.PostOrderResult, err error) {
+func (s *balanceSvc) PostOrder(ctx context.Context) (res *balance.PostOrderResult, err error) {
 	res = &balance.PostOrderResult{}
 	log.Printf(ctx, "balance.post order")
 	return
