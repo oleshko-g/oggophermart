@@ -12,6 +12,24 @@ produces:
     - application/xml
     - application/gob
 paths:
+    /GET /api/orders/{number}:
+        get:
+            tags:
+                - accrual
+            summary: GetOrder accrual
+            operationId: accrual#GetOrder
+            parameters:
+                - name: number
+                  in: path
+                  required: true
+                  type: string
+            responses:
+                "200":
+                    description: OK response.
+                "500":
+                    description: Internal Server Error response.
+            schemes:
+                - http
     /api/user/login:
         post:
             tags:
@@ -98,13 +116,13 @@ definitions:
         properties:
             login:
                 type: string
-                example: Sunt distinctio porro ex atque.
+                example: Earum voluptates.
             password:
                 type: string
-                example: Dolore facilis id est aut dolores nam.
+                example: Sed odit vel architecto natus voluptatem.
         example:
-            login: Expedita a laborum.
-            password: Earum voluptates.
+            login: Illum a explicabo cum incidunt libero.
+            password: Commodi a asperiores.
         required:
             - login
             - password

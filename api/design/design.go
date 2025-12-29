@@ -103,6 +103,27 @@ var _ = Service("balance", func() {
 	})
 })
 
+var _ = Service("accrual", func() {
+	Method("GetOrder",func() {
+		Error("Internal service error", ErrorType)
+		Result(Empty)
+		Payload(func(){
+			Attribute("number", String, func(){
+			})
+			Required("number")
+		})
+		HTTP(func() {
+			GET("GET /api/orders/{number}")
+			Param("number", String)
+			Response(StatusOK)
+			Response("Internal service error", StatusInternalServerError, func(){
+				Body(Empty)
+			})
+		})
+
+	})
+})
+
 var PostOrderResult = Type("PostOrderResult", func() {
 	Attribute("accepted", func() {
 		Meta("struct:tag:json", "-")

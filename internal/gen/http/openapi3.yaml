@@ -6,6 +6,25 @@ servers:
     - url: http://localhost:80
       description: Default server for gophermart
 paths:
+    /api/GET /api/orders/{number}:
+        get:
+            tags:
+                - accrual
+            summary: GetOrder accrual
+            operationId: accrual#GetOrder
+            parameters:
+                - name: number
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+                    example: Officiis reiciendis ipsa sed voluptatibus.
+                  example: Qui accusamus.
+            responses:
+                "200":
+                    description: OK response.
+                "500":
+                    description: 'Internal service error: Internal Server Error response.'
     /api/api/user/login:
         post:
             tags:
@@ -19,8 +38,8 @@ paths:
                         schema:
                             $ref: '#/components/schemas/LoginPass'
                         example:
-                            login: Odio eius repellendus amet.
-                            password: Eveniet fugiat dolores doloremque.
+                            login: Eveniet fugiat dolores doloremque.
+                            password: Sunt distinctio porro ex atque.
             responses:
                 "200":
                     description: OK response.
@@ -68,8 +87,8 @@ paths:
                         schema:
                             $ref: '#/components/schemas/LoginPass'
                         example:
-                            login: Laboriosam est impedit expedita sunt.
-                            password: Reprehenderit quaerat quibusdam eos.
+                            login: Reprehenderit quaerat quibusdam eos.
+                            password: Odio eius repellendus amet.
             responses:
                 "200":
                     description: OK response.
@@ -88,13 +107,13 @@ components:
             properties:
                 login:
                     type: string
-                    example: Sed odit vel architecto natus voluptatem.
+                    example: Illo at occaecati illum dolor.
                 password:
                     type: string
-                    example: Illum a explicabo cum incidunt libero.
+                    example: Velit delectus quibusdam cupiditate repellat.
             example:
-                login: Commodi a asperiores.
-                password: Illo at occaecati illum dolor.
+                login: Molestiae sint consequuntur vero ab.
+                password: Id dolor consequuntur aliquid magnam dolorem ipsum.
             required:
                 - login
                 - password
@@ -106,3 +125,4 @@ components:
 tags:
     - name: user
     - name: balance
+    - name: accrual
