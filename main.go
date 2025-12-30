@@ -18,33 +18,41 @@ import (
 	genUser "github.com/oleshko-g/oggophermart/internal/gen/user"
 	balance "github.com/oleshko-g/oggophermart/internal/service/balance"
 	user "github.com/oleshko-g/oggophermart/internal/service/user"
-	balanceStorage "github.com/oleshko-g/oggophermart/internal/storage/balance"
+	"github.com/oleshko-g/oggophermart/internal/storage"
 	"github.com/oleshko-g/oggophermart/internal/storage/db"
-	userStorage "github.com/oleshko-g/oggophermart/internal/storage/user"
 	"github.com/oleshko-g/oggophermart/internal/transport/http"
 	"goa.design/clue/debug"
 	"goa.design/clue/log"
 )
 
 type gophermart struct {
-	server struct {
-		http.Server
+	transport struct {
+		http struct {
+			http.Server
+			http.Config
+		}
 	}
-	user struct {
-		genUser.Service
-		userStorage.Storage
+
+	service struct {
+		user struct {
+			genUser.Service
+			storage.User
+		}
+		balance struct {
+			genBalance.Service
+			storage.Balance
+		}
+		accrual struct {
+			genAccrual.Service
+			genAccrualHTTPClient.Client
+			// TODO: add Config
+		}
 	}
-	balance    struct {
-		genBalance.Service
-		balanceStorage.Storage
-	}
-	accrual struct {
-		genAccrual.Service
-		genAccrualHTTPClient.Client
-	}
-	config struct {
-		http http.Config
-		db db.Config
+
+	storage struct {
+		db struct {
+			db.Config
+		}
 	}
 }
 
@@ -57,7 +65,7 @@ func (g *gophermart) setup() (err error) {
 	}
 
 	// HTTP host address
-	aF := g.config.http.Address()
+	aF := g.transport.http.Address()
 	flag.Var(aF, "a", "The host address of the gophermart")
 
 	err = aF.Set("localhost:8080") // default
@@ -71,7 +79,7 @@ func (g *gophermart) setup() (err error) {
 	}
 
 	// DB
-	dF := g.config.db.DSN()
+	dF := g.storage.db.DSN()
 	flag.Var(dF, "d", "Database connection address")
 	err = dF.Set("DATABASE_URI") // override the default
 	if err != nil {
@@ -79,7 +87,7 @@ func (g *gophermart) setup() (err error) {
 	}
 
 	// The axcrual system host address
-	rF := g.config.http.AccrualAddress()
+	rF := g.transport.http.AccrualAddress()
 	flag.Var(rF, "r", "Address of the accrual system")
 
 	err = rF.Set("localhost:8081") // default

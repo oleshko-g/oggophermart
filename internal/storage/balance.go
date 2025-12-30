@@ -1,7 +1,7 @@
 // Package balance declares the user storage interface
-package balance
+package storage
 
-type Storage interface {
+type Balance interface {
 	RetrieveUserBalance(userID string) (int, error)
 	SaveUserTransaction(userID string, amount int) (error)
 }
