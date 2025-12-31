@@ -136,7 +136,8 @@ func (g *gophermart) setup() (err error) {
 	g.storage.Balance = dbStorage
 
 	//  2. Intanciates services with the set storage
-
+	g.service.balance.Service = balance.New(g.storage.Balance)
+	g.service.user.Service = user.New(g.storage.User)
 
 	//  3. Instanciates the HTTP server
 

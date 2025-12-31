@@ -6,6 +6,7 @@ import (
 
 	genBalance "github.com/oleshko-g/oggophermart/internal/gen/balance"
 	"github.com/oleshko-g/oggophermart/internal/service/errors"
+	"github.com/oleshko-g/oggophermart/internal/storage"
 )
 
 // balance service example implementation.
@@ -16,6 +17,10 @@ var _ genBalance.Service = (*balanceSvc)(nil)
 
 // NewBalance returns the balance service implementation.
 func NewBalance() genBalance.Service {
+	return &balanceSvc{}
+}
+// New returns the balance service implementation.
+func New(storage storage.Balance) genBalance.Service {
 	return &balanceSvc{}
 }
 

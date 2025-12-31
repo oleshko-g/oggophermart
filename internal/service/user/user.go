@@ -6,6 +6,7 @@ import (
 
 	genUser "github.com/oleshko-g/oggophermart/internal/gen/user"
 	"github.com/oleshko-g/oggophermart/internal/service/errors"
+	"github.com/oleshko-g/oggophermart/internal/storage"
 )
 
 // user service example implementation.
@@ -16,6 +17,11 @@ var _ genUser.Service = (*userSvc)(nil)
 
 // NewUser returns the user service implementation.
 func NewUser() genUser.Service {
+	return &userSvc{}
+}
+
+// New returns the user service implementation.
+func New(storage storage.User) genUser.Service {
 	return &userSvc{}
 }
 
