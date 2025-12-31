@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"net"
@@ -22,6 +23,7 @@ import (
 	user "github.com/oleshko-g/oggophermart/internal/service/user"
 	"github.com/oleshko-g/oggophermart/internal/storage"
 	"github.com/oleshko-g/oggophermart/internal/storage/db"
+	"github.com/oleshko-g/oggophermart/internal/storage/db/sql"
 	"github.com/oleshko-g/oggophermart/internal/transport/http"
 	"goa.design/clue/debug"
 	"goa.design/clue/log"
@@ -124,9 +126,25 @@ func (g *gophermart) cofigure(l *slog.Logger) (err error) {
 //
 // If successful it sets readyToRun flag
 func (g *gophermart) setup() (err error) {
+	if !g.configured {
+		return errSetupGophermartNotConfigured
+	}
+	dbStorage, err := sql.New(&g.storage.db.Config)
+
+	//  1. Sets the storage for each service
+	g.storage.User = dbStorage
+	g.storage.Balance = dbStorage
+
+	//  2. Intanciates services with the set storage
+
+
+	//  3. Instanciates the HTTP server
+
 	g.readyToRun = true
 	return nil
 }
+
+var errSetupGophermartNotConfigured = errors.New("can't setup. gophermart isn't configured")
 
 func main() {
 	// Define command line flags, add any other flag required to configure the
