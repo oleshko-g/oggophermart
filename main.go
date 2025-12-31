@@ -11,6 +11,8 @@ import (
 	"sync"
 	"syscall"
 
+	"log/slog"
+
 	"github.com/joho/godotenv"
 	genAccrual "github.com/oleshko-g/oggophermart/internal/gen/accrual"
 	genBalance "github.com/oleshko-g/oggophermart/internal/gen/balance"
@@ -23,7 +25,6 @@ import (
 	"github.com/oleshko-g/oggophermart/internal/transport/http"
 	"goa.design/clue/debug"
 	"goa.design/clue/log"
-	"log/slog"
 )
 
 type gophermart struct {
@@ -56,11 +57,19 @@ type gophermart struct {
 		storage.Balance
 	}
 	*slog.Logger
+	configured bool
+	readyToRun bool
 }
 
 var g gophermart
 
-func (g *gophermart) setup() (err error) {
+// configure sets the gophermart config parameters in the following priority:
+//  1. command line flags
+//  2. env vars
+//  3. default values
+//
+// If successful cofigure set the [slog.Logger] field and [configured] flag
+func (g *gophermart) cofigure(l *slog.Logger) (err error) {
 	err = godotenv.Load(".env")
 	if err != nil {
 		return err
@@ -103,7 +112,19 @@ func (g *gophermart) setup() (err error) {
 	}
 
 	flag.Parse() // if any of the flags are set they override the defaults or env vars
+	g.configured = true
+	return nil
+}
 
+// setup readies the gopheramart to run.
+// It does the following:
+//  1. Sets the storage for each service
+//  2. Intanciates services with the set storage
+//  3. Instanciates the HTTP server
+//
+// If successful it sets readyToRun flag
+func (g *gophermart) setup() (err error) {
+	g.readyToRun = true
 	return nil
 }
 
