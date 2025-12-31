@@ -2,6 +2,6 @@
 package storage
 
 type Balance interface {
-	RetrieveUserBalance(userID string) (int, error)
+	RetrieveUserBalance(userID string) (currentBalance, withdrawn int, err error)
 	SaveUserTransaction(userID string, amount int) (error)
 }

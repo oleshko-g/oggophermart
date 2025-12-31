@@ -35,9 +35,21 @@ type Storage struct {
 	db *sql.DB
 }
 
-func (s *Storage) RetrieveUserBalance(userID string) (int, error)               { return 0, nil }
-func (s *Storage) SaveUserTransaction(userID string, amount int) error          { return nil }
-func (s *Storage) RetrieveUser(id string) error                                 { return nil }
+// RetrieveUserBalance retrieves current user's balance and the amount withdrawn by their userID or an error
+func (s *Storage) RetrieveUserBalance(userID string) (currentBalance, withdrawn int, err error) {
+	return 0, 0, nil
+}
+
+// SaveUserTransaction saved the user's transaction by the following logic:
+//   - a) If the amount is postive then it's an accrual
+//   - b) if the amount is negative then it's a withdrawl
+func (s *Storage) SaveUserTransaction(userID string, amount int) error { return nil }
+
+// RetrieveUser retrieves a single user by their id
+func (s *Storage) RetrieveUser(id string) error { return nil }
+
+// StoreUser stores the user by their name and their hashed password.
+//   - name MUST be unique
 func (s *Storage) StoreUser(name, hashedPassword string) (id string, err error) { return "", nil }
 
 var _ storage.User = (*Storage)(nil)
