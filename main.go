@@ -23,6 +23,7 @@ import (
 	"github.com/oleshko-g/oggophermart/internal/transport/http"
 	"goa.design/clue/debug"
 	"goa.design/clue/log"
+	"log/slog"
 )
 
 type gophermart struct {
@@ -36,11 +37,9 @@ type gophermart struct {
 	service struct {
 		user struct {
 			genUser.Service
-			storage.User
 		}
 		balance struct {
 			genBalance.Service
-			storage.Balance
 		}
 		accrual struct {
 			genAccrual.Service
@@ -53,7 +52,10 @@ type gophermart struct {
 		db struct {
 			db.Config
 		}
+		storage.User
+		storage.Balance
 	}
+	*slog.Logger
 }
 
 var g gophermart
@@ -86,7 +88,7 @@ func (g *gophermart) setup() (err error) {
 		return err
 	}
 
-	// The axcrual system host address
+	// The accrual system host address
 	rF := g.transport.http.AccrualAddress()
 	flag.Var(rF, "r", "Address of the accrual system")
 
