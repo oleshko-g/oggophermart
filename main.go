@@ -5,14 +5,13 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"log/slog"
 	"net"
 	"net/url"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
-
-	"log/slog"
 
 	"github.com/joho/godotenv"
 	genAccrual "github.com/oleshko-g/oggophermart/internal/gen/accrual"
@@ -37,26 +36,24 @@ type gophermart struct {
 		}
 	}
 
-	service struct {
-		user struct {
-			genUser.Service
-		}
-		balance struct {
-			genBalance.Service
-		}
-		accrual struct {
-			genAccrual.Service
-			genAccrualHTTPClient.Client
-			// TODO: add Config
-		}
+	user struct {
+		genUser.Service
+	}
+	balance struct {
+		genBalance.Service
+	}
+	accrual struct {
+		genAccrual.Service
+		genAccrualHTTPClient.Client
+		// TODO: add Config
 	}
 
 	storage struct {
 		db struct {
 			db.Config
 		}
-		storage.User
-		storage.Balance
+		user storage.User
+		balance storage.Balance
 	}
 	*slog.Logger
 	configured bool
@@ -131,13 +128,14 @@ func (g *gophermart) setup() (err error) {
 	}
 	dbStorage, err := sql.New(&g.storage.db.Config)
 
-	//  1. Sets the storage for each service
-	g.storage.User = dbStorage
-	g.storage.Balance = dbStorage
+	// 1. Sets the storage for each service
+	// wrap concrete type [*sql.Storage] struct with interfaces
+	g.storage.user = dbStorage
+	g.storage.balance = dbStorage
 
 	//  2. Intanciates services with the set storage
-	g.service.balance.Service = balance.New(g.storage.Balance)
-	g.service.user.Service = user.New(g.storage.User)
+	g.balance.Service = balance.New(g.storage.balance)
+	g.user.Service = user.New(g.storage.user)
 
 	//  3. Instanciates the HTTP server
 
