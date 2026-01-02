@@ -18,6 +18,7 @@ import (
 	genBalance "github.com/oleshko-g/oggophermart/internal/gen/balance"
 	genAccrualHTTPClient "github.com/oleshko-g/oggophermart/internal/gen/http/accrual/client"
 	genUser "github.com/oleshko-g/oggophermart/internal/gen/user"
+	"github.com/oleshko-g/oggophermart/internal/service"
 	balance "github.com/oleshko-g/oggophermart/internal/service/balance"
 	user "github.com/oleshko-g/oggophermart/internal/service/user"
 	"github.com/oleshko-g/oggophermart/internal/storage"
@@ -35,26 +36,14 @@ type gophermart struct {
 			http.Config
 		}
 	}
-
-	user struct {
-		genUser.Service
-	}
-	balance struct {
-		genBalance.Service
-	}
+	service.Service
 	accrual struct {
 		genAccrual.Service
 		genAccrualHTTPClient.Client
 		// TODO: add Config
 	}
-
-	storage struct {
-		db struct {
-			db.Config
-		}
-		user storage.User
-		balance storage.Balance
-	}
+	storage.Storage
+	dbCfg db.Config
 	*slog.Logger
 	configured bool
 	readyToRun bool
@@ -89,7 +78,7 @@ func (g *gophermart) cofigure(l *slog.Logger) (err error) {
 	}
 
 	// DB
-	dF := g.storage.db.DSN()
+	dF := g.dbCfg.DSN()
 	flag.Var(dF, "d", "Database connection address")
 	err = dF.Set("DATABASE_URI") // override the default
 	if err != nil {
@@ -126,18 +115,21 @@ func (g *gophermart) setup() (err error) {
 	if !g.configured {
 		return errSetupGophermartNotConfigured
 	}
-	dbStorage, err := sql.New(&g.storage.db.Config)
+	dbStorage, err := sql.New(&g.dbCfg)
 
 	// 1. Sets the storage for each service
 	// wrap concrete type [*sql.Storage] struct with interfaces
-	g.storage.user = dbStorage
-	g.storage.balance = dbStorage
+	g.Storage.User = dbStorage
+	g.Storage.Balance = dbStorage
 
 	//  2. Intanciates services with the set storage
-	g.balance.Service = balance.New(g.storage.balance)
-	g.user.Service = user.New(g.storage.user)
+	g.Service = service.Service{
+		Balance: balance.New(g.Storage.Balance),
+		User:    user.New(g.Storage.User),
+	}
 
 	//  3. Instanciates the HTTP server
+	http.NewServer(g.transport.http.Config, g.Service)
 
 	g.readyToRun = true
 	return nil
