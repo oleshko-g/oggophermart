@@ -129,14 +129,21 @@ func (g *gophermart) setup() (err error) {
 	}
 
 	//  3. Instanciates the HTTP server
-	http.NewServer(g.transport.http.Config, g.Service)
+	g.transport.http.Server = http.NewServer(g.transport.http.Config, g.Service)
 
 	g.readyToRun = true
 	return nil
 }
 
+func (g *gophermart) run() (err error) {
+	if !g.readyToRun {
+		return errSetupGophermartNotReadyToRun
+	}
+	return g.transport.http.Server.ListenAndServe()
+}
 
 var errSetupGophermartNotConfigured = errors.New("can't setup. gophermart isn't configured")
+var errSetupGophermartNotReadyToRun = errors.New("can't run. gophermart isn't set up")
 
 func main() {
 	// Define command line flags, add any other flag required to configure the

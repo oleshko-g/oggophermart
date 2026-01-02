@@ -19,6 +19,7 @@ import (
 type Server interface {
 	ListenAndServe() error
 }
+
 type server struct {
 	goa struct {
 		goahttp.Server
