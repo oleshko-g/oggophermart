@@ -22,6 +22,8 @@ func NewUser() genUser.Service {
 
 // New returns the user service implementation.
 func New(storage storage.User) genUser.Service {
+
+	// TODO: connect to the storage
 	return &userSvc{}
 }
 

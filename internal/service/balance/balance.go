@@ -21,6 +21,7 @@ func NewBalance() genBalance.Service {
 }
 // New returns the balance service implementation.
 func New(storage storage.Balance) genBalance.Service {
+	// TODO: connect to the storage
 	return &balanceSvc{}
 }
 

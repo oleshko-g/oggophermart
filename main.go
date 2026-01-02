@@ -135,6 +135,7 @@ func (g *gophermart) setup() (err error) {
 	return nil
 }
 
+
 var errSetupGophermartNotConfigured = errors.New("can't setup. gophermart isn't configured")
 
 func main() {
