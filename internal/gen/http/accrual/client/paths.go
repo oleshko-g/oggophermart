@@ -5,7 +5,7 @@
 // Command:
 // $ goa gen github.com/oleshko-g/oggophermart/api/design -o internal/
 
-package server
+package client
 
 import (
 	"fmt"
