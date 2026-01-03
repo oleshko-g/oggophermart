@@ -43,13 +43,28 @@ type gophermart struct {
 		// TODO: add Config
 	}
 	storage.Storage
-	dbCfg db.Config
-	*slog.Logger
-	configured bool
-	readyToRun bool
+	dbCfg         db.Config
+	goaLoggingCtx context.Context
+	configured    bool
+	readyToRun    bool
 }
 
-var g gophermart
+
+var g = gophermart{
+	goaLoggingCtx: newCtxWithGoaLogger(),
+}
+
+func newCtxWithGoaLogger() context.Context {
+	ctx := context.Background()
+
+	opts := []log.LogOption{
+		log.WithFormat(log.FormatText),
+	}
+
+	// puts logger in ctx
+	logCtx := log.Context(ctx, opts...)
+	return logCtx
+}
 
 // configure sets the gophermart config parameters in the following priority:
 //  1. command line flags
@@ -57,8 +72,9 @@ var g gophermart
 //  3. default values
 //
 // If successful cofigure set the [slog.Logger] field and [configured] flag
-func (g *gophermart) cofigure(l *slog.Logger) (err error) {
-	err = godotenv.Load(".env")
+func (g *gophermart) cofigure() (err error) {
+
+	err = loadEnvVarsFromFile()
 	if err != nil {
 		return err
 	}
@@ -104,6 +120,25 @@ func (g *gophermart) cofigure(l *slog.Logger) (err error) {
 	return nil
 }
 
+// loadEnvVarsFromFile opens or if not exists creates the env file and loads env vars from it.
+func loadEnvVarsFromFile() (err error) {
+	const (
+		envFileName                    = ".env"
+		envFilePermissions os.FileMode = 0o644
+	)
+
+	_, err = os.OpenFile(envFileName, os.O_RDONLY|os.O_CREATE, envFilePermissions)
+	if err != nil {
+		return err
+	}
+
+	err = godotenv.Load(envFileName)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // setup readies the gopheramart to run.
 // It does the following:
 //  1. Sets the storage for each service
@@ -135,6 +170,7 @@ func (g *gophermart) setup() (err error) {
 	return nil
 }
 
+// run launches gophermart
 func (g *gophermart) run() (err error) {
 	if !g.readyToRun {
 		return errSetupGophermartNotReadyToRun
