@@ -49,7 +49,6 @@ type gophermart struct {
 	readyToRun    bool
 }
 
-
 var g = gophermart{
 	goaLoggingCtx: newCtxWithGoaLogger(),
 }
@@ -87,10 +86,12 @@ func (g *gophermart) cofigure() (err error) {
 	if err != nil {
 		return err
 	}
-
-	err = aF.Set(os.Getenv("RUN_ADDRESS")) // override the default
-	if err != nil {
-		return err
+	v, ok := os.LookupEnv("RUN_ADDRESS")
+	if ok {
+		err = aF.Set(v) // override the default
+		if err != nil {
+			return err
+		}
 	}
 
 	// DB
