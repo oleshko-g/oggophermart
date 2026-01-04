@@ -5,7 +5,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"log/slog"
 	"net"
 	"net/url"
 	"os"
@@ -43,21 +42,22 @@ type gophermart struct {
 		// TODO: add Config
 	}
 	storage.Storage
-	dbCfg         db.Config
-	goaLoggingCtx context.Context
-	configured    bool
-	readyToRun    bool
+	dbCfg      db.Config
+	loggingCtx context.Context
+	configured bool
+	readyToRun bool
 }
 
 var g = gophermart{
-	goaLoggingCtx: newCtxWithGoaLogger(),
+	loggingCtx: newLoggingCtx(),
 }
 
-func newCtxWithGoaLogger() context.Context {
+// newLoggingCtx returns the context with goa logger
+func newLoggingCtx() context.Context {
 	ctx := context.Background()
 
 	opts := []log.LogOption{
-		log.WithFormat(log.FormatText),
+		log.WithFormat(log.FormatTerminal),
 	}
 
 	// puts logger in ctx
@@ -80,12 +80,13 @@ func (g *gophermart) cofigure() (err error) {
 
 	// HTTP host address
 	aF := g.transport.http.Address()
-	flag.Var(aF, "a", "The host address of the gophermart")
-
 	err = aF.Set("localhost:8080") // default
 	if err != nil {
 		return err
 	}
+
+	flag.Var(aF, "a", "The host address of the gophermart")
+
 	v, ok := os.LookupEnv("RUN_ADDRESS")
 	if ok {
 		err = aF.Set(v) // override the default
@@ -97,26 +98,35 @@ func (g *gophermart) cofigure() (err error) {
 	// DB
 	dF := g.dbCfg.DSN()
 	flag.Var(dF, "d", "Database connection address")
-	err = dF.Set("DATABASE_URI") // override the default
-	if err != nil {
-		return err
+
+	v, ok = os.LookupEnv("DATABASE_URI")
+	if ok {
+		err = dF.Set(v) // override the default
+		if err != nil {
+			return err
+		}
 	}
 
 	// The accrual system host address
 	rF := g.transport.http.AccrualAddress()
-	flag.Var(rF, "r", "Address of the accrual system")
-
 	err = rF.Set("localhost:8081") // default
 	if err != nil {
 		return err
 	}
 
-	err = rF.Set(os.Getenv("ACCRUAL_SYSTEM_ADDRESS")) // override the default
-	if err != nil {
-		return err
+	flag.Var(rF, "r", "Address of the accrual system")
+
+	if v, ok := os.LookupEnv("ACCRUAL_SYSTEM_ADDRESS"); ok {
+		err = rF.Set(v) // override the default
+		if err != nil {
+			return err
+		}
 	}
 
 	flag.Parse() // if any of the flags are set they override the defaults or env vars
+	log.Printf(g.loggingCtx, "gophermart host address is set to %s from the %s", aF.String(), aF.Source)
+	log.Printf(g.loggingCtx, "gophermart database connection is set to %s from the %s", dF.DriverName.String(), dF.Source)
+	log.Printf(g.loggingCtx, "gophermart address of the accrual system is set to %s from the %s", rF.String(), rF.Source)
 	g.configured = true
 	return nil
 }

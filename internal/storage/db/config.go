@@ -21,10 +21,18 @@ func (c *Config) DSN() *dataSource { // revive:disable-line:unexported-return pr
 type dataSource struct {
 	name string
 	DriverName
+	Source string
 }
 
 // Set parses s and sets [DSN] and [Driver] or returns an error
 func (d *dataSource) Set(s string) error {
+	switch d.Source {
+	case "":
+		d.Source = "env var" // assumes that env var is set upon the first call to [Set]
+	case "env var":
+		d.Source = "command line flag" // assumes that flags are always parsed last
+	}
+
 	url, err := url.Parse(s)
 	if err != nil {
 		return err

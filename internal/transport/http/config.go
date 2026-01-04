@@ -37,7 +37,17 @@ func (a address) String() string {
 	return a.host + ":" + a.port
 }
 
+// Set validates a value of address and sets it or return an error
 func (a *address) Set(s string) error {
+	switch a.Source {
+	case "default", "env var":
+		a.Source = "command line flag" // assumes that flags are always parsed last
+	case "":
+		a.Source = "default" // assumes that default is set upon the first call to [Set]
+	default:
+		a.Source = "env var" // assumes that env var is after the default
+	}
+
 	if s == "" {
 		return fmt.Errorf("%w: %s", errParsingAdress, "empty string")
 	}
