@@ -65,7 +65,16 @@ func DecodeGetOrderResponse(decoder func(*http.Response) goahttp.Decoder, restor
 		}
 		switch resp.StatusCode {
 		case http.StatusOK:
-			return nil, nil
+			var (
+				body GetOrderResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("accrual", "GetOrder", err)
+			}
+			res := NewGetOrderResultOK(&body)
+			return res, nil
 		case http.StatusInternalServerError:
 			return nil, NewGetOrderInternalServiceError()
 		default:

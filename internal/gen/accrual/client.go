@@ -29,7 +29,11 @@ func NewClient(getOrder goa.Endpoint) *Client {
 // GetOrder may return the following errors:
 //   - "Internal service error" (type *service.GophermartError)
 //   - error: internal error
-func (c *Client) GetOrder(ctx context.Context, p *GetOrderPayload) (err error) {
-	_, err = c.GetOrderEndpoint(ctx, p)
-	return
+func (c *Client) GetOrder(ctx context.Context, p *GetOrderPayload) (res *GetOrderResult, err error) {
+	var ires any
+	ires, err = c.GetOrderEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(*GetOrderResult), nil
 }

@@ -67,11 +67,19 @@ var _ = Service("balance", func() {
 	Error("Not implemented", ErrorType)
 
 	Method("post order", func() {
+		// Payload(String, func(){
+		// 	// Attribute("oderNumber", ,
+		// 		// func(){
+		// 		Pattern(`\d`)
+		// 	// }
+		// 	// Required("orderNumber")
+		// })
 		Result(PostOrderResult)
 		Error("The order belongs to another user", ErrorType)
 		Error("Invalid order number", ErrorType)
 		HTTP(func() {
 			POST("/api/user/orders")
+			// SkipRequestBodyEncodeDecode()
 			Response(StatusOK, func() {
 				Description("The order has been accepted for processing before.")
 				Body(Empty)
@@ -104,11 +112,11 @@ var _ = Service("balance", func() {
 })
 
 var _ = Service("accrual", func() {
-	Method("GetOrder",func() {
+	Method("GetOrder", func() {
 		Error("Internal service error", ErrorType)
-		Result(Empty)
-		Payload(func(){
-			Attribute("number", String, func(){
+		Result(GetOrderResult)
+		Payload(func() {
+			Attribute("number", String, func() {
 			})
 			Required("number")
 		})
@@ -116,7 +124,7 @@ var _ = Service("accrual", func() {
 			GET("GET /api/orders/{number}")
 			Param("number", String)
 			Response(StatusOK)
-			Response("Internal service error", StatusInternalServerError, func(){
+			Response("Internal service error", StatusInternalServerError, func() {
 				Body(Empty)
 			})
 		})
@@ -131,6 +139,11 @@ var PostOrderResult = Type("PostOrderResult", func() {
 		Meta("openapi:example", "false")
 	})
 	Meta("openapi:example", "false")
+})
+var GetOrderResult = Type("GetOrderResult", func() {
+	Attribute("order", String)
+	Attribute("status", String)
+	Attribute("accrual", UInt)
 })
 
 var LoginPass = Type("LoginPass", func() {

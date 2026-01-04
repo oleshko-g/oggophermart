@@ -28,13 +28,13 @@ func (c *Config) AccrualAddress() *address { // revive:disable-line:unexported-r
 
 // String returns [codings] elements separated by ", " as a single string
 type address struct {
-	host   string
-	port   string
+	Host   string
+	Port   string
 	Source string
 }
 
 func (a address) String() string {
-	return a.host + ":" + a.port
+	return a.Host + ":" + a.Port
 }
 
 // Set validates a value of address and sets it or return an error
@@ -60,11 +60,11 @@ func (a *address) Set(s string) error {
 		return err
 	}
 
-	if a.host = url.Hostname(); url.Hostname() == "" {
+	if a.Host = url.Hostname(); url.Hostname() == "" {
 		return fmt.Errorf("%w: %s", errParsingAdress, "empty scheme")
 	}
 
-	if a.port = url.Port(); url.Port() == "" {
+	if a.Port = url.Port(); url.Port() == "" {
 		return fmt.Errorf("%w: %s", errParsingAdress, "empty port")
 	}
 

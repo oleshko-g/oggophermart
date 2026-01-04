@@ -14,7 +14,7 @@ import (
 // Service is the accrual service interface.
 type Service interface {
 	// GetOrder implements GetOrder.
-	GetOrder(context.Context, *GetOrderPayload) (err error)
+	GetOrder(context.Context, *GetOrderPayload) (res *GetOrderResult, err error)
 }
 
 // APIName is the name of the API as defined in the design.
@@ -36,4 +36,11 @@ var MethodNames = [1]string{"GetOrder"}
 // GetOrderPayload is the payload type of the accrual service GetOrder method.
 type GetOrderPayload struct {
 	Number string
+}
+
+// GetOrderResult is the result type of the accrual service GetOrder method.
+type GetOrderResult struct {
+	Order   *string
+	Status  *string
+	Accrual *uint
 }

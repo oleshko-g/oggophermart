@@ -35,6 +35,6 @@ func (e *Endpoints) Use(m func(goa.Endpoint) goa.Endpoint) {
 func NewGetOrderEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req any) (any, error) {
 		p := req.(*GetOrderPayload)
-		return nil, s.GetOrder(ctx, p)
+		return s.GetOrder(ctx, p)
 	}
 }

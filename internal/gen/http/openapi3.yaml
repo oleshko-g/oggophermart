@@ -18,11 +18,19 @@ paths:
                   required: true
                   schema:
                     type: string
-                    example: Officiis reiciendis ipsa sed voluptatibus.
-                  example: Qui accusamus.
+                    example: Nostrum ipsum.
+                  example: Asperiores a.
             responses:
                 "200":
                     description: OK response.
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/GetOrderResult'
+                            example:
+                                accrual: 16851211498070021830
+                                order: A asperiores.
+                                status: Illo at occaecati illum dolor.
                 "500":
                     description: 'Internal service error: Internal Server Error response.'
     /api/api/user/login:
@@ -38,8 +46,8 @@ paths:
                         schema:
                             $ref: '#/components/schemas/LoginPass'
                         example:
-                            login: Eveniet fugiat dolores doloremque.
-                            password: Sunt distinctio porro ex atque.
+                            login: Aut dolores nam quo expedita.
+                            password: Laborum est earum voluptates quo sed.
             responses:
                 "200":
                     description: OK response.
@@ -87,8 +95,8 @@ paths:
                         schema:
                             $ref: '#/components/schemas/LoginPass'
                         example:
-                            login: Reprehenderit quaerat quibusdam eos.
-                            password: Odio eius repellendus amet.
+                            login: Fugiat dolores doloremque non sunt distinctio.
+                            password: Ex atque qui dolore facilis id.
             responses:
                 "200":
                     description: OK response.
@@ -100,6 +108,23 @@ paths:
                     description: 'Not implemented: Not Implemented response.'
 components:
     schemas:
+        GetOrderResult:
+            type: object
+            properties:
+                accrual:
+                    type: integer
+                    example: 17089541985497195692
+                    format: int64
+                order:
+                    type: string
+                    example: Neque veritatis et est est facere.
+                status:
+                    type: string
+                    example: Dolores dolor.
+            example:
+                accrual: 16206595565553352438
+                order: Hic alias aut.
+                status: Nobis laboriosam.
         GophermartError:
             type: object
         LoginPass:
@@ -107,13 +132,13 @@ components:
             properties:
                 login:
                     type: string
-                    example: Illo at occaecati illum dolor.
+                    example: Iusto et et necessitatibus ut et.
                 password:
                     type: string
-                    example: Velit delectus quibusdam cupiditate repellat.
+                    example: Perferendis aliquid.
             example:
-                login: Molestiae sint consequuntur vero ab.
-                password: Id dolor consequuntur aliquid magnam dolorem ipsum.
+                login: Consequuntur recusandae et consequuntur.
+                password: Omnis sint.
             required:
                 - login
                 - password
