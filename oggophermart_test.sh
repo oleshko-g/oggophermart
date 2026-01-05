@@ -1,4 +1,6 @@
 #!/bin/zsh
+go build -buildvcs=false -o oggophermart
+cd accrual_bin && chmod +x accrual_linux_amd64
 gophermarttest \
             -test.v -test.run=^TestGophermart$ \
             -gophermart-binary-path=./oggophermart \

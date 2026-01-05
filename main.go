@@ -154,6 +154,9 @@ func (g *gophermart) setup() (err error) {
 		return errSetupGophermartNotConfigured
 	}
 	dbStorage, err := sql.New(&g.dbCfg)
+	if err != nil {
+		return err
+	}
 
 	// 1. Sets the storage for each service
 	// wrap concrete type [*sql.Storage] struct with interfaces
