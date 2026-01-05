@@ -4,6 +4,7 @@ package sql
 import (
 	"database/sql"
 
+	_ "github.com/lib/pq" // revive:disable-line:blank-imports registers the postgres driver
 	"github.com/oleshko-g/oggophermart/internal/storage"
 	"github.com/oleshko-g/oggophermart/internal/storage/db"
 	"github.com/oleshko-g/oggophermart/internal/storage/db/sql/schema"
