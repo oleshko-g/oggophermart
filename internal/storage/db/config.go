@@ -38,7 +38,7 @@ func (d *dataSource) Set(s string) error {
 		return err
 	}
 
-	if url.Scheme != string(DriverNamePostgres) {
+	if url.Scheme != string(DriverNamePostgres) && url.Scheme != string(DriverNamePostgreSQL) {
 		return storageErrors.ErrUnsupportedDataSource
 	}
 	d.DriverName = DriverName(url.Scheme)
@@ -61,5 +61,6 @@ func (d DriverName) String() string {
 
 // Supported database drivers
 const (
-	DriverNamePostgres DriverName = "postgres"
+	DriverNamePostgres   DriverName = "postgres"
+	DriverNamePostgreSQL DriverName = "postgresql"
 )
