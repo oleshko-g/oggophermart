@@ -10,6 +10,7 @@ package balance
 import (
 	"context"
 
+	service "github.com/oleshko-g/oggophermart/internal/gen/service"
 	goa "goa.design/goa/v3/pkg"
 )
 
@@ -34,9 +35,9 @@ func NewClient(postOrder goa.Endpoint) *Client {
 //   - "Internal service error" (type *service.GophermartError)
 //   - "Not implemented" (type *service.GophermartError)
 //   - error: internal error
-func (c *Client) PostOrder(ctx context.Context) (res *PostOrderResult, err error) {
+func (c *Client) PostOrder(ctx context.Context, p *service.JWTToken) (res *PostOrderResult, err error) {
 	var ires any
-	ires, err = c.PostOrderEndpoint(ctx, nil)
+	ires, err = c.PostOrderEndpoint(ctx, p)
 	if err != nil {
 		return
 	}

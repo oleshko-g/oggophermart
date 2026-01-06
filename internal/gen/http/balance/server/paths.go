@@ -9,5 +9,5 @@ package server
 
 // PostOrderBalancePath returns the URL path to the balance service post order HTTP endpoint.
 func PostOrderBalancePath() string {
-	return "/api/api/user/orders"
+	return "/api/user/orders"
 }

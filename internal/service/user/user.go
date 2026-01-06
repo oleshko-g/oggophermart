@@ -3,36 +3,81 @@ package user
 
 import (
 	"context"
+	"errors"
+	"time"
 
+	jwt "github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
+	genSvc "github.com/oleshko-g/oggophermart/internal/gen/service"
 	genUser "github.com/oleshko-g/oggophermart/internal/gen/user"
-	"github.com/oleshko-g/oggophermart/internal/service/errors"
+	svcErrors "github.com/oleshko-g/oggophermart/internal/service/errors"
 	"github.com/oleshko-g/oggophermart/internal/storage"
+	storageErrors "github.com/oleshko-g/oggophermart/internal/storage/errors"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // user service example implementation.
 // The example methods slog the requests and return zero values.
-type userSvc struct{}
+type userSvc struct {
+	storage.User
+}
 
 var _ genUser.Service = (*userSvc)(nil)
 
-// NewUser returns the user service implementation.
-func NewUser() genUser.Service {
-	return &userSvc{}
-}
-
 // New returns the user service implementation.
-func New(storage storage.User) genUser.Service {
-
-	// TODO: connect to the storage
-	return &userSvc{}
+func New(storage storage.User) *userSvc {
+	return &userSvc{
+		User: storage,
+	}
 }
 
 // Register implements register.
-func (s *userSvc) Register(ctx context.Context, p *genUser.LoginPass) (res *genUser.UserServiceResult, err error) {
-	return nil, errors.NotImplemented
+func (s *userSvc) Register(ctx context.Context, p *genUser.LoginPass) (authToken *genSvc.JWTToken, err error) {
+
+	hashedPassword, err := hashPassword(p.Password)
+	if err != nil {
+		return &genSvc.JWTToken{}, svcErrors.ErrInternalServiceError
+	}
+
+	err = s.User.StoreUser(ctx, p.Login, hashedPassword)
+	if err != nil {
+		if errors.Is(err, storageErrors.ErrAlreadyExists) {
+			return &genSvc.JWTToken{}, ErrLoginTaken
+		}
+		return &genSvc.JWTToken{}, svcErrors.ErrInternalServiceError
+	}
+
+	return &genSvc.JWTToken{}, svcErrors.ErrNotImplemented
 }
 
 // Login implements login.
-func (s *userSvc) Login(ctx context.Context, p *genUser.LoginPass) (res *genUser.UserServiceResult, err error) {
-	return nil, errors.NotImplemented
+func (s *userSvc) Login(ctx context.Context, p *genUser.LoginPass) (authToken *genSvc.JWTToken, err error) {
+	return &genSvc.JWTToken{}, svcErrors.ErrNotImplemented
+}
+
+func hashPassword(password string) (string, error) {
+
+	hashedPasswordData, errHash := bcrypt.GenerateFromPassword([]byte(password), 0)
+	if errHash != nil {
+		return "", errHash
+	}
+
+	return string(hashedPasswordData), nil
+}
+
+func checkPasswordHash(hashedPassword, password string) error {
+	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+}
+
+// TODO: add makeJWTToken to user service
+func signUserJWT(userID uuid.UUID, jwtSecret string, expiresIn time.Duration) (string, error) {
+	t := jwt.NewWithClaims(jwt.SigningMethodHS256,
+		jwt.RegisteredClaims{
+			Issuer:    "oggophermart",
+			IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
+			ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(expiresIn)),
+			Subject:   userID.String(),
+		},
+	)
+	return t.SignedString([]byte(jwtSecret))
 }

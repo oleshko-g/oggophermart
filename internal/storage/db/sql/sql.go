@@ -2,12 +2,17 @@
 package sql
 
 import (
+	"context"
 	"database/sql"
+	"fmt"
 
+	"github.com/google/uuid"
 	_ "github.com/lib/pq" // revive:disable-line:blank-imports registers the postgres driver
 	"github.com/oleshko-g/oggophermart/internal/storage"
 	"github.com/oleshko-g/oggophermart/internal/storage/db"
+	"github.com/oleshko-g/oggophermart/internal/storage/db/sql/query"
 	"github.com/oleshko-g/oggophermart/internal/storage/db/sql/schema"
+	"github.com/oleshko-g/oggophermart/internal/storage/errors"
 )
 
 // New configures and open a new connection to the db and returns a [Storage] or an error
@@ -51,7 +56,33 @@ func (s *Storage) RetrieveUser(id string) error { return nil }
 
 // StoreUser stores the user by their name and their hashed password.
 //   - name MUST be unique
-func (s *Storage) StoreUser(name, hashedPassword string) (id string, err error) { return "", nil }
+func (s *Storage) StoreUser(ctx context.Context, login, hashedPassword string) (err error) {
+	result, err := s.db.ExecContext(ctx, query.SelectUserIDByLogin, login)
+	if err != nil {
+		return err
+	}
+
+	num, err := result.RowsAffected()
+	if num != 0 {
+		return fmt.Errorf("%w: user login", errors.ErrAlreadyExists)
+	}
+
+	newUserID, err := uuid.NewV7()
+	if err != nil {
+		return err
+	}
+
+	result, err = s.db.ExecContext(ctx, query.InsertUser, newUserID, login, hashedPassword)
+	num, err = result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if num != 1 {
+		return fmt.Errorf("%w: expected to affect 1 row, affected %d", errors.ErrNoAffect, num)
+	}
+
+	return nil
+}
 
 var _ storage.User = (*Storage)(nil)
 var _ storage.Balance = (*Storage)(nil)

@@ -9,14 +9,16 @@ package user
 
 import (
 	"context"
+
+	service "github.com/oleshko-g/oggophermart/internal/gen/service"
 )
 
 // Service is the user service interface.
 type Service interface {
 	// Register implements register.
-	Register(context.Context, *LoginPass) (res *UserServiceResult, err error)
+	Register(context.Context, *LoginPass) (res *service.JWTToken, err error)
 	// Login implements login.
-	Login(context.Context, *LoginPass) (res *UserServiceResult, err error)
+	Login(context.Context, *LoginPass) (res *service.JWTToken, err error)
 }
 
 // APIName is the name of the API as defined in the design.
@@ -39,9 +41,4 @@ var MethodNames = [2]string{"register", "login"}
 type LoginPass struct {
 	Login    string
 	Password string
-}
-
-// UserServiceResult is the result type of the user service register method.
-type UserServiceResult struct {
-	StatusCode *string `json:"-"`
 }

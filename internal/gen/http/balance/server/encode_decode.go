@@ -11,6 +11,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strings"
 
 	balance "github.com/oleshko-g/oggophermart/internal/gen/balance"
 	service "github.com/oleshko-g/oggophermart/internal/gen/service"
@@ -29,6 +30,32 @@ func EncodePostOrderResponse(encoder func(context.Context, http.ResponseWriter) 
 		}
 		w.WriteHeader(http.StatusOK)
 		return nil
+	}
+}
+
+// DecodePostOrderRequest returns a decoder for requests sent to the balance
+// post order endpoint.
+func DecodePostOrderRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (*service.JWTToken, error) {
+	return func(r *http.Request) (*service.JWTToken, error) {
+		var (
+			authToken string
+			err       error
+		)
+		authToken = r.Header.Get("Authorization")
+		if authToken == "" {
+			err = goa.MergeErrors(err, goa.MissingFieldError("authToken", "header"))
+		}
+		if err != nil {
+			return nil, err
+		}
+		payload := NewPostOrderJWTToken(authToken)
+		if strings.Contains(payload.AuthToken, " ") {
+			// Remove authorization scheme prefix (e.g. "Bearer")
+			cred := strings.SplitN(payload.AuthToken, " ", 2)[1]
+			payload.AuthToken = cred
+		}
+
+		return payload, nil
 	}
 }
 

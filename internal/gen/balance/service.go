@@ -9,12 +9,21 @@ package balance
 
 import (
 	"context"
+
+	service "github.com/oleshko-g/oggophermart/internal/gen/service"
+	"goa.design/goa/v3/security"
 )
 
 // Service is the balance service interface.
 type Service interface {
 	// PostOrder implements post order.
-	PostOrder(context.Context) (res *PostOrderResult, err error)
+	PostOrder(context.Context, *service.JWTToken) (res *PostOrderResult, err error)
+}
+
+// Auther defines the authorization functions to be implemented by the service.
+type Auther interface {
+	// JWTAuth implements the authorization logic for the JWT security scheme.
+	JWTAuth(ctx context.Context, token string, schema *security.JWTScheme) (context.Context, error)
 }
 
 // APIName is the name of the API as defined in the design.

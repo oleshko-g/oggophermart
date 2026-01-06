@@ -6,3 +6,15 @@
 // $ goa gen github.com/oleshko-g/oggophermart/api/design -o internal/
 
 package server
+
+import (
+	service "github.com/oleshko-g/oggophermart/internal/gen/service"
+)
+
+// NewPostOrderJWTToken builds a balance service post order endpoint payload.
+func NewPostOrderJWTToken(authToken string) *service.JWTToken {
+	v := &service.JWTToken{}
+	v.AuthToken = authToken
+
+	return v
+}

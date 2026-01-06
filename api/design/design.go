@@ -17,16 +17,21 @@ var _ = Service("user", func() {
 
 	Method("register", func() {
 		Payload(LoginPass)
-		Result(userServiceResult)
+		Result(JWTToken)
+		Error("Login is taken already", ErrorType)
 		HTTP(func() {
-			POST("/api/user/register")
+			POST("/user/register")
 			Response(StatusOK, func() {
+				Header("authToken:Authorization")
 				Body(Empty)
 			})
 			Response("Invalid input parameter", StatusBadRequest, func() {
 				Body(Empty)
 			})
 			Response("Internal service error", StatusInternalServerError, func() {
+				Body(Empty)
+			})
+			Response("Login is taken already", StatusConflict, func() {
 				Body(Empty)
 			})
 			Response("Not implemented", StatusNotImplemented, func() {
@@ -37,10 +42,11 @@ var _ = Service("user", func() {
 	})
 	Method("login", func() {
 		Payload(LoginPass)
-		Result(userServiceResult)
+		Result(JWTToken)
 		HTTP(func() {
-			POST("/api/user/login")
+			POST("/user/login")
 			Response(StatusOK, func() {
+				Header("authToken:Authorization")
 				Body(Empty)
 			})
 			Response("Not implemented", StatusNotImplemented, func() {
@@ -61,25 +67,19 @@ var _ = Service("user", func() {
 })
 
 var _ = Service("balance", func() {
+	Security(JWTAuth)
 	Error("Invalid input parameter", ErrorType)
 	Error("User is not authenticated", ErrorType)
 	Error("Internal service error", ErrorType)
 	Error("Not implemented", ErrorType)
 
 	Method("post order", func() {
-		// Payload(String, func(){
-		// 	// Attribute("oderNumber", ,
-		// 		// func(){
-		// 		Pattern(`\d`)
-		// 	// }
-		// 	// Required("orderNumber")
-		// })
 		Result(PostOrderResult)
+		Payload(JWTToken)
 		Error("The order belongs to another user", ErrorType)
 		Error("Invalid order number", ErrorType)
 		HTTP(func() {
-			POST("/api/user/orders")
-			// SkipRequestBodyEncodeDecode()
+			POST("/user/orders")
 			Response(StatusOK, func() {
 				Description("The order has been accepted for processing before.")
 				Body(Empty)
@@ -121,7 +121,7 @@ var _ = Service("accrual", func() {
 			Required("number")
 		})
 		HTTP(func() {
-			GET("GET /api/orders/{number}")
+			GET("GET /orders/{number}")
 			Param("number", String)
 			Response(StatusOK)
 			Response("Internal service error", StatusInternalServerError, func() {
@@ -152,14 +152,6 @@ var LoginPass = Type("LoginPass", func() {
 	Required("login", "password")
 })
 
-var userServiceResult = Type("userServiceResult", func() {
-	Attribute("statusCode", func() {
-		Meta("struct:tag:json", "-")
-		Meta("openapi:generate", "false")
-		Meta("openapi:example", "false")
-	})
-})
-
 var ErrorType = Type("GophermartError", func() {
 	ErrorName("name", func() {
 		Description("identifier to map an error to HTTP status codes")
@@ -170,5 +162,17 @@ var ErrorType = Type("GophermartError", func() {
 	Required("name")
 	Meta("openapi:generate", "false")
 	Meta("openapi:example", "false")
+	Meta("struct:pkg:path", "service")
+})
+
+var JWTAuth = JWTSecurity("jwt", func() {
+	Description("Secures an endpoint by requiring a valid JWT token.")
+})
+
+var JWTToken = Type("JWTToken", func() {
+	Token("authToken", String, func() {
+		Description("A JWT token used to authenticate a request")
+	})
+	Required("authToken")
 	Meta("struct:pkg:path", "service")
 })

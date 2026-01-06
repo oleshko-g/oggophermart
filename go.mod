@@ -3,11 +3,14 @@ module github.com/oleshko-g/oggophermart
 go 1.25.5
 
 require (
+	github.com/golang-jwt/jwt/v5 v5.3.0
+	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.10.9
 	github.com/pressly/goose/v3 v3.26.0
 	goa.design/clue v1.2.3
 	goa.design/goa/v3 v3.23.4
+	golang.org/x/crypto v0.46.0
 	golang.org/x/sync v0.19.0
 )
 
@@ -18,7 +21,6 @@ require (
 	github.com/go-chi/chi/v5 v5.2.3 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/gohugoio/hashstructure v0.6.0 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/manveru/faker v0.0.0-20171103152722-9fbc68a78c4d // indirect
 	github.com/mfridman/interpolate v0.0.2 // indirect

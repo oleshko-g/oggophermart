@@ -23,6 +23,8 @@ import (
 // register endpoint.
 func EncodeRegisterResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
 	return func(ctx context.Context, w http.ResponseWriter, v any) error {
+		res, _ := v.(*service.JWTToken)
+		w.Header().Set("Authorization", res.AuthToken)
 		w.WriteHeader(http.StatusOK)
 		return nil
 	}
@@ -79,6 +81,12 @@ func EncodeRegisterError(encoder func(context.Context, http.ResponseWriter) goah
 			w.Header().Set("goa-error", res.GoaErrorName())
 			w.WriteHeader(http.StatusInternalServerError)
 			return nil
+		case "Login is taken already":
+			var res *service.GophermartError
+			errors.As(v, &res)
+			w.Header().Set("goa-error", res.GoaErrorName())
+			w.WriteHeader(http.StatusConflict)
+			return nil
 		case "Not implemented":
 			var res *service.GophermartError
 			errors.As(v, &res)
@@ -95,6 +103,8 @@ func EncodeRegisterError(encoder func(context.Context, http.ResponseWriter) goah
 // login endpoint.
 func EncodeLoginResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
 	return func(ctx context.Context, w http.ResponseWriter, v any) error {
+		res, _ := v.(*service.JWTToken)
+		w.Header().Set("Authorization", res.AuthToken)
 		w.WriteHeader(http.StatusOK)
 		return nil
 	}

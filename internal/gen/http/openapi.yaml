@@ -12,7 +12,7 @@ produces:
     - application/xml
     - application/gob
 paths:
-    /GET /api/orders/{number}:
+    /GET /orders/{number}:
         get:
             tags:
                 - accrual
@@ -32,7 +32,7 @@ paths:
                     description: Internal Server Error response.
             schemes:
                 - http
-    /api/user/login:
+    /user/login:
         post:
             tags:
                 - user
@@ -50,6 +50,10 @@ paths:
             responses:
                 "200":
                     description: OK response.
+                    headers:
+                        Authorization:
+                            description: A JWT token used to authenticate a request
+                            type: string
                 "400":
                     description: Bad Request response.
                 "401":
@@ -60,12 +64,18 @@ paths:
                     description: Not Implemented response.
             schemes:
                 - http
-    /api/user/orders:
+    /user/orders:
         post:
             tags:
                 - balance
             summary: post order balance
             operationId: balance#post order
+            parameters:
+                - name: Authorization
+                  in: header
+                  description: A JWT token used to authenticate a request
+                  required: true
+                  type: string
             responses:
                 "200":
                     description: The order has been accepted for processing before.
@@ -85,7 +95,9 @@ paths:
                     description: Not Implemented response.
             schemes:
                 - http
-    /api/user/register:
+            security:
+                - jwt_header_Authorization: []
+    /user/register:
         post:
             tags:
                 - user
@@ -103,8 +115,14 @@ paths:
             responses:
                 "200":
                     description: OK response.
+                    headers:
+                        Authorization:
+                            description: A JWT token used to authenticate a request
+                            type: string
                 "400":
                     description: Bad Request response.
+                "409":
+                    description: Conflict response.
                 "500":
                     description: Internal Server Error response.
                 "501":
@@ -122,10 +140,10 @@ definitions:
                 format: int64
             order:
                 type: string
-                example: Ipsa sed.
+                example: Officiis reiciendis ipsa sed voluptatibus.
             status:
                 type: string
-                example: Est qui accusamus.
+                example: Qui accusamus.
         example:
             accrual: 14724329254648412728
             order: Officia quas minus ab.
@@ -136,13 +154,19 @@ definitions:
         properties:
             login:
                 type: string
-                example: Delectus quibusdam cupiditate repellat aut molestiae.
+                example: Neque veritatis et est est facere.
             password:
                 type: string
-                example: Consequuntur vero ab est.
+                example: Dolores dolor.
         example:
-            login: Dolor consequuntur.
-            password: Magnam dolorem ipsum quibusdam officiis.
+            login: Quaerat hic alias aut quibusdam nobis.
+            password: Est voluptatem.
         required:
             - login
             - password
+securityDefinitions:
+    jwt_header_Authorization:
+        type: apiKey
+        description: Secures an endpoint by requiring a valid JWT token.
+        name: Authorization
+        in: header

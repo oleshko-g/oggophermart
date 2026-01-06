@@ -10,6 +10,7 @@ package user
 import (
 	"context"
 
+	service "github.com/oleshko-g/oggophermart/internal/gen/service"
 	goa "goa.design/goa/v3/pkg"
 )
 
@@ -29,18 +30,19 @@ func NewClient(register, login goa.Endpoint) *Client {
 
 // Register calls the "register" endpoint of the "user" service.
 // Register may return the following errors:
+//   - "Login is taken already" (type *service.GophermartError)
 //   - "Invalid input parameter" (type *service.GophermartError)
 //   - "User is not authenticated" (type *service.GophermartError)
 //   - "Internal service error" (type *service.GophermartError)
 //   - "Not implemented" (type *service.GophermartError)
 //   - error: internal error
-func (c *Client) Register(ctx context.Context, p *LoginPass) (res *UserServiceResult, err error) {
+func (c *Client) Register(ctx context.Context, p *LoginPass) (res *service.JWTToken, err error) {
 	var ires any
 	ires, err = c.RegisterEndpoint(ctx, p)
 	if err != nil {
 		return
 	}
-	return ires.(*UserServiceResult), nil
+	return ires.(*service.JWTToken), nil
 }
 
 // Login calls the "login" endpoint of the "user" service.
@@ -50,11 +52,11 @@ func (c *Client) Register(ctx context.Context, p *LoginPass) (res *UserServiceRe
 //   - "Internal service error" (type *service.GophermartError)
 //   - "Not implemented" (type *service.GophermartError)
 //   - error: internal error
-func (c *Client) Login(ctx context.Context, p *LoginPass) (res *UserServiceResult, err error) {
+func (c *Client) Login(ctx context.Context, p *LoginPass) (res *service.JWTToken, err error) {
 	var ires any
 	ires, err = c.LoginEndpoint(ctx, p)
 	if err != nil {
 		return
 	}
-	return ires.(*UserServiceResult), nil
+	return ires.(*service.JWTToken), nil
 }

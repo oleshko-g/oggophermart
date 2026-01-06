@@ -6,6 +6,12 @@ import (
 )
 
 var (
-	// ErrUnsupportedDataSource is the error returned when data source is not supported by the storage implementation
+	// ErrUnsupportedDataSource is returned when data source is not supported by the storage implementation
 	ErrUnsupportedDataSource = errors.New("unsupported data source")
+
+	// ErrNoAffect is returned when storage operation didn't do anything
+	ErrNoAffect = errors.New("no affect")
+
+	// ErrAlreadyExists is returned when a storage record alrady exists
+	ErrAlreadyExists = errors.New("already exists")
 )

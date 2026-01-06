@@ -6,7 +6,7 @@ servers:
     - url: http://localhost:80
       description: Default server for gophermart
 paths:
-    /api/GET /api/orders/{number}:
+    /api/GET /orders/{number}:
         get:
             tags:
                 - accrual
@@ -18,8 +18,8 @@ paths:
                   required: true
                   schema:
                     type: string
-                    example: Nostrum ipsum.
-                  example: Asperiores a.
+                    example: Nulla ducimus distinctio ut molestiae facilis sequi.
+                  example: Corporis sed dolor magni quo.
             responses:
                 "200":
                     description: OK response.
@@ -28,12 +28,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/GetOrderResult'
                             example:
-                                accrual: 16851211498070021830
-                                order: A asperiores.
-                                status: Illo at occaecati illum dolor.
+                                accrual: 10426460008271561488
+                                order: Earum voluptates.
+                                status: Sed odit vel architecto natus voluptatem.
                 "500":
                     description: 'Internal service error: Internal Server Error response.'
-    /api/api/user/login:
+    /api/user/login:
         post:
             tags:
                 - user
@@ -46,11 +46,19 @@ paths:
                         schema:
                             $ref: '#/components/schemas/LoginPass'
                         example:
-                            login: Aut dolores nam quo expedita.
-                            password: Laborum est earum voluptates quo sed.
+                            login: Illum dolor.
+                            password: Velit delectus quibusdam cupiditate repellat.
             responses:
                 "200":
                     description: OK response.
+                    headers:
+                        Authorization:
+                            description: A JWT token used to authenticate a request
+                            schema:
+                                type: string
+                                description: A JWT token used to authenticate a request
+                                example: Aut quia aut.
+                            example: Neque iure quibusdam necessitatibus mollitia quo consequatur.
                 "400":
                     description: 'Invalid input parameter: Bad Request response.'
                 "401":
@@ -59,7 +67,7 @@ paths:
                     description: 'Internal service error: Internal Server Error response.'
                 "501":
                     description: 'Not implemented: Not Implemented response.'
-    /api/api/user/orders:
+    /api/user/orders:
         post:
             tags:
                 - balance
@@ -82,7 +90,9 @@ paths:
                     description: 'Internal service error: Internal Server Error response.'
                 "501":
                     description: 'Not implemented: Not Implemented response.'
-    /api/api/user/register:
+            security:
+                - jwt_header_Authorization: []
+    /api/user/register:
         post:
             tags:
                 - user
@@ -95,13 +105,23 @@ paths:
                         schema:
                             $ref: '#/components/schemas/LoginPass'
                         example:
-                            login: Fugiat dolores doloremque non sunt distinctio.
-                            password: Ex atque qui dolore facilis id.
+                            login: A explicabo cum incidunt.
+                            password: Natus commodi a.
             responses:
                 "200":
                     description: OK response.
+                    headers:
+                        Authorization:
+                            description: A JWT token used to authenticate a request
+                            schema:
+                                type: string
+                                description: A JWT token used to authenticate a request
+                                example: Incidunt et beatae sed voluptas.
+                            example: Aliquam saepe similique ad quidem reprehenderit.
                 "400":
                     description: 'Invalid input parameter: Bad Request response.'
+                "409":
+                    description: 'Login is taken already: Conflict response.'
                 "500":
                     description: 'Internal service error: Internal Server Error response.'
                 "501":
@@ -113,41 +133,54 @@ components:
             properties:
                 accrual:
                     type: integer
-                    example: 17089541985497195692
+                    example: 11658436235080330863
                     format: int64
                 order:
                     type: string
-                    example: Neque veritatis et est est facere.
+                    example: Et et necessitatibus ut et.
                 status:
                     type: string
-                    example: Dolores dolor.
+                    example: Perferendis aliquid.
             example:
-                accrual: 16206595565553352438
-                order: Hic alias aut.
-                status: Nobis laboriosam.
+                accrual: 13986383431657086209
+                order: Recusandae et consequuntur.
+                status: Omnis sint.
         GophermartError:
             type: object
+        JWTToken:
+            type: object
+            properties:
+                authToken:
+                    type: string
+                    description: A JWT token used to authenticate a request
+                    example: Sed aperiam omnis placeat et quia velit.
+            example:
+                authToken: Provident possimus eos sed.
+            required:
+                - authToken
         LoginPass:
             type: object
             properties:
                 login:
                     type: string
-                    example: Iusto et et necessitatibus ut et.
+                    example: Ipsum aut.
                 password:
                     type: string
-                    example: Perferendis aliquid.
+                    example: A quod deserunt.
             example:
-                login: Consequuntur recusandae et consequuntur.
-                password: Omnis sint.
+                login: Omnis qui occaecati atque enim recusandae.
+                password: Voluptas sit.
             required:
                 - login
                 - password
         PostOrderResult:
             type: object
-        UserServiceResult:
-            type: object
-            example: {}
+    securitySchemes:
+        jwt_header_Authorization:
+            type: http
+            description: Secures an endpoint by requiring a valid JWT token.
+            scheme: bearer
 tags:
+    - name: accrual
     - name: user
     - name: balance
-    - name: accrual

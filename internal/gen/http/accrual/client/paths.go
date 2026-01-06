@@ -13,5 +13,5 @@ import (
 
 // GetOrderAccrualPath returns the URL path to the accrual service GetOrder HTTP endpoint.
 func GetOrderAccrualPath(number string) string {
-	return fmt.Sprintf("/api/GET /api/orders/%v", number)
+	return fmt.Sprintf("/api/GET /orders/%v", number)
 }

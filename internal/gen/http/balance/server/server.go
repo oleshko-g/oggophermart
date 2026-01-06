@@ -49,7 +49,7 @@ func New(
 ) *Server {
 	return &Server{
 		Mounts: []*MountPoint{
-			{"PostOrder", "POST", "/api/api/user/orders"},
+			{"PostOrder", "POST", "/api/user/orders"},
 		},
 		PostOrder: NewPostOrderHandler(e.PostOrder, mux, decoder, encoder, errhandler, formatter),
 	}
@@ -85,7 +85,7 @@ func MountPostOrderHandler(mux goahttp.Muxer, h http.Handler) {
 			h.ServeHTTP(w, r)
 		}
 	}
-	mux.Handle("POST", "/api/api/user/orders", f)
+	mux.Handle("POST", "/api/user/orders", f)
 }
 
 // NewPostOrderHandler creates a HTTP handler which loads the HTTP request and
@@ -99,6 +99,7 @@ func NewPostOrderHandler(
 	formatter func(ctx context.Context, err error) goahttp.Statuser,
 ) http.Handler {
 	var (
+		decodeRequest  = DecodePostOrderRequest(mux, decoder)
 		encodeResponse = EncodePostOrderResponse(encoder)
 		encodeError    = EncodePostOrderError(encoder, formatter)
 	)
@@ -106,8 +107,14 @@ func NewPostOrderHandler(
 		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
 		ctx = context.WithValue(ctx, goa.MethodKey, "post order")
 		ctx = context.WithValue(ctx, goa.ServiceKey, "balance")
-		var err error
-		res, err := endpoint(ctx, nil)
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
 		if err != nil {
 			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
 				errhandler(ctx, w, err)

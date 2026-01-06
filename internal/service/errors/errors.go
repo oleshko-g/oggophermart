@@ -10,7 +10,7 @@ type svcError struct {
 	genSvc.GophermartError
 }
 
-var _ = (*goa.GoaErrorNamer)(nil)
+var _ goa.GoaErrorNamer= (*svcError)(nil)
 
 // Error return the Name field of the wrapped [GophermartError], because the standard generated code return an empty string
 func (ogerr svcError) Error() string {
@@ -22,18 +22,18 @@ func (ogerr svcError) String() string {
 	return ogerr.Name
 }
 
-// New return returns a pointer to a new instance of gophermart service error
+// New returns a pointer to a new instance of gophermart service error
 func New(name string) error {
 	return &svcError{genSvc.GophermartError{Name: name}}
 }
 
 var (
-	// InvalidInputParameter is the error value which is used to map to the 400 Bad Request HTTP Status code
-	InvalidInputParameter = New("Invalid input parameter")
-	// UserIsNotAuthenticated is the error value which is used to map to the 401 Unauthorized HTTP Status code
-	UserIsNotAuthenticated = New("User is not authenticated")
-	// InternalServiceError is the error value which is used to map to the 500 Internal Server Error HTTP Status code
-	InternalServiceError = New("Internal service error")
-	// NotImplemented is the error value which is used to map to the 501 Not Implemented HTTP Status code
-	NotImplemented = New("Not Implemented")
+	// ErrInvalidInputParameter is the error value which is used to map to the 400 Bad Request HTTP Status code
+	ErrInvalidInputParameter = New("Invalid input parameter")
+	// ErrUserIsNotAuthenticated is the error value which is used to map to the 401 Unauthorized HTTP Status code
+	ErrUserIsNotAuthenticated = New("User is not authenticated")
+	// ErrInternalServiceError is the error value which is used to map to the 500 Internal Server Error HTTP Status code
+	ErrInternalServiceError = New("Internal service error")
+	// ErrNotImplemented is the error value which is used to map to the 501 Not Implemented HTTP Status code
+	ErrNotImplemented = New("Not Implemented")
 )
