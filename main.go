@@ -33,6 +33,7 @@ type gophermart struct {
 	service.Service
 	storage.Storage
 	dbCfg      db.Config
+	userCfg    user.Config
 	loggingCtx context.Context
 	configured bool
 	readyToRun bool
@@ -110,6 +111,14 @@ func (g *gophermart) cofigure() (err error) {
 
 	if v, ok := os.LookupEnv("ACCRUAL_SYSTEM_ADDRESS"); ok {
 		err = rF.Set(v) // override the default
+		if err != nil {
+			return err
+		}
+	}
+
+	secretKey := g.userCfg.SecretAuthKey()
+	if v, ok := os.LookupEnv("JWT_SECRET"); ok {
+		err = secretKey.Set(v)
 		if err != nil {
 			return err
 		}

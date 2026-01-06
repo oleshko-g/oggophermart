@@ -7,7 +7,6 @@ import (
 	"time"
 
 	jwt "github.com/golang-jwt/jwt/v5"
-	"github.com/google/uuid"
 	genSvc "github.com/oleshko-g/oggophermart/internal/gen/service"
 	genUser "github.com/oleshko-g/oggophermart/internal/gen/user"
 	svcErrors "github.com/oleshko-g/oggophermart/internal/service/errors"
@@ -20,6 +19,7 @@ import (
 // The example methods slog the requests and return zero values.
 type userSvc struct {
 	storage.User
+	Config
 }
 
 var _ genUser.Service = (*userSvc)(nil)
@@ -47,7 +47,14 @@ func (s *userSvc) Register(ctx context.Context, p *genUser.LoginPass) (authToken
 		return &genSvc.JWTToken{}, svcErrors.ErrInternalServiceError
 	}
 
-	return &genSvc.JWTToken{}, svcErrors.ErrNotImplemented
+	jwt, err := signUserJWT(p.Login, s.secretKey.String(), 1 * time.Hour)
+	if err != nil {
+		return &genSvc.JWTToken{}, svcErrors.ErrInternalServiceError
+	}
+
+	return &genSvc.JWTToken{
+		AuthToken: jwt,
+	}, nil
 }
 
 // Login implements login.
@@ -70,13 +77,13 @@ func checkPasswordHash(hashedPassword, password string) error {
 }
 
 // TODO: add makeJWTToken to user service
-func signUserJWT(userID uuid.UUID, jwtSecret string, expiresIn time.Duration) (string, error) {
+func signUserJWT(login string, jwtSecret string, expiresIn time.Duration) (string, error) {
 	t := jwt.NewWithClaims(jwt.SigningMethodHS256,
 		jwt.RegisteredClaims{
 			Issuer:    "oggophermart",
 			IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
 			ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(expiresIn)),
-			Subject:   userID.String(),
+			Subject:   login,
 		},
 	)
 	return t.SignedString([]byte(jwtSecret))
