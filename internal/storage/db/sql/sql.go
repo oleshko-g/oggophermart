@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	_ "github.com/lib/pq" // revive:disable-line:blank-imports registers the postgres driver
@@ -72,11 +73,23 @@ func (s *Storage) StoreUser(ctx context.Context, login, hashedPassword string) (
 		return err
 	}
 
-	result, err = s.db.ExecContext(ctx, query.InsertUser, newUserID, login, hashedPassword)
+	result, err = s.db.ExecContext(ctx,
+		query.InsertUser,
+		newUserID,
+		login,
+		hashedPassword,
+		time.Now().UTC(), // creatd_at
+		time.Now().UTC(), // updated_at
+	)
+	if err != nil {
+		return err
+	}
+
 	num, err = result.RowsAffected()
 	if err != nil {
 		return err
 	}
+
 	if num != 1 {
 		return fmt.Errorf("%w: expected to affect 1 row, affected %d", errors.ErrNoAffect, num)
 	}

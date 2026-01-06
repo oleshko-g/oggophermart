@@ -19,15 +19,16 @@ import (
 // The example methods slog the requests and return zero values.
 type userSvc struct {
 	storage.User
-	Config
+	*Config
 }
 
 var _ genUser.Service = (*userSvc)(nil)
 
 // New returns the user service implementation.
-func New(storage storage.User) *userSvc {
+func New(cfg *Config, storage storage.User) *userSvc {
 	return &userSvc{
 		User: storage,
+		Config: cfg,
 	}
 }
 

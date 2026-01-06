@@ -5,7 +5,7 @@ import _ "embed"
 
 // InsertString is the SQL statement to insert a string into a db
 //
-//go:embed InsertUser.sql
+//go:embed insertUser.sql
 var InsertUser string
 
 // SelectUserIDByLogin

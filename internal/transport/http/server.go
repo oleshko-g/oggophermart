@@ -13,6 +13,7 @@ import (
 	genUserHTTPSvr "github.com/oleshko-g/oggophermart/internal/gen/http/user/server"
 	user "github.com/oleshko-g/oggophermart/internal/gen/user"
 	"github.com/oleshko-g/oggophermart/internal/service"
+	"goa.design/clue/log"
 	goahttp "goa.design/goa/v3/http"
 )
 
@@ -27,33 +28,36 @@ type server struct {
 	Server
 }
 
-func newMux(balanceEndpoints *balance.Endpoints, userEndpoints *user.Endpoints) goahttp.Muxer {
+func newMux(loggingCtx context.Context, balanceEndpoints *balance.Endpoints, userEndpoints *user.Endpoints) goahttp.Muxer {
 	var (
 		reqDecoder func(r *http.Request) goahttp.Decoder
 		resEncoder func(ctx context.Context, res http.ResponseWriter) goahttp.Encoder
-		mux        goahttp.Muxer
+		handlers        goahttp.Muxer
 		errHandler func(context.Context, http.ResponseWriter, error)
 	)
 	{
 		reqDecoder = goahttp.RequestDecoder
 		resEncoder = goahttp.ResponseEncoder
 		errHandler = errorHandler
-		mux = goahttp.NewMuxer()
+		handlers = goahttp.NewMuxer()
 	}
 
+	loggingMiddleware := log.HTTP(loggingCtx)
+	loggingMiddleware(handlers)
+
 	// create HTTP servers
-	balanceServer := genBalanceHTTPSrv.New(balanceEndpoints, mux, reqDecoder, resEncoder, errHandler, nil)
-	userServer := genUserHTTPSvr.New(userEndpoints, mux, reqDecoder, resEncoder, errHandler, nil)
+	balanceServer := genBalanceHTTPSrv.New(balanceEndpoints, handlers, reqDecoder, resEncoder, errHandler, nil)
+	userServer := genUserHTTPSvr.New(userEndpoints, handlers, reqDecoder, resEncoder, errHandler, nil)
 
 	// mount HTTP endpoint onto mux
-	balanceServer.Mount(mux)
-	userServer.Mount(mux)
+	balanceServer.Mount(handlers)
+	userServer.Mount(handlers)
 
-	return mux
+	return handlers
 
 }
 
-func NewServer(cfg Config, svc service.Service) Server {
+func NewServer(loggingCtx context.Context, cfg Config, svc service.Service) Server {
 	var (
 		balanceEndpoints *balance.Endpoints
 		userEndpoints    *user.Endpoints
@@ -62,7 +66,7 @@ func NewServer(cfg Config, svc service.Service) Server {
 	{
 		balanceEndpoints = balance.NewEndpoints(svc.Balance)
 		userEndpoints = user.NewEndpoints(svc.User)
-		mux = newMux(balanceEndpoints, userEndpoints)
+		mux = newMux(loggingCtx, balanceEndpoints, userEndpoints)
 	}
 
 	return &server{

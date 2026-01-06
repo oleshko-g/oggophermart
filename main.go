@@ -176,11 +176,11 @@ func (g *gophermart) setup() (err error) {
 	// 2. Intanciates services with the set storage
 	g.Service = service.Service{
 		Balance: balance.New(g.Storage.Balance),
-		User:    user.New(g.Storage.User),
+		User:    user.New(&g.userCfg, g.Storage.User),
 	}
 
 	// 3. Instanciates the HTTP server
-	g.transport.http.Server = http.NewServer(g.transport.http.Config, g.Service)
+	g.transport.http.Server = http.NewServer(g.loggingCtx, g.transport.http.Config, g.Service)
 
 	// 4. Instanicates the Accrual system HTTP client
 	// err = genAccrual.NewGetOrderEndpoint(a)
