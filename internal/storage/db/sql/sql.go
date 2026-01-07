@@ -62,19 +62,20 @@ func (s *Storage) StoreUser(ctx context.Context, login, hashedPassword string) (
 	if err != nil {
 		return err
 	}
-
 	num, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
 	if num != 0 {
 		return fmt.Errorf("%w: user login", errors.ErrAlreadyExists)
 	}
+
 
 	newUserID, err := uuid.NewV7()
 	if err != nil {
 		return err
 	}
-
-	result, err = s.db.ExecContext(ctx,
-		query.InsertUser,
+	result, err = s.db.ExecContext(ctx, query.InsertUser,
 		newUserID,
 		login,
 		hashedPassword,
@@ -84,12 +85,10 @@ func (s *Storage) StoreUser(ctx context.Context, login, hashedPassword string) (
 	if err != nil {
 		return err
 	}
-
 	num, err = result.RowsAffected()
 	if err != nil {
 		return err
 	}
-
 	if num != 1 {
 		return fmt.Errorf("%w: expected to affect 1 row, affected %d", errors.ErrNoAffect, num)
 	}
