@@ -10,24 +10,24 @@ package balance
 import (
 	"context"
 
-	service "github.com/oleshko-g/oggophermart/internal/gen/service"
 	goa "goa.design/goa/v3/pkg"
 )
 
 // Client is the "balance" service client.
 type Client struct {
-	PostOrderEndpoint goa.Endpoint
+	UploadUserOrderEndpoint goa.Endpoint
 }
 
 // NewClient initializes a "balance" service client given the endpoints.
-func NewClient(postOrder goa.Endpoint) *Client {
+func NewClient(uploadUserOrder goa.Endpoint) *Client {
 	return &Client{
-		PostOrderEndpoint: postOrder,
+		UploadUserOrderEndpoint: uploadUserOrder,
 	}
 }
 
-// PostOrder calls the "post order" endpoint of the "balance" service.
-// PostOrder may return the following errors:
+// UploadUserOrder calls the "UploadUserOrder" endpoint of the "balance"
+// service.
+// UploadUserOrder may return the following errors:
 //   - "The order belongs to another user" (type *service.GophermartError)
 //   - "Invalid order number" (type *service.GophermartError)
 //   - "Invalid input parameter" (type *service.GophermartError)
@@ -35,11 +35,11 @@ func NewClient(postOrder goa.Endpoint) *Client {
 //   - "Internal service error" (type *service.GophermartError)
 //   - "Not implemented" (type *service.GophermartError)
 //   - error: internal error
-func (c *Client) PostOrder(ctx context.Context, p *service.JWTToken) (res *PostOrderResult, err error) {
+func (c *Client) UploadUserOrder(ctx context.Context, p *UploadUserOrderPayload) (res *UploadUserOrderResult, err error) {
 	var ires any
-	ires, err = c.PostOrderEndpoint(ctx, p)
+	ires, err = c.UploadUserOrderEndpoint(ctx, p)
 	if err != nil {
 		return
 	}
-	return ires.(*PostOrderResult), nil
+	return ires.(*UploadUserOrderResult), nil
 }

@@ -16,7 +16,7 @@ var _ = Service("user", func() {
 	Error("Not implemented", ErrorType)
 
 	Method("register", func() {
-		Payload(LoginPass)
+		Payload(LoginPassword)
 		Result(JWTToken)
 		Error("Login is taken already", ErrorType)
 		HTTP(func() {
@@ -41,7 +41,7 @@ var _ = Service("user", func() {
 
 	})
 	Method("login", func() {
-		Payload(LoginPass)
+		Payload(LoginPassword)
 		Result(JWTToken)
 		HTTP(func() {
 			POST("/user/login")
@@ -63,7 +63,6 @@ var _ = Service("user", func() {
 			})
 		})
 	})
-
 })
 
 var _ = Service("balance", func() {
@@ -73,13 +72,29 @@ var _ = Service("balance", func() {
 	Error("Internal service error", ErrorType)
 	Error("Not implemented", ErrorType)
 
-	Method("post order", func() {
-		Result(PostOrderResult)
-		Payload(JWTToken)
+	Method("UploadUserOrder", func() {
+		Description("Upload user order")
+		Result(func() {
+			Attribute("accepted", func() {
+				Meta("struct:tag:json", "-")
+				Meta("openapi:generate", "false")
+				Meta("openapi:example", "false")
+			})
+			Meta("openapi:example", "false")
+		})
+		Payload(func() {
+			Token("JWTToken", String, "A JWT token used to authenticate a request")
+			Attribute("OrderNumber", String, func() {
+				Description("Unique user order number")
+				Pattern("[1-9][0-9]*")
+			})
+			Required("JWTToken", "OrderNumber")
+		})
 		Error("The order belongs to another user", ErrorType)
 		Error("Invalid order number", ErrorType)
 		HTTP(func() {
 			POST("/user/orders")
+			Body("OrderNumber")
 			Response(StatusOK, func() {
 				Description("The order has been accepted for processing before.")
 				Body(Empty)
@@ -132,7 +147,7 @@ var _ = Service("accrual", func() {
 	})
 })
 
-var PostOrderResult = Type("PostOrderResult", func() {
+var UploadUserOrderResult = Type("PostOrderResult", func() {
 	Attribute("accepted", func() {
 		Meta("struct:tag:json", "-")
 		Meta("openapi:generate", "false")
@@ -146,7 +161,7 @@ var GetOrderResult = Type("GetOrderResult", func() {
 	Attribute("accrual", UInt)
 })
 
-var LoginPass = Type("LoginPass", func() {
+var LoginPassword = Type("LoginPassword", func() {
 	Attribute("login", String)
 	Attribute("password", String)
 	Required("login", "password")
@@ -175,4 +190,12 @@ var JWTToken = Type("JWTToken", func() {
 	})
 	Required("authToken")
 	Meta("struct:pkg:path", "service")
+})
+
+var UploadedOrder = Type("UploadedOrder", func() {
+	Attribute("number", String)
+	Attribute("status", String)
+	Attribute("accrual", String)
+	Attribute("uploaded_at", String)
+	Required("number", "status", "uploaded_at")
 })

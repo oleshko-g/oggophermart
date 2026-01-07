@@ -5,7 +5,6 @@ import (
 	"context"
 
 	genBalance "github.com/oleshko-g/oggophermart/internal/gen/balance"
-	genSvc "github.com/oleshko-g/oggophermart/internal/gen/service"
 	"github.com/oleshko-g/oggophermart/internal/service/errors"
 	"github.com/oleshko-g/oggophermart/internal/storage"
 	"goa.design/goa/v3/security"
@@ -18,11 +17,6 @@ type balanceSvc struct{}
 var _ genBalance.Service = (*balanceSvc)(nil)
 var _ genBalance.Auther = (*balanceSvc)(nil)
 
-// NewBalance returns the balance service implementation.
-func NewBalance() genBalance.Service {
-	return &balanceSvc{}
-}
-
 // New returns the balance service implementation.
 func New(storage storage.Balance) *balanceSvc {
 	// TODO: connect to the storage
@@ -30,7 +24,7 @@ func New(storage storage.Balance) *balanceSvc {
 }
 
 // PostOrder implements post order.
-func (s *balanceSvc) PostOrder(ctx context.Context, payload *genSvc.JWTToken) (res *genBalance.PostOrderResult, err error) {
+func (s *balanceSvc) UploadUserOrder(ctx context.Context, payload *genBalance.UploadUserOrderPayload) (res *genBalance.UploadUserOrderResult, err error) {
 	return nil, errors.ErrNotImplemented
 }
 

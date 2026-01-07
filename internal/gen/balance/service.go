@@ -10,14 +10,13 @@ package balance
 import (
 	"context"
 
-	service "github.com/oleshko-g/oggophermart/internal/gen/service"
 	"goa.design/goa/v3/security"
 )
 
 // Service is the balance service interface.
 type Service interface {
-	// PostOrder implements post order.
-	PostOrder(context.Context, *service.JWTToken) (res *PostOrderResult, err error)
+	// Upload user order
+	UploadUserOrder(context.Context, *UploadUserOrderPayload) (res *UploadUserOrderResult, err error)
 }
 
 // Auther defines the authorization functions to be implemented by the service.
@@ -40,9 +39,19 @@ const ServiceName = "balance"
 // MethodNames lists the service method names as defined in the design. These
 // are the same values that are set in the endpoint request contexts under the
 // MethodKey key.
-var MethodNames = [1]string{"post order"}
+var MethodNames = [1]string{"UploadUserOrder"}
 
-// PostOrderResult is the result type of the balance service post order method.
-type PostOrderResult struct {
+// UploadUserOrderPayload is the payload type of the balance service
+// UploadUserOrder method.
+type UploadUserOrderPayload struct {
+	// A JWT token used to authenticate a request
+	JWTToken string
+	// Unique user order number
+	OrderNumber string
+}
+
+// UploadUserOrderResult is the result type of the balance service
+// UploadUserOrder method.
+type UploadUserOrderResult struct {
 	Accepted *string `json:"-"`
 }

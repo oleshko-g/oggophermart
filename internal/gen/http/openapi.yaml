@@ -43,7 +43,7 @@ paths:
                   in: body
                   required: true
                   schema:
-                    $ref: '#/definitions/LoginPass'
+                    $ref: '#/definitions/LoginPassword'
                     required:
                         - login
                         - password
@@ -68,14 +68,22 @@ paths:
         post:
             tags:
                 - balance
-            summary: post order balance
-            operationId: balance#post order
+            summary: UploadUserOrder balance
+            description: Upload user order
+            operationId: balance#UploadUserOrder
             parameters:
                 - name: Authorization
                   in: header
                   description: A JWT token used to authenticate a request
                   required: true
                   type: string
+                - name: string
+                  in: body
+                  description: Unique user order number
+                  required: true
+                  schema:
+                    type: string
+                    pattern: '[1-9][0-9]*'
             responses:
                 "200":
                     description: The order has been accepted for processing before.
@@ -108,7 +116,7 @@ paths:
                   in: body
                   required: true
                   schema:
-                    $ref: '#/definitions/LoginPass'
+                    $ref: '#/definitions/LoginPassword'
                     required:
                         - login
                         - password
@@ -136,31 +144,31 @@ definitions:
         properties:
             accrual:
                 type: integer
-                example: 7535674848249382747
+                example: 13950020156666227145
                 format: int64
             order:
                 type: string
-                example: Officiis reiciendis ipsa sed voluptatibus.
+                example: Officia animi et neque veritatis et est.
             status:
                 type: string
-                example: Qui accusamus.
+                example: Facere delectus dolores dolor aut quaerat.
         example:
-            accrual: 14724329254648412728
-            order: Officia quas minus ab.
-            status: Quo cum rerum nesciunt quia officia.
-    LoginPass:
-        title: LoginPass
+            accrual: 3690596239021120171
+            order: Aut quibusdam.
+            status: Laboriosam est voluptatem iusto et et necessitatibus.
+    LoginPassword:
+        title: LoginPassword
         type: object
         properties:
             login:
                 type: string
-                example: Neque veritatis et est est facere.
+                example: Dolores perferendis aliquid.
             password:
                 type: string
-                example: Dolores dolor.
+                example: Consequuntur recusandae et consequuntur.
         example:
-            login: Quaerat hic alias aut quibusdam nobis.
-            password: Est voluptatem.
+            login: Omnis sint.
+            password: Nostrum ipsum.
         required:
             - login
             - password

@@ -7,7 +7,7 @@
 
 package server
 
-// PostOrderBalancePath returns the URL path to the balance service post order HTTP endpoint.
-func PostOrderBalancePath() string {
+// UploadUserOrderBalancePath returns the URL path to the balance service UploadUserOrder HTTP endpoint.
+func UploadUserOrderBalancePath() string {
 	return "/api/user/orders"
 }

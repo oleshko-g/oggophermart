@@ -37,7 +37,7 @@ func (e *Endpoints) Use(m func(goa.Endpoint) goa.Endpoint) {
 // "register" of service "user".
 func NewRegisterEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req any) (any, error) {
-		p := req.(*LoginPass)
+		p := req.(*LoginPassword)
 		return s.Register(ctx, p)
 	}
 }
@@ -46,7 +46,7 @@ func NewRegisterEndpoint(s Service) goa.Endpoint {
 // of service "user".
 func NewLoginEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req any) (any, error) {
-		p := req.(*LoginPass)
+		p := req.(*LoginPassword)
 		return s.Login(ctx, p)
 	}
 }

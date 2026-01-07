@@ -26,9 +26,9 @@ type LoginRequestBody struct {
 	Password *string `form:"password,omitempty" json:"password,omitempty" xml:"password,omitempty"`
 }
 
-// NewRegisterLoginPass builds a user service register endpoint payload.
-func NewRegisterLoginPass(body *RegisterRequestBody) *user.LoginPass {
-	v := &user.LoginPass{
+// NewRegisterLoginPassword builds a user service register endpoint payload.
+func NewRegisterLoginPassword(body *RegisterRequestBody) *user.LoginPassword {
+	v := &user.LoginPassword{
 		Login:    *body.Login,
 		Password: *body.Password,
 	}
@@ -36,9 +36,9 @@ func NewRegisterLoginPass(body *RegisterRequestBody) *user.LoginPass {
 	return v
 }
 
-// NewLoginPass builds a user service login endpoint payload.
-func NewLoginPass(body *LoginRequestBody) *user.LoginPass {
-	v := &user.LoginPass{
+// NewLoginPassword builds a user service login endpoint payload.
+func NewLoginPassword(body *LoginRequestBody) *user.LoginPassword {
+	v := &user.LoginPassword{
 		Login:    *body.Login,
 		Password: *body.Password,
 	}

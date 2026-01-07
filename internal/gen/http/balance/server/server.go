@@ -18,8 +18,8 @@ import (
 
 // Server lists the balance service endpoint HTTP handlers.
 type Server struct {
-	Mounts    []*MountPoint
-	PostOrder http.Handler
+	Mounts          []*MountPoint
+	UploadUserOrder http.Handler
 }
 
 // MountPoint holds information about the mounted endpoints.
@@ -49,9 +49,9 @@ func New(
 ) *Server {
 	return &Server{
 		Mounts: []*MountPoint{
-			{"PostOrder", "POST", "/api/user/orders"},
+			{"UploadUserOrder", "POST", "/api/user/orders"},
 		},
-		PostOrder: NewPostOrderHandler(e.PostOrder, mux, decoder, encoder, errhandler, formatter),
+		UploadUserOrder: NewUploadUserOrderHandler(e.UploadUserOrder, mux, decoder, encoder, errhandler, formatter),
 	}
 }
 
@@ -60,7 +60,7 @@ func (s *Server) Service() string { return "balance" }
 
 // Use wraps the server handlers with the given middleware.
 func (s *Server) Use(m func(http.Handler) http.Handler) {
-	s.PostOrder = m(s.PostOrder)
+	s.UploadUserOrder = m(s.UploadUserOrder)
 }
 
 // MethodNames returns the methods served.
@@ -68,7 +68,7 @@ func (s *Server) MethodNames() []string { return balance.MethodNames[:] }
 
 // Mount configures the mux to serve the balance endpoints.
 func Mount(mux goahttp.Muxer, h *Server) {
-	MountPostOrderHandler(mux, h.PostOrder)
+	MountUploadUserOrderHandler(mux, h.UploadUserOrder)
 }
 
 // Mount configures the mux to serve the balance endpoints.
@@ -76,9 +76,9 @@ func (s *Server) Mount(mux goahttp.Muxer) {
 	Mount(mux, s)
 }
 
-// MountPostOrderHandler configures the mux to serve the "balance" service
-// "post order" endpoint.
-func MountPostOrderHandler(mux goahttp.Muxer, h http.Handler) {
+// MountUploadUserOrderHandler configures the mux to serve the "balance"
+// service "UploadUserOrder" endpoint.
+func MountUploadUserOrderHandler(mux goahttp.Muxer, h http.Handler) {
 	f, ok := h.(http.HandlerFunc)
 	if !ok {
 		f = func(w http.ResponseWriter, r *http.Request) {
@@ -88,9 +88,9 @@ func MountPostOrderHandler(mux goahttp.Muxer, h http.Handler) {
 	mux.Handle("POST", "/api/user/orders", f)
 }
 
-// NewPostOrderHandler creates a HTTP handler which loads the HTTP request and
-// calls the "balance" service "post order" endpoint.
-func NewPostOrderHandler(
+// NewUploadUserOrderHandler creates a HTTP handler which loads the HTTP
+// request and calls the "balance" service "UploadUserOrder" endpoint.
+func NewUploadUserOrderHandler(
 	endpoint goa.Endpoint,
 	mux goahttp.Muxer,
 	decoder func(*http.Request) goahttp.Decoder,
@@ -99,13 +99,13 @@ func NewPostOrderHandler(
 	formatter func(ctx context.Context, err error) goahttp.Statuser,
 ) http.Handler {
 	var (
-		decodeRequest  = DecodePostOrderRequest(mux, decoder)
-		encodeResponse = EncodePostOrderResponse(encoder)
-		encodeError    = EncodePostOrderError(encoder, formatter)
+		decodeRequest  = DecodeUploadUserOrderRequest(mux, decoder)
+		encodeResponse = EncodeUploadUserOrderResponse(encoder)
+		encodeError    = EncodeUploadUserOrderError(encoder, formatter)
 	)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
-		ctx = context.WithValue(ctx, goa.MethodKey, "post order")
+		ctx = context.WithValue(ctx, goa.MethodKey, "UploadUserOrder")
 		ctx = context.WithValue(ctx, goa.ServiceKey, "balance")
 		payload, err := decodeRequest(r)
 		if err != nil {

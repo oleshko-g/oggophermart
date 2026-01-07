@@ -36,7 +36,7 @@ func NewClient(register, login goa.Endpoint) *Client {
 //   - "Internal service error" (type *service.GophermartError)
 //   - "Not implemented" (type *service.GophermartError)
 //   - error: internal error
-func (c *Client) Register(ctx context.Context, p *LoginPass) (res *service.JWTToken, err error) {
+func (c *Client) Register(ctx context.Context, p *LoginPassword) (res *service.JWTToken, err error) {
 	var ires any
 	ires, err = c.RegisterEndpoint(ctx, p)
 	if err != nil {
@@ -52,7 +52,7 @@ func (c *Client) Register(ctx context.Context, p *LoginPass) (res *service.JWTTo
 //   - "Internal service error" (type *service.GophermartError)
 //   - "Not implemented" (type *service.GophermartError)
 //   - error: internal error
-func (c *Client) Login(ctx context.Context, p *LoginPass) (res *service.JWTToken, err error) {
+func (c *Client) Login(ctx context.Context, p *LoginPassword) (res *service.JWTToken, err error) {
 	var ires any
 	ires, err = c.LoginEndpoint(ctx, p)
 	if err != nil {

@@ -32,8 +32,8 @@ func EncodeRegisterResponse(encoder func(context.Context, http.ResponseWriter) g
 
 // DecodeRegisterRequest returns a decoder for requests sent to the user
 // register endpoint.
-func DecodeRegisterRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (*user.LoginPass, error) {
-	return func(r *http.Request) (*user.LoginPass, error) {
+func DecodeRegisterRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (*user.LoginPassword, error) {
+	return func(r *http.Request) (*user.LoginPassword, error) {
 		var (
 			body RegisterRequestBody
 			err  error
@@ -53,7 +53,7 @@ func DecodeRegisterRequest(mux goahttp.Muxer, decoder func(*http.Request) goahtt
 		if err != nil {
 			return nil, err
 		}
-		payload := NewRegisterLoginPass(&body)
+		payload := NewRegisterLoginPassword(&body)
 
 		return payload, nil
 	}
@@ -112,8 +112,8 @@ func EncodeLoginResponse(encoder func(context.Context, http.ResponseWriter) goah
 
 // DecodeLoginRequest returns a decoder for requests sent to the user login
 // endpoint.
-func DecodeLoginRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (*user.LoginPass, error) {
-	return func(r *http.Request) (*user.LoginPass, error) {
+func DecodeLoginRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (*user.LoginPassword, error) {
+	return func(r *http.Request) (*user.LoginPassword, error) {
 		var (
 			body LoginRequestBody
 			err  error
@@ -133,7 +133,7 @@ func DecodeLoginRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.D
 		if err != nil {
 			return nil, err
 		}
-		payload := NewLoginPass(&body)
+		payload := NewLoginPassword(&body)
 
 		return payload, nil
 	}

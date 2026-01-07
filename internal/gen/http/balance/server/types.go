@@ -8,13 +8,17 @@
 package server
 
 import (
-	service "github.com/oleshko-g/oggophermart/internal/gen/service"
+	balance "github.com/oleshko-g/oggophermart/internal/gen/balance"
 )
 
-// NewPostOrderJWTToken builds a balance service post order endpoint payload.
-func NewPostOrderJWTToken(authToken string) *service.JWTToken {
-	v := &service.JWTToken{}
-	v.AuthToken = authToken
+// NewUploadUserOrderPayload builds a balance service UploadUserOrder endpoint
+// payload.
+func NewUploadUserOrderPayload(body string, jWTToken string) *balance.UploadUserOrderPayload {
+	v := body
+	res := &balance.UploadUserOrderPayload{
+		OrderNumber: v,
+	}
+	res.JWTToken = jWTToken
 
-	return v
+	return res
 }

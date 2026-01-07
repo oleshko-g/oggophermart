@@ -16,9 +16,9 @@ import (
 // Service is the user service interface.
 type Service interface {
 	// Register implements register.
-	Register(context.Context, *LoginPass) (res *service.JWTToken, err error)
+	Register(context.Context, *LoginPassword) (res *service.JWTToken, err error)
 	// Login implements login.
-	Login(context.Context, *LoginPass) (res *service.JWTToken, err error)
+	Login(context.Context, *LoginPassword) (res *service.JWTToken, err error)
 }
 
 // APIName is the name of the API as defined in the design.
@@ -37,8 +37,8 @@ const ServiceName = "user"
 // MethodKey key.
 var MethodNames = [2]string{"register", "login"}
 
-// LoginPass is the payload type of the user service register method.
-type LoginPass struct {
+// LoginPassword is the payload type of the user service register method.
+type LoginPassword struct {
 	Login    string
 	Password string
 }

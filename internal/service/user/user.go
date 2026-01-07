@@ -33,7 +33,7 @@ func New(cfg *Config, storage storage.User) *userSvc {
 }
 
 // Register implements register.
-func (s *userSvc) Register(ctx context.Context, p *genUser.LoginPass) (authToken *genSvc.JWTToken, err error) {
+func (s *userSvc) Register(ctx context.Context, p *genUser.LoginPassword) (authToken *genSvc.JWTToken, err error) {
 
 	hashedPassword, err := hashPassword(p.Password)
 	if err != nil {
@@ -59,9 +59,10 @@ func (s *userSvc) Register(ctx context.Context, p *genUser.LoginPass) (authToken
 }
 
 // Login implements login.
-func (s *userSvc) Login(ctx context.Context, p *genUser.LoginPass) (authToken *genSvc.JWTToken, err error) {
+func (s *userSvc) Login(ctx context.Context, p *genUser.LoginPassword) (authToken *genSvc.JWTToken, err error) {
 	return &genSvc.JWTToken{}, svcErrors.ErrNotImplemented
 }
+
 
 func hashPassword(password string) (string, error) {
 

@@ -10,6 +10,7 @@ package server
 import (
 	"context"
 	"errors"
+	"io"
 	"net/http"
 	"strings"
 
@@ -19,11 +20,11 @@ import (
 	goa "goa.design/goa/v3/pkg"
 )
 
-// EncodePostOrderResponse returns an encoder for responses returned by the
-// balance post order endpoint.
-func EncodePostOrderResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
+// EncodeUploadUserOrderResponse returns an encoder for responses returned by
+// the balance UploadUserOrder endpoint.
+func EncodeUploadUserOrderResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
 	return func(ctx context.Context, w http.ResponseWriter, v any) error {
-		res, _ := v.(*balance.PostOrderResult)
+		res, _ := v.(*balance.UploadUserOrderResult)
 		if res.Accepted != nil && *res.Accepted == "yes" {
 			w.WriteHeader(http.StatusAccepted)
 			return nil
@@ -33,35 +34,54 @@ func EncodePostOrderResponse(encoder func(context.Context, http.ResponseWriter) 
 	}
 }
 
-// DecodePostOrderRequest returns a decoder for requests sent to the balance
-// post order endpoint.
-func DecodePostOrderRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (*service.JWTToken, error) {
-	return func(r *http.Request) (*service.JWTToken, error) {
+// DecodeUploadUserOrderRequest returns a decoder for requests sent to the
+// balance UploadUserOrder endpoint.
+func DecodeUploadUserOrderRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (*balance.UploadUserOrderPayload, error) {
+	return func(r *http.Request) (*balance.UploadUserOrderPayload, error) {
 		var (
-			authToken string
-			err       error
+			body string
+			err  error
 		)
-		authToken = r.Header.Get("Authorization")
-		if authToken == "" {
-			err = goa.MergeErrors(err, goa.MissingFieldError("authToken", "header"))
+		err = decoder(r).Decode(&body)
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				return nil, goa.MissingPayloadError()
+			}
+			var gerr *goa.ServiceError
+			if errors.As(err, &gerr) {
+				return nil, gerr
+			}
+			return nil, goa.DecodePayloadError(err.Error())
+		}
+		err = goa.MergeErrors(err, goa.ValidatePattern("body", body, "[1-9][0-9]*"))
+		if err != nil {
+			return nil, err
+		}
+
+		var (
+			jWTToken string
+		)
+		jWTToken = r.Header.Get("Authorization")
+		if jWTToken == "" {
+			err = goa.MergeErrors(err, goa.MissingFieldError("JWTToken", "header"))
 		}
 		if err != nil {
 			return nil, err
 		}
-		payload := NewPostOrderJWTToken(authToken)
-		if strings.Contains(payload.AuthToken, " ") {
+		payload := NewUploadUserOrderPayload(body, jWTToken)
+		if strings.Contains(payload.JWTToken, " ") {
 			// Remove authorization scheme prefix (e.g. "Bearer")
-			cred := strings.SplitN(payload.AuthToken, " ", 2)[1]
-			payload.AuthToken = cred
+			cred := strings.SplitN(payload.JWTToken, " ", 2)[1]
+			payload.JWTToken = cred
 		}
 
 		return payload, nil
 	}
 }
 
-// EncodePostOrderError returns an encoder for errors returned by the post
-// order balance endpoint.
-func EncodePostOrderError(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder, formatter func(ctx context.Context, err error) goahttp.Statuser) func(context.Context, http.ResponseWriter, error) error {
+// EncodeUploadUserOrderError returns an encoder for errors returned by the
+// UploadUserOrder balance endpoint.
+func EncodeUploadUserOrderError(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder, formatter func(ctx context.Context, err error) goahttp.Statuser) func(context.Context, http.ResponseWriter, error) error {
 	encodeError := goahttp.ErrorEncoder(encoder, formatter)
 	return func(ctx context.Context, w http.ResponseWriter, v error) error {
 		var en goa.GoaErrorNamer
