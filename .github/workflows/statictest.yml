@@ -31,4 +31,5 @@ jobs:
 
       - name: Run statictest
         run: |
-          go vet -vettool=$(which statictest) ./...
+          pkgs=$(go list -buildvcs=false ./... | grep -v '/internal/gen/')
+          go vet -vettool=$(which statictest) $pkgs
