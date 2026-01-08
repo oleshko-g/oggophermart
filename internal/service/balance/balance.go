@@ -12,15 +12,18 @@ import (
 
 // balance service example implementation.
 // The example methods log the requests and return zero values.
-type balanceSvc struct{}
+type balanceSvc struct{
+		storage.Balance
+}
 
 var _ genBalance.Service = (*balanceSvc)(nil)
 var _ genBalance.Auther = (*balanceSvc)(nil)
 
 // New returns the balance service implementation.
 func New(storage storage.Balance) *balanceSvc {
-	// TODO: connect to the storage
-	return &balanceSvc{}
+	return &balanceSvc{
+		Balance: storage,
+	}
 }
 
 // PostOrder implements post order.

@@ -167,11 +167,14 @@ func (g *gophermart) setup() (err error) {
 	if err != nil {
 		return err
 	}
+	log.Infof(g.loggingCtx, "Connected the storage")
 
 	// 1. Sets the storage for each service
 	// wrap concrete type [*sql.Storage] struct with interfaces
 	g.Storage.User = dbStorage
+	log.Infof(g.loggingCtx, "set User service storage")
 	g.Storage.Balance = dbStorage
+	log.Infof(g.loggingCtx, "set Balance service storage")
 
 	// 2. Intanciates services with the set storage
 	g.Service = service.Service{
