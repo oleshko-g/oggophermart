@@ -192,10 +192,3 @@ var JWTToken = Type("JWTToken", func() {
 	Meta("struct:pkg:path", "service")
 })
 
-var UploadedOrder = Type("UploadedOrder", func() {
-	Attribute("number", String)
-	Attribute("status", String)
-	Attribute("accrual", String)
-	Attribute("uploaded_at", String)
-	Required("number", "status", "uploaded_at")
-})
