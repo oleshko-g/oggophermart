@@ -191,4 +191,3 @@ var JWTToken = Type("JWTToken", func() {
 	Required("authToken")
 	Meta("struct:pkg:path", "service")
 })
-

@@ -7,13 +7,14 @@ import (
 	genBalance "github.com/oleshko-g/oggophermart/internal/gen/balance"
 	"github.com/oleshko-g/oggophermart/internal/service/errors"
 	"github.com/oleshko-g/oggophermart/internal/storage"
-	"goa.design/goa/v3/security"
+	"github.com/oleshko-g/oggophermart/internal/service"
 )
 
 // balance service example implementation.
 // The example methods log the requests and return zero values.
-type balanceSvc struct{
-		storage.Balance
+type balanceSvc struct {
+	storage.Balance
+	service.Auther
 }
 
 var _ genBalance.Service = (*balanceSvc)(nil)
@@ -28,12 +29,10 @@ func New(storage storage.Balance) *balanceSvc {
 
 // PostOrder implements post order.
 func (s *balanceSvc) UploadUserOrder(ctx context.Context, payload *genBalance.UploadUserOrderPayload) (res *genBalance.UploadUserOrderResult, err error) {
+	// TODO: authenticate the user
+	// TODO: check if order exists
+	// TODO: If the user is the owner return "Accepted" == "yes"
+	// TODO: If the user is not the owner return ErrOwnerMismatch
+	// TODO: Store the order and return "Accepted" == nil
 	return nil, errors.ErrNotImplemented
-}
-
-// JWTAuth is the implementation of [Auther]
-// TODO: write JWTAuth
-func (s *balanceSvc) JWTAuth(ctx context.Context, JWTToken string, schema *security.JWTScheme) (context.Context, error) {
-	// TODO: call user service to authenticate token
-	return nil, nil
 }

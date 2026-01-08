@@ -4,14 +4,17 @@ package user
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	jwt "github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	genSvc "github.com/oleshko-g/oggophermart/internal/gen/service"
 	genUser "github.com/oleshko-g/oggophermart/internal/gen/user"
 	svcErrors "github.com/oleshko-g/oggophermart/internal/service/errors"
 	"github.com/oleshko-g/oggophermart/internal/storage"
 	storageErrors "github.com/oleshko-g/oggophermart/internal/storage/errors"
+	"goa.design/goa/v3/security"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -27,8 +30,8 @@ var _ genUser.Service = (*userSvc)(nil)
 // New returns the user service implementation.
 func New(cfg *Config, storage storage.User) *userSvc {
 	return &userSvc{
-		User: storage,
 		Config: cfg,
+		User:   storage,
 	}
 }
 
@@ -48,7 +51,7 @@ func (s *userSvc) Register(ctx context.Context, p *genUser.LoginPassword) (authT
 		return &genSvc.JWTToken{}, svcErrors.ErrInternalServiceError
 	}
 
-	jwt, err := signUserJWT(p.Login, s.secretKey.String(), 1 * time.Hour)
+	jwt, err := signUserJWT(p.Login, s.secretKey.String(), 1*time.Hour)
 	if err != nil {
 		return &genSvc.JWTToken{}, svcErrors.ErrInternalServiceError
 	}
@@ -62,7 +65,6 @@ func (s *userSvc) Register(ctx context.Context, p *genUser.LoginPassword) (authT
 func (s *userSvc) Login(ctx context.Context, p *genUser.LoginPassword) (authToken *genSvc.JWTToken, err error) {
 	return &genSvc.JWTToken{}, svcErrors.ErrNotImplemented
 }
-
 
 func hashPassword(password string) (string, error) {
 
@@ -78,7 +80,6 @@ func checkPasswordHash(hashedPassword, password string) error {
 	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 }
 
-// TODO: add makeJWTToken to user service
 func signUserJWT(login string, jwtSecret string, expiresIn time.Duration) (string, error) {
 	t := jwt.NewWithClaims(jwt.SigningMethodHS256,
 		jwt.RegisteredClaims{
@@ -90,3 +91,50 @@ func signUserJWT(login string, jwtSecret string, expiresIn time.Duration) (strin
 	)
 	return t.SignedString([]byte(jwtSecret))
 }
+
+func (s *userSvc) JWTAuth(ctx context.Context, token string, _ *security.JWTScheme) (context.Context, error) {
+	userID, err := s.authenticate(token)
+	if err != nil {
+		return nil, err
+	}
+	return s.ContextWithUserID(ctx, userID), nil
+}
+
+func (s *userSvc) ContextWithUserID(ctx context.Context, userID uuid.UUID) context.Context {
+	return context.WithValue(ctx, contextKeyUserID, userID)
+}
+func (s *userSvc) UserIDFromContext(ctx context.Context) (userID uuid.UUID, err error) {
+	v := ctx.Value(contextKeyUserID)
+	if v, ok := v.(uuid.UUID); ok {
+		return v, nil
+	}
+	return uuid.UUID{}, svcErrors.ErrUserIsNotAuthenticated
+}
+
+func (s *userSvc) authenticate(token string) (userID uuid.UUID, err error) {
+	claims := jwt.RegisteredClaims{}
+	userJWT, err := jwt.ParseWithClaims(token, &claims,
+		func(token *jwt.Token) (interface{}, error) {
+			if token.Method.Alg() != jwt.SigningMethodHS256.Alg() {
+				return nil, fmt.Errorf("error signing method must be HS256. Token's method is %s", token.Method.Alg())
+			}
+			return []byte(s.secretKey.String()), nil
+		},
+	)
+	if err != nil {
+		return uuid.UUID{}, err
+	}
+	id, err := userJWT.Claims.GetSubject()
+	if err != nil {
+		return uuid.UUID{}, err
+	}
+
+	userID, err = uuid.Parse(id)
+	return userID, err
+}
+
+type contextKey int
+
+const (
+	contextKeyUserID contextKey = iota
+)
