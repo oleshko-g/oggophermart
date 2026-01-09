@@ -177,9 +177,10 @@ func (g *gophermart) setup() (err error) {
 	log.Infof(g.loggingCtx, "set Balance service storage")
 
 	// 2. Intanciates services with the set storage
+	userSvc := user.New(&g.userCfg, g.Storage.User)
 	g.Service = service.Service{
-		Balance: balance.New(g.Storage.Balance),
-		User:    user.New(&g.userCfg, g.Storage.User),
+		User:    userSvc,
+		Balance: balance.New(g.Storage.Balance, userSvc),
 	}
 
 	// 3. Instanciates the HTTP server

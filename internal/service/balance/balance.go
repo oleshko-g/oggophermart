@@ -21,9 +21,10 @@ var _ genBalance.Service = (*balanceSvc)(nil)
 var _ genBalance.Auther = (*balanceSvc)(nil)
 
 // New returns the balance service implementation.
-func New(storage storage.Balance) *balanceSvc {
+func New(storage storage.Balance, auther service.Auther) *balanceSvc {
 	return &balanceSvc{
 		Balance: storage,
+		Auther: auther,
 	}
 }
 
