@@ -3,12 +3,14 @@ package balance
 
 import (
 	"context"
+	"errors"
+	"time"
 
 	genBalance "github.com/oleshko-g/oggophermart/internal/gen/balance"
 	"github.com/oleshko-g/oggophermart/internal/service"
-	"github.com/oleshko-g/oggophermart/internal/service/errors"
+	svcErrors "github.com/oleshko-g/oggophermart/internal/service/errors"
 	"github.com/oleshko-g/oggophermart/internal/storage"
-	"github.com/oleshko-g/oggophermart/internal/service"
+	storageErrors "github.com/oleshko-g/oggophermart/internal/storage/errors"
 )
 
 // balance service example implementation.
@@ -40,11 +42,25 @@ func (s *balanceSvc) UploadUserOrder(ctx context.Context, payload *genBalance.Up
 	if err != nil {
 		return nil, err
 	}
-	_ = userID
 
-	// TODO: RetireveOrder
-	//   TODO: If the user is the owner return "Accepted" == "no"
-	//   TODO: If the user is not the owner return ErrOwnerMismatch
-	// TODO: Store the order and return "Accepted" == nil
-	return nil, errors.ErrNotImplemented
+	res = new(genBalance.UploadUserOrderResult)
+	err = s.StoreOrder(ctx, userID, payload.OrderNumber, OrderStatusNew, time.Now().UTC())
+	if err != nil {
+		if errors.Is(err, storageErrors.ErrAlreadyExists) {
+			*res.Accepted = "yes"
+			return res, nil
+		}
+		return nil, svcErrors.ErrInvalidInputParameter
+	}
+
+	res.Accepted = nil
+	return res, nil
 }
+
+// Orders statuses
+const (
+	OrderStatusNew        = "NEW"
+	OrderStatusProcessing = "PROCESSING"
+	OrderStatusProcessed  = "PROCESSED"
+	OrderStatusInvalid    = "INVALID"
+)
