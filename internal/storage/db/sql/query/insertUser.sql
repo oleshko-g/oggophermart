@@ -1,3 +1,4 @@
+-- name: InsertUser :execresult
 INSERT INTO
   users (
     id,

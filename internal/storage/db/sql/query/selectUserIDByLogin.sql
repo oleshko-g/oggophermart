@@ -1,3 +1,4 @@
+-- name: SelectUserIDByLogin :execresult
 SELECT
   id
 FROM

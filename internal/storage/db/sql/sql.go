@@ -9,9 +9,9 @@ import (
 
 	"github.com/google/uuid"
 	_ "github.com/lib/pq" // revive:disable-line:blank-imports registers the postgres driver
+	genDBSQL "github.com/oleshko-g/oggophermart/internal/gen/storage/db/sql"
 	"github.com/oleshko-g/oggophermart/internal/storage"
 	"github.com/oleshko-g/oggophermart/internal/storage/db"
-	"github.com/oleshko-g/oggophermart/internal/storage/db/sql/query"
 	"github.com/oleshko-g/oggophermart/internal/storage/db/sql/schema"
 	"github.com/oleshko-g/oggophermart/internal/storage/errors"
 )
@@ -32,14 +32,18 @@ func New(c *db.Config) (s *Storage, err error) {
 		return
 	}
 
+	queries := genDBSQL.New(database)
+
 	return &Storage{
-		db: database,
+		db:      database,
+		queries: queries,
 	}, nil
 }
 
 // Storage represents an internal implementation of [sql.DB]
 type Storage struct {
-	db *sql.DB
+	db      *sql.DB
+	queries *genDBSQL.Queries
 }
 
 var _ storage.User = (*Storage)(nil)
@@ -65,7 +69,7 @@ func (s *Storage) RetrieveUser(ctx context.Context, login string) (userID uuid.U
 // StoreUser stores the user by their name and their hashed password.
 //   - name MUST be unique
 func (s *Storage) StoreUser(ctx context.Context, login, hashedPassword string) (err error) {
-	result, err := s.db.ExecContext(ctx, query.SelectUserIDByLogin, login)
+	result, err := s.queries.SelectUserIDByLogin(ctx, login)
 	if err != nil {
 		return err
 	}
@@ -81,12 +85,13 @@ func (s *Storage) StoreUser(ctx context.Context, login, hashedPassword string) (
 	if err != nil {
 		return err
 	}
-	result, err = s.db.ExecContext(ctx, query.InsertUser,
-		newUserID,
-		login,
-		hashedPassword,
-		time.Now().UTC(), // creatd_at
-		time.Now().UTC(), // updated_at
+	result, err = s.queries.InsertUser(ctx,
+		genDBSQL.InsertUserParams{
+			ID:             newUserID,
+			Login:          login,
+			HashedPassword: hashedPassword,
+			CreatedAt:      time.Now().UTC(),
+			UpdatedAt:      time.Now().UTC()},
 	)
 	if err != nil {
 		return err
@@ -104,27 +109,34 @@ func (s *Storage) StoreUser(ctx context.Context, login, hashedPassword string) (
 
 func (s *Storage) StoreOrder(ctx context.Context, userID uuid.UUID, orderNumber, orderStatus string, createdAt time.Time) error {
 
-	tx, err := s.db.Begin()
-	if err != nil {
-		return err
-	}
-
 	newOrderID, err := uuid.NewV7()
 	if err != nil {
 		return err
 	}
-
-	row := tx.QueryRowContext(ctx, query.InsertOrder,
-		newOrderID,
-		userID,
-		orderNumber,
-		orderStatus,
-		createdAt)
-	if err := row.Err(); err != nil {
-		tx.Rollback()
+	res, err := s.queries.InsertOrder(ctx,
+		genDBSQL.InsertOrderParams{
+			ID:        newOrderID,
+			UserID:    userID,
+			Number:    orderNumber,
+			Status:    orderStatus,
+			CreatedAt: createdAt,
+		})
+	if err != nil {
 		return err
 	}
 
-	tx.Commit()
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return errors.ErrAlreadyExists
+	}
+
+	return nil
+}
+func (s *Storage) RetreiveOrder(ctx context.Context, userID uuid.UUID, orderNumber string) error {
+	// s.queries.Se
 	return nil
 }
