@@ -5,6 +5,7 @@ import (
 	"context"
 
 	genBalance "github.com/oleshko-g/oggophermart/internal/gen/balance"
+	"github.com/oleshko-g/oggophermart/internal/service"
 	"github.com/oleshko-g/oggophermart/internal/service/errors"
 	"github.com/oleshko-g/oggophermart/internal/storage"
 	"github.com/oleshko-g/oggophermart/internal/service"
@@ -24,16 +25,26 @@ var _ genBalance.Auther = (*balanceSvc)(nil)
 func New(storage storage.Balance, auther service.Auther) *balanceSvc {
 	return &balanceSvc{
 		Balance: storage,
-		Auther: auther,
+		Auther:  auther,
 	}
 }
 
 // PostOrder implements post order.
 func (s *balanceSvc) UploadUserOrder(ctx context.Context, payload *genBalance.UploadUserOrderPayload) (res *genBalance.UploadUserOrderResult, err error) {
-	// TODO: authenticate the user
-	// TODO: check if order exists
-	// TODO: If the user is the owner return "Accepted" == "yes"
-	// TODO: If the user is not the owner return ErrOwnerMismatch
+	ctx, err = s.Auther.JWTAuth(ctx, payload.JWTToken, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	userID, err := s.Auther.UserIDFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	_ = userID
+
+	// TODO: RetireveOrder
+	//   TODO: If the user is the owner return "Accepted" == "no"
+	//   TODO: If the user is not the owner return ErrOwnerMismatch
 	// TODO: Store the order and return "Accepted" == nil
 	return nil, errors.ErrNotImplemented
 }
