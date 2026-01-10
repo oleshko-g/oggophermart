@@ -6,6 +6,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/EClaesson/go-luhn"
 	genBalance "github.com/oleshko-g/oggophermart/internal/gen/balance"
 	"github.com/oleshko-g/oggophermart/internal/service"
 	svcErrors "github.com/oleshko-g/oggophermart/internal/service/errors"
@@ -43,6 +44,11 @@ func (s *balanceSvc) UploadUserOrder(ctx context.Context, payload *genBalance.Up
 		return nil, err
 	}
 
+	err = checkOrderNumber(payload.OrderNumber)
+	if err != nil {
+		return nil, err
+	}
+
 	dbUserID, err := s.RetreiveOrderUser(ctx, payload.OrderNumber)
 	if err != nil {
 		if !errors.Is(err, storageErrors.ErrNotFound) {
@@ -75,3 +81,17 @@ const (
 	OrderStatusProcessed  = "PROCESSED"
 	OrderStatusInvalid    = "INVALID"
 )
+
+func checkOrderNumber(orderNumber string) error {
+
+	valid, err := luhn.IsValid(orderNumber)
+	if err != nil {
+		return err
+	}
+
+	if !valid {
+		return ErrInvalidOrderNumber
+	}
+
+	return nil
+}
