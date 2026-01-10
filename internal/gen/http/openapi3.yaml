@@ -46,8 +46,8 @@ paths:
                         schema:
                             $ref: '#/components/schemas/LoginPassword'
                         example:
-                            login: Qui accusamus.
-                            password: Ut officia quas minus ab ex quo.
+                            login: Ut officia quas minus ab ex quo.
+                            password: Rerum nesciunt.
             responses:
                 "200":
                     description: OK response.
@@ -57,8 +57,8 @@ paths:
                             schema:
                                 type: string
                                 description: A JWT token used to authenticate a request
-                                example: Qui accusamus aperiam rem amet enim magnam.
-                            example: Consequatur porro assumenda.
+                                example: Odit accusamus laborum ipsam consequuntur sed repellat.
+                            example: Consequuntur earum ut.
                 "400":
                     description: 'Invalid input parameter: Bad Request response.'
                 "401":
@@ -91,15 +91,54 @@ paths:
                 "400":
                     description: 'Invalid input parameter: Bad Request response.'
                 "401":
-                    description: 'User is not authenticated: Unauthorized response.'
+                    description: 'missing_field: Missing or empty Authorization header'
+                    headers:
+                        goa-attribute-fault:
+                            description: Is the error a server-side fault?
+                            schema:
+                                type: boolean
+                                description: Is the error a server-side fault?
+                                example: true
+                            example: false
+                        goa-attribute-id:
+                            description: ID is a unique identifier for this particular occurrence of the problem.
+                            schema:
+                                type: string
+                                description: ID is a unique identifier for this particular occurrence of the problem.
+                                example: 123abc
+                            example: 123abc
+                        goa-attribute-message:
+                            description: Message is a human-readable explanation specific to this occurrence of the problem.
+                            schema:
+                                type: string
+                                description: Message is a human-readable explanation specific to this occurrence of the problem.
+                                example: parameter 'p' must be an integer
+                            example: parameter 'p' must be an integer
+                        goa-attribute-name:
+                            description: Name is the name of this class of errors.
+                            schema:
+                                type: string
+                                description: Name is the name of this class of errors.
+                                example: bad_request
+                            example: bad_request
+                        goa-attribute-temporary:
+                            description: Is the error temporary?
+                            schema:
+                                type: boolean
+                                description: Is the error temporary?
+                                example: true
+                            example: true
+                        goa-attribute-timeout:
+                            description: Is the error a timeout?
+                            schema:
+                                type: boolean
+                                description: Is the error a timeout?
+                                example: false
+                            example: true
                 "409":
                     description: 'The order belongs to another user: Conflict response.'
                 "422":
                     description: 'Invalid order number: Unprocessable Entity response.'
-                "500":
-                    description: 'Internal service error: Internal Server Error response.'
-                "501":
-                    description: 'Not implemented: Not Implemented response.'
             security:
                 - jwt_header_Authorization: []
     /api/user/register:
@@ -115,8 +154,8 @@ paths:
                         schema:
                             $ref: '#/components/schemas/LoginPassword'
                         example:
-                            login: Molestiae sint consequuntur vero ab.
-                            password: Id dolor consequuntur aliquid magnam dolorem ipsum.
+                            login: Id dolor consequuntur aliquid magnam dolorem ipsum.
+                            password: Officiis reiciendis ipsa sed voluptatibus.
             responses:
                 "200":
                     description: OK response.
@@ -126,8 +165,8 @@ paths:
                             schema:
                                 type: string
                                 description: A JWT token used to authenticate a request
-                                example: Alias tempora neque iure quibusdam necessitatibus mollitia.
-                            example: Ea id voluptate et et maxime.
+                                example: Molestias hic dolorem ea id voluptate.
+                            example: Amet enim.
                 "400":
                     description: 'Invalid input parameter: Bad Request response.'
                 "409":

@@ -30,6 +30,7 @@ func NewClient(uploadUserOrder goa.Endpoint) *Client {
 // UploadUserOrder may return the following errors:
 //   - "The order belongs to another user" (type *service.GophermartError)
 //   - "Invalid order number" (type *service.GophermartError)
+//   - "missing_field" (type *goa.ServiceError)
 //   - "Invalid input parameter" (type *service.GophermartError)
 //   - "User is not authenticated" (type *service.GophermartError)
 //   - "Internal service error" (type *service.GophermartError)

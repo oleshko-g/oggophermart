@@ -12,6 +12,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 
 	balance "github.com/oleshko-g/oggophermart/internal/gen/balance"
@@ -89,6 +90,36 @@ func EncodeUploadUserOrderError(encoder func(context.Context, http.ResponseWrite
 			return encodeError(ctx, w, v)
 		}
 		switch en.GoaErrorName() {
+		case "missing_field":
+			var res *goa.ServiceError
+			errors.As(v, &res)
+			w.Header().Set("Goa-Attribute-Name", res.Name)
+			w.Header().Set("Goa-Attribute-Id", res.ID)
+			w.Header().Set("Goa-Attribute-Message", res.Message)
+			{
+				val := res.Temporary
+				temporarys := strconv.FormatBool(val)
+				w.Header().Set("Goa-Attribute-Temporary", temporarys)
+			}
+			{
+				val := res.Timeout
+				timeouts := strconv.FormatBool(val)
+				w.Header().Set("Goa-Attribute-Timeout", timeouts)
+			}
+			{
+				val := res.Fault
+				faults := strconv.FormatBool(val)
+				w.Header().Set("Goa-Attribute-Fault", faults)
+			}
+			w.Header().Set("goa-error", res.GoaErrorName())
+			w.WriteHeader(http.StatusUnauthorized)
+			return nil
+		case "User is not authenticated":
+			var res *service.GophermartError
+			errors.As(v, &res)
+			w.Header().Set("goa-error", res.GoaErrorName())
+			w.WriteHeader(http.StatusUnauthorized)
+			return nil
 		case "Invalid input parameter":
 			var res *service.GophermartError
 			errors.As(v, &res)
@@ -106,24 +137,6 @@ func EncodeUploadUserOrderError(encoder func(context.Context, http.ResponseWrite
 			errors.As(v, &res)
 			w.Header().Set("goa-error", res.GoaErrorName())
 			w.WriteHeader(http.StatusUnprocessableEntity)
-			return nil
-		case "User is not authenticated":
-			var res *service.GophermartError
-			errors.As(v, &res)
-			w.Header().Set("goa-error", res.GoaErrorName())
-			w.WriteHeader(http.StatusUnauthorized)
-			return nil
-		case "Internal service error":
-			var res *service.GophermartError
-			errors.As(v, &res)
-			w.Header().Set("goa-error", res.GoaErrorName())
-			w.WriteHeader(http.StatusInternalServerError)
-			return nil
-		case "Not implemented":
-			var res *service.GophermartError
-			errors.As(v, &res)
-			w.Header().Set("goa-error", res.GoaErrorName())
-			w.WriteHeader(http.StatusNotImplemented)
 			return nil
 		default:
 			return encodeError(ctx, w, v)

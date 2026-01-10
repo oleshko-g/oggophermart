@@ -10,6 +10,7 @@ package balance
 import (
 	"context"
 
+	goa "goa.design/goa/v3/pkg"
 	"goa.design/goa/v3/security"
 )
 
@@ -54,4 +55,9 @@ type UploadUserOrderPayload struct {
 // UploadUserOrder method.
 type UploadUserOrderResult struct {
 	Accepted *string `json:"-"`
+}
+
+// MakeMissingField builds a goa.ServiceError from an error.
+func MakeMissingField(err error) *goa.ServiceError {
+	return goa.NewServiceError(err, "missing_field", false, false, false)
 }

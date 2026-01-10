@@ -87,6 +87,7 @@ var _ = Service("balance", func() {
 		})
 		Error("The order belongs to another user", ErrorType)
 		Error("Invalid order number", ErrorType)
+		Error("missing_field")
 		HTTP(func() {
 			POST("/user/orders")
 			Body("OrderNumber")
@@ -111,10 +112,8 @@ var _ = Service("balance", func() {
 			Response("User is not authenticated", StatusUnauthorized, func() {
 				Body(Empty)
 			})
-			Response("Internal service error", StatusInternalServerError, func() {
-				Body(Empty)
-			})
-			Response("Not implemented", StatusNotImplemented, func() {
+			Response("missing_field", StatusUnauthorized, func() {
+				Description("Missing or empty Authorization header")
 				Body(Empty)
 			})
 		})
