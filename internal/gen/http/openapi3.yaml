@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
     title: Goa API
-    version: 0.0.1
+    version: "0.2"
 servers:
     - url: http://localhost:80
       description: Default server for gophermart
@@ -65,8 +65,6 @@ paths:
                     description: 'User is not authenticated: Unauthorized response.'
                 "500":
                     description: 'Internal service error: Internal Server Error response.'
-                "501":
-                    description: 'Not implemented: Not Implemented response.'
     /api/user/orders:
         post:
             tags:
@@ -136,8 +134,6 @@ paths:
                     description: 'Login is taken already: Conflict response.'
                 "500":
                     description: 'Internal service error: Internal Server Error response.'
-                "501":
-                    description: 'Not implemented: Not Implemented response.'
 components:
     schemas:
         GetOrderResult:

@@ -203,44 +203,17 @@ func (g *gophermart) setup() (err error) {
 
 // run launches gophermart
 func (g *gophermart) run() (err error) {
-	errGroup, runCtx := errgroup.WithContext(g.loggingCtx)
+	if !g.readyToRun {
+		return errSetupGophermartNotReadyToRun
+	}
+	errGroup, _ := errgroup.WithContext(g.loggingCtx)
 
 	errGroup.Go(func() error {
 		log.Infof(g.loggingCtx, "in HTTP server")
-		if !g.readyToRun {
-			return errSetupGophermartNotReadyToRun
-		}
 		return g.transport.http.Server.ListenAndServe()
 	})
 
-	errGroup.Go(func() error {
-		log.Infof(g.loggingCtx, "in accrual worker")
-		if !g.readyToRun {
-			return errSetupGophermartNotReadyToRun
-		}
-		// TODO: wrap into worker func
-		getOrder := g.transport.http.client.accrual.GetOrder()
-		for {
-			// TODO: storage.GetOrderToProcess
-			ordersToProcess := []string{"1"}
-
-			errGroup.Go(func() error {
-				for _, order := range ordersToProcess {
-					req, err := genAccrualHTTPClient.BuildGetOrderPayload(order)
-					if err != nil {
-						return err
-					}
-
-					// TODO: store res
-					// TODO: handle err
-					res, err := getOrder(runCtx, req)
-					_, _ = res, err
-				}
-				return nil
-			})
-
-		}
-	})
+	// TODO: make accrual worker
 
 	// TODO: add os.Signal handling
 	// TODO: add graceful shutdown

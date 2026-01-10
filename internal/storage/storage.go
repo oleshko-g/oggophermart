@@ -16,6 +16,7 @@ type Storage struct {
 // User declares the storage interface for the user service
 type User interface {
 	RetrieveUser(ctx context.Context, login string) (userID uuid.UUID, err error)
+	RetreiveUserPassword(ctx context.Context, login string) (hashedPassword string, err error)
 	StoreUser(ctx context.Context, login, hashedPassword string) error
 }
 

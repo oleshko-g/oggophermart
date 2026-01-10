@@ -56,7 +56,7 @@ func (s *Storage) RetrieveUserBalance(ctx context.Context, userID uuid.UUID) (cu
 }
 
 // SaveUserTransaction saved the user's transaction by the following logic:
-//   - a) If the amount is postive then it's an accrual
+//   - a) If the amount is positive then it's an accrual
 //   - b) if the amount is negative then it's a withdrawl
 func (s *Storage) SaveUserTransaction(ctx context.Context, userID uuid.UUID, amount int) error {
 	return nil
@@ -146,4 +146,15 @@ func (s *Storage) StoreOrder(ctx context.Context, userID uuid.UUID, orderNumber,
 func (s *Storage) RetreiveOrder(ctx context.Context, userID uuid.UUID, orderNumber string) error {
 	// s.queries.Se
 	return nil
+}
+
+func (s *Storage) RetreiveUserPassword(ctx context.Context, login string) (hashedPassword string, err error) {
+	hashedPassword, err = s.queries.SelectUserHashedPasswordByLogin(ctx, login)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", storageErrors.ErrNotFound
+		}
+		return "", err
+	}
+	return hashedPassword, nil
 }

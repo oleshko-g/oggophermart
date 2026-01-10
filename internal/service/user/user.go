@@ -51,6 +51,31 @@ func (s *userSvc) Register(ctx context.Context, p *genUser.LoginPassword) (authT
 		return &genSvc.JWTToken{}, svcErrors.ErrInternalServiceError
 	}
 
+	return s.authorize(p)
+}
+
+// Login implements login.
+func (s *userSvc) Login(ctx context.Context, p *genUser.LoginPassword) (authToken *genSvc.JWTToken, err error) {
+	dbHashedPassword, err := s.RetreiveUserPassword(ctx, p.Login)
+	if err != nil {
+		if errors.Is(err, storageErrors.ErrNotFound) {
+			return nil, svcErrors.ErrUserIsNotAuthenticated
+		}
+		return nil, svcErrors.ErrInternalServiceError
+	}
+
+	err = checkPasswordHash(dbHashedPassword, p.Password)
+	if err != nil {
+		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+			return nil, svcErrors.ErrUserIsNotAuthenticated
+		}
+		return nil, svcErrors.ErrInternalServiceError
+	}
+
+	return s.authorize(p)
+}
+
+func (s *userSvc) authorize(p *genUser.LoginPassword) (*genSvc.JWTToken, error) {
 	jwt, err := signUserJWT(p.Login, s.secretKey.String(), 1*time.Hour)
 	if err != nil {
 		return &genSvc.JWTToken{}, svcErrors.ErrInternalServiceError
@@ -59,11 +84,6 @@ func (s *userSvc) Register(ctx context.Context, p *genUser.LoginPassword) (authT
 	return &genSvc.JWTToken{
 		AuthToken: jwt,
 	}, nil
-}
-
-// Login implements login.
-func (s *userSvc) Login(ctx context.Context, p *genUser.LoginPassword) (authToken *genSvc.JWTToken, err error) {
-	return &genSvc.JWTToken{}, svcErrors.ErrNotImplemented
 }
 
 func hashPassword(password string) (string, error) {

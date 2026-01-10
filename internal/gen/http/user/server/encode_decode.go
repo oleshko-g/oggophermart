@@ -87,12 +87,6 @@ func EncodeRegisterError(encoder func(context.Context, http.ResponseWriter) goah
 			w.Header().Set("goa-error", res.GoaErrorName())
 			w.WriteHeader(http.StatusConflict)
 			return nil
-		case "Not implemented":
-			var res *service.GophermartError
-			errors.As(v, &res)
-			w.Header().Set("goa-error", res.GoaErrorName())
-			w.WriteHeader(http.StatusNotImplemented)
-			return nil
 		default:
 			return encodeError(ctx, w, v)
 		}
@@ -149,12 +143,6 @@ func EncodeLoginError(encoder func(context.Context, http.ResponseWriter) goahttp
 			return encodeError(ctx, w, v)
 		}
 		switch en.GoaErrorName() {
-		case "Not implemented":
-			var res *service.GophermartError
-			errors.As(v, &res)
-			w.Header().Set("goa-error", res.GoaErrorName())
-			w.WriteHeader(http.StatusNotImplemented)
-			return nil
 		case "Invalid input parameter":
 			var res *service.GophermartError
 			errors.As(v, &res)
