@@ -7,10 +7,11 @@ package sql
 
 import (
 	"context"
-	"database/sql"
+
+	"github.com/google/uuid"
 )
 
-const selectUserIDByLogin = `-- name: SelectUserIDByLogin :execresult
+const selectUserIDByLogin = `-- name: SelectUserIDByLogin :one
 SELECT
   id
 FROM
@@ -19,6 +20,9 @@ WHERE
   login = $1
 `
 
-func (q *Queries) SelectUserIDByLogin(ctx context.Context, login string) (sql.Result, error) {
-	return q.db.ExecContext(ctx, selectUserIDByLogin, login)
+func (q *Queries) SelectUserIDByLogin(ctx context.Context, login string) (uuid.UUID, error) {
+	row := q.db.QueryRowContext(ctx, selectUserIDByLogin, login)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
 }

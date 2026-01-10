@@ -4,6 +4,7 @@ package sql
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -13,7 +14,7 @@ import (
 	"github.com/oleshko-g/oggophermart/internal/storage"
 	"github.com/oleshko-g/oggophermart/internal/storage/db"
 	"github.com/oleshko-g/oggophermart/internal/storage/db/sql/schema"
-	"github.com/oleshko-g/oggophermart/internal/storage/errors"
+	storageErrors "github.com/oleshko-g/oggophermart/internal/storage/errors"
 )
 
 // New configures and open a new connection to the db and returns a [Storage] or an error
@@ -61,31 +62,37 @@ func (s *Storage) SaveUserTransaction(ctx context.Context, userID uuid.UUID, amo
 	return nil
 }
 
-// RetrieveUser retrieves a single user by their id
+// RetrieveUser retrieves a user id by their login
 func (s *Storage) RetrieveUser(ctx context.Context, login string) (userID uuid.UUID, err error) {
-	return uuid.UUID{}, nil
+	userID, err = s.queries.SelectUserIDByLogin(ctx, login)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return uuid.UUID{}, storageErrors.ErrNotFound
+		}
+		return uuid.UUID{}, err
+	}
+	return userID, nil
 }
 
 // StoreUser stores the user by their name and their hashed password.
 //   - name MUST be unique
 func (s *Storage) StoreUser(ctx context.Context, login, hashedPassword string) (err error) {
-	result, err := s.queries.SelectUserIDByLogin(ctx, login)
+	_, err = s.RetrieveUser(ctx, login)
 	if err != nil {
+		if errors.Is(err, storageErrors.ErrNotFound) {
+			goto newUser
+		}
 		return err
-	}
-	num, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if num != 0 {
-		return fmt.Errorf("%w: user login", errors.ErrAlreadyExists)
+	} else {
+		return storageErrors.ErrAlreadyExists
 	}
 
+newUser:
 	newUserID, err := uuid.NewV7()
 	if err != nil {
 		return err
 	}
-	result, err = s.queries.InsertUser(ctx,
+	result, err := s.queries.InsertUser(ctx,
 		genDBSQL.InsertUserParams{
 			ID:             newUserID,
 			Login:          login,
@@ -96,12 +103,12 @@ func (s *Storage) StoreUser(ctx context.Context, login, hashedPassword string) (
 	if err != nil {
 		return err
 	}
-	num, err = result.RowsAffected()
+	num, err := result.RowsAffected()
 	if err != nil {
 		return err
 	}
 	if num != 1 {
-		return fmt.Errorf("%w: expected to affect 1 row, affected %d", errors.ErrNoAffect, num)
+		return fmt.Errorf("%w: expected to affect 1 row, affected %d", storageErrors.ErrNoAffect, num)
 	}
 
 	return nil
@@ -131,7 +138,7 @@ func (s *Storage) StoreOrder(ctx context.Context, userID uuid.UUID, orderNumber,
 	}
 
 	if rowsAffected == 0 {
-		return errors.ErrAlreadyExists
+		return storageErrors.ErrAlreadyExists
 	}
 
 	return nil

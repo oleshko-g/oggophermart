@@ -93,7 +93,7 @@ func signUserJWT(login string, jwtSecret string, expiresIn time.Duration) (strin
 }
 
 func (s *userSvc) JWTAuth(ctx context.Context, token string, _ *security.JWTScheme) (context.Context, error) {
-	userID, err := s.authenticate(token)
+	userID, err := s.authenticate(ctx, token)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +111,7 @@ func (s *userSvc) UserIDFromContext(ctx context.Context) (userID uuid.UUID, err 
 	return uuid.UUID{}, svcErrors.ErrUserIsNotAuthenticated
 }
 
-func (s *userSvc) authenticate(token string) (userID uuid.UUID, err error) {
+func (s *userSvc) authenticate(ctx context.Context, token string) (userID uuid.UUID, err error) {
 	claims := jwt.RegisteredClaims{}
 	userJWT, err := jwt.ParseWithClaims(token, &claims,
 		func(token *jwt.Token) (interface{}, error) {
@@ -124,13 +124,17 @@ func (s *userSvc) authenticate(token string) (userID uuid.UUID, err error) {
 	if err != nil {
 		return uuid.UUID{}, err
 	}
-	id, err := userJWT.Claims.GetSubject()
+	login, err := userJWT.Claims.GetSubject()
 	if err != nil {
 		return uuid.UUID{}, err
 	}
 
-	userID, err = uuid.Parse(id)
-	return userID, err
+	userID, err = s.RetrieveUser(ctx, login)
+	if err != nil {
+		return uuid.UUID{}, err
+	}
+
+	return userID, nil
 }
 
 type contextKey int

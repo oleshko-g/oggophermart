@@ -14,4 +14,7 @@ var (
 
 	// ErrAlreadyExists is returned when a storage record alrady exists
 	ErrAlreadyExists = errors.New("already exists")
+
+	// ErrNotFound is returned when a storage record is not found
+	ErrNotFound = errors.New("not found")
 )
