@@ -1,7 +1,7 @@
 swagger: "2.0"
 info:
     title: ""
-    version: 0.0.1
+    version: "0.2"
 host: localhost:80
 basePath: /api
 consumes:
@@ -60,8 +60,6 @@ paths:
                     description: Unauthorized response.
                 "500":
                     description: Internal Server Error response.
-                "501":
-                    description: Not Implemented response.
             schemes:
                 - http
     /user/orders:
@@ -133,8 +131,6 @@ paths:
                     description: Conflict response.
                 "500":
                     description: Internal Server Error response.
-                "501":
-                    description: Not Implemented response.
             schemes:
                 - http
 definitions:

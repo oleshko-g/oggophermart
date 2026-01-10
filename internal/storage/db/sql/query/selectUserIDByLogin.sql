@@ -1,3 +1,4 @@
+-- name: SelectUserIDByLogin :one
 SELECT
   id
 FROM

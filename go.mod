@@ -22,6 +22,7 @@ require (
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/gohugoio/hashstructure v0.6.0 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
+	github.com/kr/pretty v0.3.0 // indirect
 	github.com/manveru/faker v0.0.0-20171103152722-9fbc68a78c4d // indirect
 	github.com/mfridman/interpolate v0.0.2 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
@@ -39,5 +40,6 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251213004720-97cd9d5aeac2 // indirect
 	google.golang.org/grpc v1.77.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
+	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

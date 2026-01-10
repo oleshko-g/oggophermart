@@ -3,6 +3,7 @@ package design
 import . "goa.design/goa/v3/dsl"
 
 var _ = API("gophermart", func() {
+	Version("0.2")
 	HTTP(func() {
 		Path("/api")
 		Consumes("text/plain", "application/json")
@@ -34,9 +35,6 @@ var _ = Service("user", func() {
 			Response("Login is taken already", StatusConflict, func() {
 				Body(Empty)
 			})
-			Response("Not implemented", StatusNotImplemented, func() {
-				Body(Empty)
-			})
 		})
 
 	})
@@ -47,9 +45,6 @@ var _ = Service("user", func() {
 			POST("/user/login")
 			Response(StatusOK, func() {
 				Header("authToken:Authorization")
-				Body(Empty)
-			})
-			Response("Not implemented", StatusNotImplemented, func() {
 				Body(Empty)
 			})
 			Response("Invalid input parameter", StatusBadRequest, func() {
@@ -190,12 +185,4 @@ var JWTToken = Type("JWTToken", func() {
 	})
 	Required("authToken")
 	Meta("struct:pkg:path", "service")
-})
-
-var UploadedOrder = Type("UploadedOrder", func() {
-	Attribute("number", String)
-	Attribute("status", String)
-	Attribute("accrual", String)
-	Attribute("uploaded_at", String)
-	Required("number", "status", "uploaded_at")
 })

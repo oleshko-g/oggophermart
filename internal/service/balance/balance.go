@@ -3,34 +3,64 @@ package balance
 
 import (
 	"context"
+	"errors"
+	"time"
 
 	genBalance "github.com/oleshko-g/oggophermart/internal/gen/balance"
-	"github.com/oleshko-g/oggophermart/internal/service/errors"
+	"github.com/oleshko-g/oggophermart/internal/service"
+	svcErrors "github.com/oleshko-g/oggophermart/internal/service/errors"
 	"github.com/oleshko-g/oggophermart/internal/storage"
-	"goa.design/goa/v3/security"
+	storageErrors "github.com/oleshko-g/oggophermart/internal/storage/errors"
 )
 
 // balance service example implementation.
 // The example methods log the requests and return zero values.
-type balanceSvc struct{}
+type balanceSvc struct {
+	storage.Balance
+	service.Auther
+}
 
 var _ genBalance.Service = (*balanceSvc)(nil)
 var _ genBalance.Auther = (*balanceSvc)(nil)
 
 // New returns the balance service implementation.
-func New(storage storage.Balance) *balanceSvc {
-	// TODO: connect to the storage
-	return &balanceSvc{}
+func New(storage storage.Balance, auther service.Auther) *balanceSvc {
+	return &balanceSvc{
+		Balance: storage,
+		Auther:  auther,
+	}
 }
 
 // PostOrder implements post order.
 func (s *balanceSvc) UploadUserOrder(ctx context.Context, payload *genBalance.UploadUserOrderPayload) (res *genBalance.UploadUserOrderResult, err error) {
-	return nil, errors.ErrNotImplemented
+	ctx, err = s.Auther.JWTAuth(ctx, payload.JWTToken, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	userID, err := s.Auther.UserIDFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	res = new(genBalance.UploadUserOrderResult)
+	err = s.StoreOrder(ctx, userID, payload.OrderNumber, OrderStatusNew, time.Now().UTC())
+	if err != nil {
+		if errors.Is(err, storageErrors.ErrAlreadyExists) {
+			*res.Accepted = "yes"
+			return res, nil
+		}
+		return nil, svcErrors.ErrInvalidInputParameter
+	}
+
+	res.Accepted = nil
+	return res, nil
 }
 
-// JWTAuth is the implementation of [Auther]
-// TODO: write JWTAuth
-func (s *balanceSvc) JWTAuth(ctx context.Context, JWTToken string, schema *security.JWTScheme) (context.Context, error) {
-	// TODO: call user service to authenticate token
-	return nil, nil
-}
+// Orders statuses
+const (
+	OrderStatusNew        = "NEW"
+	OrderStatusProcessing = "PROCESSING"
+	OrderStatusProcessed  = "PROCESSED"
+	OrderStatusInvalid    = "INVALID"
+)

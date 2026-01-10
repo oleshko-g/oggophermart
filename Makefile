@@ -1,9 +1,10 @@
 .DEFAULT_GOAL := build
 
-.PHONY: fmt vet test build oggoa
+.PHONY: fmt vet test build gen
 
-oggoa:
+gen:
 	goa gen github.com/oleshko-g/oggophermart/api/design -o internal/
+	sqlc generate
 
 test: vet
 	go fmt

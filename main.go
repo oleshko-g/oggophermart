@@ -167,16 +167,20 @@ func (g *gophermart) setup() (err error) {
 	if err != nil {
 		return err
 	}
+	log.Infof(g.loggingCtx, "Connected the storage")
 
 	// 1. Sets the storage for each service
 	// wrap concrete type [*sql.Storage] struct with interfaces
 	g.Storage.User = dbStorage
+	log.Infof(g.loggingCtx, "set User service storage")
 	g.Storage.Balance = dbStorage
+	log.Infof(g.loggingCtx, "set Balance service storage")
 
 	// 2. Intanciates services with the set storage
+	userSvc := user.New(&g.userCfg, g.Storage.User)
 	g.Service = service.Service{
-		Balance: balance.New(g.Storage.Balance),
-		User:    user.New(&g.userCfg, g.Storage.User),
+		User:    userSvc,
+		Balance: balance.New(g.Storage.Balance, userSvc),
 	}
 
 	// 3. Instanciates the HTTP server
@@ -199,44 +203,17 @@ func (g *gophermart) setup() (err error) {
 
 // run launches gophermart
 func (g *gophermart) run() (err error) {
-	errGroup, runCtx := errgroup.WithContext(g.loggingCtx)
+	if !g.readyToRun {
+		return errSetupGophermartNotReadyToRun
+	}
+	errGroup, _ := errgroup.WithContext(g.loggingCtx)
 
 	errGroup.Go(func() error {
 		log.Infof(g.loggingCtx, "in HTTP server")
-		if !g.readyToRun {
-			return errSetupGophermartNotReadyToRun
-		}
 		return g.transport.http.Server.ListenAndServe()
 	})
 
-	errGroup.Go(func() error {
-		log.Infof(g.loggingCtx, "in accrual worker")
-		if !g.readyToRun {
-			return errSetupGophermartNotReadyToRun
-		}
-		// TODO: wrap into worker func
-		getOrder := g.transport.http.client.accrual.GetOrder()
-		for {
-			// TODO: storage.GetOrderToProcess
-			ordersToProcess := []string{"1"}
-
-			errGroup.Go(func() error {
-				for _, order := range ordersToProcess {
-					req, err := genAccrualHTTPClient.BuildGetOrderPayload(order)
-					if err != nil {
-						return err
-					}
-
-					// TODO: store res
-					// TODO: handle err
-					res, err := getOrder(runCtx, req)
-					_, _ = res, err
-				}
-				return nil
-			})
-
-		}
-	})
+	// TODO: make accrual worker
 
 	// TODO: add os.Signal handling
 	// TODO: add graceful shutdown

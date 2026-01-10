@@ -1,7 +1,12 @@
 // Package storage declares the type to imported by the service architecture layer
 package storage
 
-import "context"
+import (
+	"context"
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type Storage struct {
 	User    // interface
@@ -10,12 +15,14 @@ type Storage struct {
 
 // User declares the storage interface for the user service
 type User interface {
-	RetrieveUser(id string) error
+	RetrieveUser(ctx context.Context, login string) (userID uuid.UUID, err error)
+	RetreiveUserPassword(ctx context.Context, login string) (hashedPassword string, err error)
 	StoreUser(ctx context.Context, login, hashedPassword string) error
 }
 
 // Balance declares the storage interfce for the balance service
 type Balance interface {
-	RetrieveUserBalance(userID string) (currentBalance, withdrawn int, err error)
-	SaveUserTransaction(userID string, amount int) error
+	RetrieveUserBalance(ctx context.Context, userID uuid.UUID) (currentBalance, withdrawn int, err error)
+	SaveUserTransaction(ctx context.Context, userID uuid.UUID, amount int) error
+	StoreOrder(ctx context.Context, userID uuid.UUID, orderNumber, status string, createdAt time.Time) error
 }
