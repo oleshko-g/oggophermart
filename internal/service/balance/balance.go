@@ -43,17 +43,28 @@ func (s *balanceSvc) UploadUserOrder(ctx context.Context, payload *genBalance.Up
 		return nil, err
 	}
 
-	res = new(genBalance.UploadUserOrderResult)
-	err = s.StoreOrder(ctx, userID, payload.OrderNumber, OrderStatusNew, time.Now().UTC())
+	dbUserID, err := s.RetreiveOrderUser(ctx, payload.OrderNumber)
 	if err != nil {
-		if errors.Is(err, storageErrors.ErrAlreadyExists) {
-			*res.Accepted = "yes"
-			return res, nil
+		if !errors.Is(err, storageErrors.ErrNotFound) {
+			return nil, err
 		}
-		return nil, svcErrors.ErrInvalidInputParameter
+	} else if dbUserID != userID {
+		return nil, ErrOwnerMismatch
 	}
 
-	res.Accepted = nil
+	res = &genBalance.UploadUserOrderResult{
+		Accepted: nil,
+	}
+	if dbUserID == userID {
+		return res, nil
+	}
+
+	err = s.StoreOrder(ctx, userID, payload.OrderNumber, OrderStatusNew, time.Now().UTC())
+	if err != nil {
+		return nil, svcErrors.ErrInternalServiceError
+	}
+	accepted := "yes"
+	res.Accepted = &accepted
 	return res, nil
 }
 

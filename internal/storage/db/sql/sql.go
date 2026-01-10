@@ -158,3 +158,15 @@ func (s *Storage) RetreiveUserPassword(ctx context.Context, login string) (hashe
 	}
 	return hashedPassword, nil
 }
+
+func (s *Storage) RetreiveOrderUser(ctx context.Context, orderNumber string) (userID uuid.UUID, err error) {
+	userID, err = s.queries.SelectUserIDByOrderNumber(ctx, orderNumber)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return uuid.UUID{}, storageErrors.ErrNotFound
+		}
+
+		return uuid.UUID{}, err
+	}
+	return userID, nil
+}

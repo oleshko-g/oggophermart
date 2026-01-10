@@ -25,4 +25,5 @@ type Balance interface {
 	RetrieveUserBalance(ctx context.Context, userID uuid.UUID) (currentBalance, withdrawn int, err error)
 	SaveUserTransaction(ctx context.Context, userID uuid.UUID, amount int) error
 	StoreOrder(ctx context.Context, userID uuid.UUID, orderNumber, status string, createdAt time.Time) error
+	RetreiveOrderUser(ctx context.Context, orderNumber string) (userID uuid.UUID, err error)
 }
