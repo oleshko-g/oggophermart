@@ -28,30 +28,30 @@ type server struct {
 	Server
 }
 
-func newMux(loggingCtx context.Context, balanceEndpoints *balance.Endpoints, userEndpoints *user.Endpoints) goahttp.Muxer {
+func newHandlers(loggingCtx context.Context, balanceEndpoints *balance.Endpoints, userEndpoints *user.Endpoints) http.Handler {
 	var (
 		reqDecoder func(r *http.Request) goahttp.Decoder
 		resEncoder func(ctx context.Context, res http.ResponseWriter) goahttp.Encoder
-		handlers        goahttp.Muxer
+		mux        goahttp.Muxer
 		errHandler func(context.Context, http.ResponseWriter, error)
 	)
 	{
 		reqDecoder = goahttp.RequestDecoder
 		resEncoder = goahttp.ResponseEncoder
 		errHandler = errorHandler
-		handlers = goahttp.NewMuxer()
+		mux = goahttp.NewMuxer()
 	}
 
-	loggingMiddleware := log.HTTP(loggingCtx)
-	loggingMiddleware(handlers)
-
 	// create HTTP servers
-	balanceServer := genBalanceHTTPSrv.New(balanceEndpoints, handlers, reqDecoder, resEncoder, errHandler, nil)
-	userServer := genUserHTTPSvr.New(userEndpoints, handlers, reqDecoder, resEncoder, errHandler, nil)
+	balanceServer := genBalanceHTTPSrv.New(balanceEndpoints, mux, reqDecoder, resEncoder, errHandler, nil)
+	userServer := genUserHTTPSvr.New(userEndpoints, mux, reqDecoder, resEncoder, errHandler, nil)
 
 	// mount HTTP endpoint onto mux
-	balanceServer.Mount(handlers)
-	userServer.Mount(handlers)
+	balanceServer.Mount(mux)
+	userServer.Mount(mux)
+
+	loggingMiddleware := log.HTTP(loggingCtx)
+	var handlers http.Handler = loggingMiddleware(mux)
 
 	return handlers
 
@@ -61,18 +61,18 @@ func NewServer(loggingCtx context.Context, cfg Config, svc service.Service) Serv
 	var (
 		balanceEndpoints *balance.Endpoints
 		userEndpoints    *user.Endpoints
-		mux              goahttp.Muxer
+		handlers         http.Handler
 	)
 	{
 		balanceEndpoints = balance.NewEndpoints(svc.Balance)
 		userEndpoints = user.NewEndpoints(svc.User)
-		mux = newMux(loggingCtx, balanceEndpoints, userEndpoints)
+		handlers = newHandlers(loggingCtx, balanceEndpoints, userEndpoints)
 	}
 
 	return &server{
 		Server: &http.Server{
 			Addr:              cfg.Address().String(),
-			Handler:           mux,
+			Handler:           handlers,
 			ReadHeaderTimeout: time.Second * 60},
 	}
 }
