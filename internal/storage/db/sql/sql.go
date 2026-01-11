@@ -183,3 +183,11 @@ func (s *Storage) RetrieaveUserOrders(ctx context.Context, userID uuid.UUID) (us
 
 	return rows, nil
 }
+
+func (s *Storage) Retrieve(ctx context.Context, userID uuid.UUID) (genDBSQL.UserBalance, error) {
+	userBalance, err := s.queries.SelectBalanceByUserID(ctx, userID)
+	if err != nil {
+		return genDBSQL.UserBalance{}, err
+	}
+	return userBalance, nil
+}
