@@ -158,3 +158,28 @@ func (s *Storage) RetreiveUserPassword(ctx context.Context, login string) (hashe
 	}
 	return hashedPassword, nil
 }
+
+func (s *Storage) RetreiveOrderUser(ctx context.Context, orderNumber string) (userID uuid.UUID, err error) {
+	userID, err = s.queries.SelectUserIDByOrderNumber(ctx, orderNumber)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return uuid.UUID{}, storageErrors.ErrNotFound
+		}
+
+		return uuid.UUID{}, err
+	}
+	return userID, nil
+}
+
+func (s *Storage) RetrieaveUserOrders(ctx context.Context, userID uuid.UUID) (userOrders []genDBSQL.SelectOrdersByUserIDRow, err error) {
+	rows, err := s.queries.SelectOrdersByUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(rows) == 0 {
+		return nil, nil
+	}
+
+	return rows, nil
+}

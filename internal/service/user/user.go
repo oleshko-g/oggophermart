@@ -112,8 +112,8 @@ func signUserJWT(login string, jwtSecret string, expiresIn time.Duration) (strin
 	return t.SignedString([]byte(jwtSecret))
 }
 
-func (s *userSvc) JWTAuth(ctx context.Context, token string, _ *security.JWTScheme) (context.Context, error) {
-	userID, err := s.authenticate(ctx, token)
+func (s *userSvc) JWTAuth(ctx context.Context, tokenString string, _ *security.JWTScheme) (context.Context, error) {
+	userID, err := s.authenticate(ctx, tokenString)
 	if err != nil {
 		return nil, err
 	}
@@ -131,9 +131,9 @@ func (s *userSvc) UserIDFromContext(ctx context.Context) (userID uuid.UUID, err 
 	return uuid.UUID{}, svcErrors.ErrUserIsNotAuthenticated
 }
 
-func (s *userSvc) authenticate(ctx context.Context, token string) (userID uuid.UUID, err error) {
+func (s *userSvc) authenticate(ctx context.Context, tokenString string) (userID uuid.UUID, err error) {
 	claims := jwt.RegisteredClaims{}
-	userJWT, err := jwt.ParseWithClaims(token, &claims,
+	userJWT, err := jwt.ParseWithClaims(tokenString, &claims,
 		func(token *jwt.Token) (interface{}, error) {
 			if token.Method.Alg() != jwt.SigningMethodHS256.Alg() {
 				return nil, fmt.Errorf("error signing method must be HS256. Token's method is %s", token.Method.Alg())

@@ -75,17 +75,17 @@ func EncodeRegisterError(encoder func(context.Context, http.ResponseWriter) goah
 			w.Header().Set("goa-error", res.GoaErrorName())
 			w.WriteHeader(http.StatusBadRequest)
 			return nil
-		case "Internal service error":
-			var res *service.GophermartError
-			errors.As(v, &res)
-			w.Header().Set("goa-error", res.GoaErrorName())
-			w.WriteHeader(http.StatusInternalServerError)
-			return nil
 		case "Login is taken already":
 			var res *service.GophermartError
 			errors.As(v, &res)
 			w.Header().Set("goa-error", res.GoaErrorName())
 			w.WriteHeader(http.StatusConflict)
+			return nil
+		case "Internal service error":
+			var res *service.GophermartError
+			errors.As(v, &res)
+			w.Header().Set("goa-error", res.GoaErrorName())
+			w.WriteHeader(http.StatusInternalServerError)
 			return nil
 		default:
 			return encodeError(ctx, w, v)

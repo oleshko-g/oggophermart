@@ -14,7 +14,6 @@ var _ = Service("user", func() {
 	Error("Invalid input parameter", ErrorType)
 	Error("User is not authenticated", ErrorType)
 	Error("Internal service error", ErrorType)
-	Error("Not implemented", ErrorType)
 
 	Method("register", func() {
 		Payload(LoginPassword)
@@ -29,10 +28,11 @@ var _ = Service("user", func() {
 			Response("Invalid input parameter", StatusBadRequest, func() {
 				Body(Empty)
 			})
-			Response("Internal service error", StatusInternalServerError, func() {
+			Response("Login is taken already", StatusConflict, func() {
+				Description("Login is taken already")
 				Body(Empty)
 			})
-			Response("Login is taken already", StatusConflict, func() {
+			Response("Internal service error", StatusInternalServerError, func() {
 				Body(Empty)
 			})
 		})
@@ -51,6 +51,7 @@ var _ = Service("user", func() {
 				Body(Empty)
 			})
 			Response("User is not authenticated", StatusUnauthorized, func() {
+				Description("User is not authenticated")
 				Body(Empty)
 			})
 			Response("Internal service error", StatusInternalServerError, func() {
@@ -66,6 +67,14 @@ var _ = Service("balance", func() {
 	Error("User is not authenticated", ErrorType)
 	Error("Internal service error", ErrorType)
 	Error("Not implemented", ErrorType)
+	HTTP(func() {
+		Header("Authorization", func() {
+			Example(func() {
+				Value("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30")
+			})
+		})
+
+	})
 
 	Method("UploadUserOrder", func() {
 		Description("Upload user order")
@@ -78,18 +87,27 @@ var _ = Service("balance", func() {
 			Meta("openapi:example", "false")
 		})
 		Payload(func() {
-			Token("JWTToken", String, "A JWT token used to authenticate a request")
+			Token("Authorization", String, "A JWT token used to authenticate a request", func() {
+				Example(func() {
+					Value("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30")
+				})
+			})
 			Attribute("OrderNumber", String, func() {
 				Description("Unique user order number")
 				Pattern("[1-9][0-9]*")
 			})
-			Required("JWTToken", "OrderNumber")
+			Required("Authorization", "OrderNumber")
 		})
 		Error("The order belongs to another user", ErrorType)
 		Error("Invalid order number", ErrorType)
+		Error("missing_field")
 		HTTP(func() {
 			POST("/user/orders")
-			Body("OrderNumber")
+			Body("OrderNumber", func() {
+				Example(func() {
+					Value("12345678903")
+				})
+			})
 			Response(StatusOK, func() {
 				Description("The order has been accepted for processing before.")
 				Body(Empty)
@@ -103,21 +121,87 @@ var _ = Service("balance", func() {
 				Body(Empty)
 			})
 			Response("The order belongs to another user", StatusConflict, func() {
+				Description("The order belongs to another user")
 				Body(Empty)
 			})
 			Response("Invalid order number", StatusUnprocessableEntity, func() {
+				Description("Invalid order number")
 				Body(Empty)
 			})
 			Response("User is not authenticated", StatusUnauthorized, func() {
+				Description("User is not authenticated")
+				Body(Empty)
+			})
+			Response("missing_field", StatusUnauthorized, func() {
+				Description("Missing or empty Authorization header")
 				Body(Empty)
 			})
 			Response("Internal service error", StatusInternalServerError, func() {
 				Body(Empty)
 			})
-			Response("Not implemented", StatusNotImplemented, func() {
+		})
+	})
+	Method("ListUserOrder", func() {
+		Description("List user orders")
+		Payload(func() {
+			Token("Authorization", String, "A JWT token used to authenticate a request", func() {
+				Example(func() {
+					Value("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30")
+				})
+			})
+			Required("Authorization")
+		})
+		Result(func() {
+			Attribute("orders", ArrayOf(Order), func() {
+				Example(func() {
+					Value([]Val{{
+						"number":      "9278923470",
+						"status":      "PROCESSED",
+						"accrual":     500,
+						"uploaded_at": "2020-12-10T15:15:45+03:00",
+					},
+						{
+							"number":      "12345678903",
+							"status":      "PROCESSING",
+							"uploaded_at": "2020-12-10T15:12:01+03:00",
+						},
+						{
+							"number":      "346436439",
+							"status":      "INVALID",
+							"uploaded_at": "2020-12-09T16:09:53+03:00",
+						}})
+				})
+			})
+			Attribute("no orders", func() {
+				Meta("struct:tag:json", "-")
+				Meta("openapi:generate", "false")
+				Meta("openapi:example", "false")
+			})
+		})
+		Error("missing_field")
+		HTTP(func() {
+			GET("/user/orders")
+			Response(StatusOK, func() {
+				Body("orders")
+			})
+			Response(StatusNoContent, func() {
+				Tag("no orders", "yes")
+				Description("No orders available")
+				Body(Empty)
+			})
+			Response("User is not authenticated", StatusUnauthorized, func() {
+				Description("User is not authenticated")
+				Body(Empty)
+			})
+			Response("missing_field", StatusUnauthorized, func() {
+				Description("Missing or empty Authorization header")
+				Body(Empty)
+			})
+			Response("Internal service error", StatusInternalServerError, func() {
 				Body(Empty)
 			})
 		})
+
 	})
 })
 
@@ -160,6 +244,12 @@ var LoginPassword = Type("LoginPassword", func() {
 	Attribute("login", String)
 	Attribute("password", String)
 	Required("login", "password")
+	Example(func() {
+		Value(Val{
+			"login":    "<login>",
+			"password": "<password>",
+		})
+	})
 })
 
 var ErrorType = Type("GophermartError", func() {
@@ -182,7 +272,46 @@ var JWTAuth = JWTSecurity("jwt", func() {
 var JWTToken = Type("JWTToken", func() {
 	Token("authToken", String, func() {
 		Description("A JWT token used to authenticate a request")
+		Example(func() {
+			Value("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30")
+		})
 	})
 	Required("authToken")
 	Meta("struct:pkg:path", "service")
+})
+
+var Order = Type("Order", func() {
+	Attribute("number", String, func() {
+		Pattern("[1-9][0-9]*")
+	})
+	Attribute("status", String, func() {
+		Enum("NEW", "PROCESSING", "INVALID", "PROCESSED")
+	})
+	Attribute("accrual", UInt)
+	Attribute("uploaded_at", String, func() {
+		Format(FormatDateTime)
+	})
+	Required("number", "status", "uploaded_at")
+	// Example("PROCESSED", func() {
+	// 	Value(Val{
+	// 		"number":      "9278923470",
+	// 		"status":      "PROCESSED",
+	// 		"accrual":     500,
+	// 		"uploaded_at": "2020-12-10T15:15:45+03:00",
+	// 	})
+	// })
+	// Example("PROCESSING", func() {
+	// 	Value(Val{
+	// 		"number":      "12345678903",
+	// 		"status":      "PROCESSING",
+	// 		"uploaded_at": "2020-12-10T15:12:01+03:00",
+	// 	})
+	// })
+	// Example("INVALID", func() {
+	// 	Value(Val{
+	// 		"number":      "346436439",
+	// 		"status":      "INVALID",
+	// 		"uploaded_at": "2020-12-09T16:09:53+03:00",
+	// 	})
+	// })
 })

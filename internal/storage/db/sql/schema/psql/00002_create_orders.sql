@@ -1,7 +1,7 @@
 -- +goose Up
 CREATE TABLE IF NOT EXISTS orders (
   id UUID PRIMARY KEY,
-  number TEXT NOT NULL,
+  number TEXT NOT NULL UNIQUE,
   user_id UUID NOT NULL,
   status TEXT NOT NULL,
   created_at TIMESTAMPTZ NOT NULL,

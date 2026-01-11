@@ -12,6 +12,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 
 	balance "github.com/oleshko-g/oggophermart/internal/gen/balance"
@@ -59,20 +60,20 @@ func DecodeUploadUserOrderRequest(mux goahttp.Muxer, decoder func(*http.Request)
 		}
 
 		var (
-			jWTToken string
+			authorization string
 		)
-		jWTToken = r.Header.Get("Authorization")
-		if jWTToken == "" {
-			err = goa.MergeErrors(err, goa.MissingFieldError("JWTToken", "header"))
+		authorization = r.Header.Get("Authorization")
+		if authorization == "" {
+			err = goa.MergeErrors(err, goa.MissingFieldError("Authorization", "header"))
 		}
 		if err != nil {
 			return nil, err
 		}
-		payload := NewUploadUserOrderPayload(body, jWTToken)
-		if strings.Contains(payload.JWTToken, " ") {
+		payload := NewUploadUserOrderPayload(body, authorization)
+		if strings.Contains(payload.Authorization, " ") {
 			// Remove authorization scheme prefix (e.g. "Bearer")
-			cred := strings.SplitN(payload.JWTToken, " ", 2)[1]
-			payload.JWTToken = cred
+			cred := strings.SplitN(payload.Authorization, " ", 2)[1]
+			payload.Authorization = cred
 		}
 
 		return payload, nil
@@ -89,6 +90,36 @@ func EncodeUploadUserOrderError(encoder func(context.Context, http.ResponseWrite
 			return encodeError(ctx, w, v)
 		}
 		switch en.GoaErrorName() {
+		case "missing_field":
+			var res *goa.ServiceError
+			errors.As(v, &res)
+			w.Header().Set("Goa-Attribute-Name", res.Name)
+			w.Header().Set("Goa-Attribute-Id", res.ID)
+			w.Header().Set("Goa-Attribute-Message", res.Message)
+			{
+				val := res.Temporary
+				temporarys := strconv.FormatBool(val)
+				w.Header().Set("Goa-Attribute-Temporary", temporarys)
+			}
+			{
+				val := res.Timeout
+				timeouts := strconv.FormatBool(val)
+				w.Header().Set("Goa-Attribute-Timeout", timeouts)
+			}
+			{
+				val := res.Fault
+				faults := strconv.FormatBool(val)
+				w.Header().Set("Goa-Attribute-Fault", faults)
+			}
+			w.Header().Set("goa-error", res.GoaErrorName())
+			w.WriteHeader(http.StatusUnauthorized)
+			return nil
+		case "User is not authenticated":
+			var res *service.GophermartError
+			errors.As(v, &res)
+			w.Header().Set("goa-error", res.GoaErrorName())
+			w.WriteHeader(http.StatusUnauthorized)
+			return nil
 		case "Invalid input parameter":
 			var res *service.GophermartError
 			errors.As(v, &res)
@@ -107,6 +138,94 @@ func EncodeUploadUserOrderError(encoder func(context.Context, http.ResponseWrite
 			w.Header().Set("goa-error", res.GoaErrorName())
 			w.WriteHeader(http.StatusUnprocessableEntity)
 			return nil
+		case "Internal service error":
+			var res *service.GophermartError
+			errors.As(v, &res)
+			w.Header().Set("goa-error", res.GoaErrorName())
+			w.WriteHeader(http.StatusInternalServerError)
+			return nil
+		default:
+			return encodeError(ctx, w, v)
+		}
+	}
+}
+
+// EncodeListUserOrderResponse returns an encoder for responses returned by the
+// balance ListUserOrder endpoint.
+func EncodeListUserOrderResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
+	return func(ctx context.Context, w http.ResponseWriter, v any) error {
+		res, _ := v.(*balance.ListUserOrderResult)
+		if res.NoOrders != nil && *res.NoOrders == "yes" {
+			w.WriteHeader(http.StatusNoContent)
+			return nil
+		}
+		enc := encoder(ctx, w)
+		body := NewListUserOrderResponseBody(res)
+		w.WriteHeader(http.StatusOK)
+		return enc.Encode(body)
+	}
+}
+
+// DecodeListUserOrderRequest returns a decoder for requests sent to the
+// balance ListUserOrder endpoint.
+func DecodeListUserOrderRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (*balance.ListUserOrderPayload, error) {
+	return func(r *http.Request) (*balance.ListUserOrderPayload, error) {
+		var (
+			authorization string
+			err           error
+		)
+		authorization = r.Header.Get("Authorization")
+		if authorization == "" {
+			err = goa.MergeErrors(err, goa.MissingFieldError("Authorization", "header"))
+		}
+		if err != nil {
+			return nil, err
+		}
+		payload := NewListUserOrderPayload(authorization)
+		if strings.Contains(payload.Authorization, " ") {
+			// Remove authorization scheme prefix (e.g. "Bearer")
+			cred := strings.SplitN(payload.Authorization, " ", 2)[1]
+			payload.Authorization = cred
+		}
+
+		return payload, nil
+	}
+}
+
+// EncodeListUserOrderError returns an encoder for errors returned by the
+// ListUserOrder balance endpoint.
+func EncodeListUserOrderError(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder, formatter func(ctx context.Context, err error) goahttp.Statuser) func(context.Context, http.ResponseWriter, error) error {
+	encodeError := goahttp.ErrorEncoder(encoder, formatter)
+	return func(ctx context.Context, w http.ResponseWriter, v error) error {
+		var en goa.GoaErrorNamer
+		if !errors.As(v, &en) {
+			return encodeError(ctx, w, v)
+		}
+		switch en.GoaErrorName() {
+		case "missing_field":
+			var res *goa.ServiceError
+			errors.As(v, &res)
+			w.Header().Set("Goa-Attribute-Name", res.Name)
+			w.Header().Set("Goa-Attribute-Id", res.ID)
+			w.Header().Set("Goa-Attribute-Message", res.Message)
+			{
+				val := res.Temporary
+				temporarys := strconv.FormatBool(val)
+				w.Header().Set("Goa-Attribute-Temporary", temporarys)
+			}
+			{
+				val := res.Timeout
+				timeouts := strconv.FormatBool(val)
+				w.Header().Set("Goa-Attribute-Timeout", timeouts)
+			}
+			{
+				val := res.Fault
+				faults := strconv.FormatBool(val)
+				w.Header().Set("Goa-Attribute-Fault", faults)
+			}
+			w.Header().Set("goa-error", res.GoaErrorName())
+			w.WriteHeader(http.StatusUnauthorized)
+			return nil
 		case "User is not authenticated":
 			var res *service.GophermartError
 			errors.As(v, &res)
@@ -119,14 +238,21 @@ func EncodeUploadUserOrderError(encoder func(context.Context, http.ResponseWrite
 			w.Header().Set("goa-error", res.GoaErrorName())
 			w.WriteHeader(http.StatusInternalServerError)
 			return nil
-		case "Not implemented":
-			var res *service.GophermartError
-			errors.As(v, &res)
-			w.Header().Set("goa-error", res.GoaErrorName())
-			w.WriteHeader(http.StatusNotImplemented)
-			return nil
 		default:
 			return encodeError(ctx, w, v)
 		}
 	}
+}
+
+// marshalBalanceOrderToOrder builds a value of type *Order from a value of
+// type *balance.Order.
+func marshalBalanceOrderToOrder(v *balance.Order) *Order {
+	res := &Order{
+		Number:     v.Number,
+		Status:     v.Status,
+		Accrual:    v.Accrual,
+		UploadedAt: v.UploadedAt,
+	}
+
+	return res
 }

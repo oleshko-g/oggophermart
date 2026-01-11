@@ -6,6 +6,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/EClaesson/go-luhn"
 	genBalance "github.com/oleshko-g/oggophermart/internal/gen/balance"
 	"github.com/oleshko-g/oggophermart/internal/service"
 	svcErrors "github.com/oleshko-g/oggophermart/internal/service/errors"
@@ -33,7 +34,7 @@ func New(storage storage.Balance, auther service.Auther) *balanceSvc {
 
 // PostOrder implements post order.
 func (s *balanceSvc) UploadUserOrder(ctx context.Context, payload *genBalance.UploadUserOrderPayload) (res *genBalance.UploadUserOrderResult, err error) {
-	ctx, err = s.Auther.JWTAuth(ctx, payload.JWTToken, nil)
+	ctx, err = s.Auther.JWTAuth(ctx, payload.Authorization, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -43,17 +44,33 @@ func (s *balanceSvc) UploadUserOrder(ctx context.Context, payload *genBalance.Up
 		return nil, err
 	}
 
-	res = new(genBalance.UploadUserOrderResult)
-	err = s.StoreOrder(ctx, userID, payload.OrderNumber, OrderStatusNew, time.Now().UTC())
+	err = checkOrderNumber(payload.OrderNumber)
 	if err != nil {
-		if errors.Is(err, storageErrors.ErrAlreadyExists) {
-			*res.Accepted = "yes"
-			return res, nil
-		}
-		return nil, svcErrors.ErrInvalidInputParameter
+		return nil, err
 	}
 
-	res.Accepted = nil
+	dbUserID, err := s.RetreiveOrderUser(ctx, payload.OrderNumber)
+	if err != nil {
+		if !errors.Is(err, storageErrors.ErrNotFound) {
+			return nil, err
+		}
+	} else if dbUserID != userID {
+		return nil, ErrOwnerMismatch
+	}
+
+	res = &genBalance.UploadUserOrderResult{
+		Accepted: nil,
+	}
+	if dbUserID == userID {
+		return res, nil
+	}
+
+	err = s.StoreOrder(ctx, userID, payload.OrderNumber, OrderStatusNew, time.Now().UTC())
+	if err != nil {
+		return nil, svcErrors.ErrInternalServiceError
+	}
+	accepted := "yes"
+	res.Accepted = &accepted
 	return res, nil
 }
 
@@ -64,3 +81,53 @@ const (
 	OrderStatusProcessed  = "PROCESSED"
 	OrderStatusInvalid    = "INVALID"
 )
+
+func checkOrderNumber(orderNumber string) error {
+
+	valid, err := luhn.IsValid(orderNumber)
+	if err != nil {
+		return err
+	}
+
+	if !valid {
+		return ErrInvalidOrderNumber
+	}
+
+	return nil
+}
+
+func (s *balanceSvc) ListUserOrder(ctx context.Context, payload *genBalance.ListUserOrderPayload) (res *genBalance.ListUserOrderResult, err error) {
+
+	ctx, err = s.Auther.JWTAuth(ctx, payload.Authorization, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	userID, err := s.Auther.UserIDFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	ordersByUserID, err := s.RetrieaveUserOrders(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	res = new(genBalance.ListUserOrderResult)
+	if ordersByUserID == nil {
+		noOrders := "yes"
+		res.NoOrders = &noOrders
+		return res, nil
+	}
+
+	for _, v := range ordersByUserID {
+		userOrder := &genBalance.Order{
+			Number:     v.Number,
+			Status:     v.Status,
+			UploadedAt: v.CreatedAt.Format(time.RFC3339),
+		}
+		res.Orders = append(res.Orders, userOrder)
+	}
+
+	return res, nil
+}

@@ -3,6 +3,7 @@ module github.com/oleshko-g/oggophermart
 go 1.25.5
 
 require (
+	github.com/EClaesson/go-luhn v0.0.0-20210207103312-b1c12d658b70
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
