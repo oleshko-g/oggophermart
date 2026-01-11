@@ -96,11 +96,38 @@ func checkOrderNumber(orderNumber string) error {
 	return nil
 }
 
-func (s *balanceSvc) ListUserOrder(context.Context, *genBalance.ListUserOrderPayload) (res *genBalance.ListUserOrderResult, err error) {
+func (s *balanceSvc) ListUserOrder(ctx context.Context, payload *genBalance.ListUserOrderPayload) (res *genBalance.ListUserOrderResult, err error) {
 
-	noOrders := "yes"
-	res = &genBalance.ListUserOrderResult{
-		NoOrders: &noOrders,
+	ctx, err = s.Auther.JWTAuth(ctx, payload.Authorization, nil)
+	if err != nil {
+		return nil, err
 	}
+
+	userID, err := s.Auther.UserIDFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	ordersByUserID, err := s.RetrieaveUserOrders(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	res = new(genBalance.ListUserOrderResult)
+	if ordersByUserID == nil {
+		noOrders := "yes"
+		res.NoOrders = &noOrders
+		return res, nil
+	}
+
+	for _, v := range ordersByUserID {
+		userOrder := &genBalance.Order{
+			Number:     v.Number,
+			Status:     v.Status,
+			UploadedAt: v.CreatedAt.Format(time.RFC3339),
+		}
+		res.Orders = append(res.Orders, userOrder)
+	}
+
 	return res, nil
 }
