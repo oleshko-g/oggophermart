@@ -50,6 +50,9 @@ paths:
                     description: OK response.
                     schema:
                         $ref: '#/definitions/BalanceGetUserBalanceResponseBody'
+                        required:
+                            - current
+                            - withdrawn
                 "401":
                     description: Missing or empty Authorization header
                     headers:
@@ -249,16 +252,21 @@ definitions:
         type: object
         properties:
             current:
-                type: integer
-                example: 9550999508649145278
-                format: int64
+                type: number
+                example: 0.03552144166853887
+                format: double
+                minimum: 0
             withdrawn:
-                type: integer
-                example: 7867690860693954692
-                format: int64
+                type: number
+                example: 0.8530167523608734
+                format: double
+                minimum: 0
         example:
             current: 500.5
             withdrawn: 42
+        required:
+            - current
+            - withdrawn
     GetOrderResult:
         title: GetOrderResult
         type: object

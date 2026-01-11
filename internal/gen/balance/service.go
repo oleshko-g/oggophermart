@@ -56,8 +56,8 @@ type GetUserBalancePayload struct {
 // GetUserBalanceResult is the result type of the balance service
 // GetUserBalance method.
 type GetUserBalanceResult struct {
-	Current   *uint
-	Withdrawn *uint
+	Current   float64
+	Withdrawn float64
 }
 
 // ListUserOrderPayload is the payload type of the balance service

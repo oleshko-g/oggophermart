@@ -352,16 +352,21 @@ components:
             type: object
             properties:
                 current:
-                    type: integer
-                    example: 17011080842894472774
-                    format: int64
+                    type: number
+                    example: 0.8443450806192734
+                    format: double
+                    minimum: 0
                 withdrawn:
-                    type: integer
-                    example: 13933679520437755289
-                    format: int64
+                    type: number
+                    example: 0.5106925606775395
+                    format: double
+                    minimum: 0
             example:
                 current: 500.5
                 withdrawn: 42
+            required:
+                - current
+                - withdrawn
         GophermartError:
             type: object
         JWTToken:

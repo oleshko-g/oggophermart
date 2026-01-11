@@ -13,21 +13,22 @@ import (
 
 const selectBalanceByUserID = `-- name: SelectBalanceByUserID :one
 SELECT
-  user_id, accrued_sum, withdrawn_sum, current
+  current,
+  withdrawn_sum
 FROM
   user_balances
 WHERE
   user_id = $1
 `
 
-func (q *Queries) SelectBalanceByUserID(ctx context.Context, userID uuid.UUID) (UserBalance, error) {
+type SelectBalanceByUserIDRow struct {
+	Current      int32
+	WithdrawnSum int64
+}
+
+func (q *Queries) SelectBalanceByUserID(ctx context.Context, userID uuid.UUID) (SelectBalanceByUserIDRow, error) {
 	row := q.db.QueryRowContext(ctx, selectBalanceByUserID, userID)
-	var i UserBalance
-	err := row.Scan(
-		&i.UserID,
-		&i.AccruedSum,
-		&i.WithdrawnSum,
-		&i.Current,
-	)
+	var i SelectBalanceByUserIDRow
+	err := row.Scan(&i.Current, &i.WithdrawnSum)
 	return i, err
 }

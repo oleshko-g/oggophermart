@@ -30,5 +30,5 @@ type Balance interface {
 	StoreOrder(ctx context.Context, userID uuid.UUID, orderNumber, status string, createdAt time.Time) error
 	RetreiveOrderUser(ctx context.Context, orderNumber string) (userID uuid.UUID, err error)
 	RetrieaveUserOrders(ctx context.Context, userID uuid.UUID) ([]genDBSQL.SelectOrdersByUserIDRow, error)
-	Retrieve(ctx context.Context, userID uuid.UUID) (genDBSQL.UserBalance, error)
+	Retrieve(ctx context.Context, userID uuid.UUID) (genDBSQL.SelectBalanceByUserIDRow, error)
 }

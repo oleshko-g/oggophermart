@@ -18,8 +18,8 @@ type ListUserOrderResponseBody []*Order
 // GetUserBalanceResponseBody is the type of the "balance" service
 // "GetUserBalance" endpoint HTTP response body.
 type GetUserBalanceResponseBody struct {
-	Current   *uint `form:"current,omitempty" json:"current,omitempty" xml:"current,omitempty"`
-	Withdrawn *uint `form:"withdrawn,omitempty" json:"withdrawn,omitempty" xml:"withdrawn,omitempty"`
+	Current   float64 `form:"current" json:"current" xml:"current"`
+	Withdrawn float64 `form:"withdrawn" json:"withdrawn" xml:"withdrawn"`
 }
 
 // Order is used to define fields on response body types.

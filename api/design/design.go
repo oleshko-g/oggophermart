@@ -213,14 +213,19 @@ var _ = Service("balance", func() {
 			Required("Authorization")
 		})
 		Result(func() {
-			Attribute("current", UInt)
-			Attribute("withdrawn", UInt)
+			Attribute("current", Float64, func(){
+				Minimum(0)
+			})
+			Attribute("withdrawn", Float64, func() {
+				Minimum(0)
+			})
 			Example(func() {
 				Value(Val{
 					"current":   500.5,
 					"withdrawn": 42,
 				})
 			})
+			Required("current", "withdrawn")
 		})
 		HTTP(func() {
 			GET("/user/balance")

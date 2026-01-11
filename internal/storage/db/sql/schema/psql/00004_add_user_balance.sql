@@ -1,5 +1,5 @@
 -- +goose Up
-CREATE VIEW user_balances (user_id, accrued_sum, withdrawn_sum, current) AS
+CREATE VIEW user_balances (user_id, current, withdrawn_sum) AS
 WITH
   cte_users AS (
     SELECT
@@ -42,9 +42,8 @@ WITH
   )
 SELECT
   user_id,
-  accrued_sum,
-  withdrawn_sum,
-  accrued_sum - withdrawn_sum AS current
+  accrued_sum - withdrawn_sum AS current,
+  withdrawn_sum
 FROM
   balances;
 
