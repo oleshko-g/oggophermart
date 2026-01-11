@@ -20,6 +20,8 @@ type Service interface {
 	UploadUserOrder(context.Context, *UploadUserOrderPayload) (res *UploadUserOrderResult, err error)
 	// List user orders
 	ListUserOrder(context.Context, *ListUserOrderPayload) (res *ListUserOrderResult, err error)
+	// Get user balance
+	GetUserBalance(context.Context, *GetUserBalancePayload) (res *GetUserBalanceResult, err error)
 }
 
 // Auther defines the authorization functions to be implemented by the service.
@@ -42,7 +44,21 @@ const ServiceName = "balance"
 // MethodNames lists the service method names as defined in the design. These
 // are the same values that are set in the endpoint request contexts under the
 // MethodKey key.
-var MethodNames = [2]string{"UploadUserOrder", "ListUserOrder"}
+var MethodNames = [3]string{"UploadUserOrder", "ListUserOrder", "GetUserBalance"}
+
+// GetUserBalancePayload is the payload type of the balance service
+// GetUserBalance method.
+type GetUserBalancePayload struct {
+	// A JWT token used to authenticate a request
+	Authorization string
+}
+
+// GetUserBalanceResult is the result type of the balance service
+// GetUserBalance method.
+type GetUserBalanceResult struct {
+	Current   *uint
+	Withdrawn *uint
+}
 
 // ListUserOrderPayload is the payload type of the balance service
 // ListUserOrder method.

@@ -15,6 +15,13 @@ import (
 // "ListUserOrder" endpoint HTTP response body.
 type ListUserOrderResponseBody []*Order
 
+// GetUserBalanceResponseBody is the type of the "balance" service
+// "GetUserBalance" endpoint HTTP response body.
+type GetUserBalanceResponseBody struct {
+	Current   *uint `form:"current,omitempty" json:"current,omitempty" xml:"current,omitempty"`
+	Withdrawn *uint `form:"withdrawn,omitempty" json:"withdrawn,omitempty" xml:"withdrawn,omitempty"`
+}
+
 // Order is used to define fields on response body types.
 type Order struct {
 	Number     string `form:"number" json:"number" xml:"number"`
@@ -37,6 +44,16 @@ func NewListUserOrderResponseBody(res *balance.ListUserOrderResult) ListUserOrde
 	return body
 }
 
+// NewGetUserBalanceResponseBody builds the HTTP response body from the result
+// of the "GetUserBalance" endpoint of the "balance" service.
+func NewGetUserBalanceResponseBody(res *balance.GetUserBalanceResult) *GetUserBalanceResponseBody {
+	body := &GetUserBalanceResponseBody{
+		Current:   res.Current,
+		Withdrawn: res.Withdrawn,
+	}
+	return body
+}
+
 // NewUploadUserOrderPayload builds a balance service UploadUserOrder endpoint
 // payload.
 func NewUploadUserOrderPayload(body string, authorization string) *balance.UploadUserOrderPayload {
@@ -53,6 +70,15 @@ func NewUploadUserOrderPayload(body string, authorization string) *balance.Uploa
 // payload.
 func NewListUserOrderPayload(authorization string) *balance.ListUserOrderPayload {
 	v := &balance.ListUserOrderPayload{}
+	v.Authorization = authorization
+
+	return v
+}
+
+// NewGetUserBalancePayload builds a balance service GetUserBalance endpoint
+// payload.
+func NewGetUserBalancePayload(authorization string) *balance.GetUserBalancePayload {
+	v := &balance.GetUserBalancePayload{}
 	v.Authorization = authorization
 
 	return v

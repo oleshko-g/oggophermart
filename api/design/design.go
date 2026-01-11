@@ -67,6 +67,7 @@ var _ = Service("balance", func() {
 	Error("User is not authenticated", ErrorType)
 	Error("Internal service error", ErrorType)
 	Error("Not implemented", ErrorType)
+	Error("missing_field")
 	HTTP(func() {
 		Header("Authorization", func() {
 			Example(func() {
@@ -100,7 +101,6 @@ var _ = Service("balance", func() {
 		})
 		Error("The order belongs to another user", ErrorType)
 		Error("Invalid order number", ErrorType)
-		Error("missing_field")
 		HTTP(func() {
 			POST("/user/orders")
 			Body("OrderNumber", func() {
@@ -154,12 +154,13 @@ var _ = Service("balance", func() {
 		Result(func() {
 			Attribute("orders", ArrayOf(Order), func() {
 				Example(func() {
-					Value([]Val{{
-						"number":      "9278923470",
-						"status":      "PROCESSED",
-						"accrual":     500,
-						"uploaded_at": "2020-12-10T15:15:45+03:00",
-					},
+					Value([]Val{
+						{
+							"number":      "9278923470",
+							"status":      "PROCESSED",
+							"accrual":     500,
+							"uploaded_at": "2020-12-10T15:15:45+03:00",
+						},
 						{
 							"number":      "12345678903",
 							"status":      "PROCESSING",
@@ -178,7 +179,6 @@ var _ = Service("balance", func() {
 				Meta("openapi:example", "false")
 			})
 		})
-		Error("missing_field")
 		HTTP(func() {
 			GET("/user/orders")
 			Response(StatusOK, func() {
@@ -201,7 +201,42 @@ var _ = Service("balance", func() {
 				Body(Empty)
 			})
 		})
-
+	})
+	Method("GetUserBalance", func() {
+		Description("Get user balance")
+		Payload(func() {
+			Token("Authorization", String, "A JWT token used to authenticate a request", func() {
+				Example(func() {
+					Value("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30")
+				})
+			})
+			Required("Authorization")
+		})
+		Result(func() {
+			Attribute("current", UInt)
+			Attribute("withdrawn", UInt)
+			Example(func() {
+				Value(Val{
+					"current":   500.5,
+					"withdrawn": 42,
+				})
+			})
+		})
+		HTTP(func() {
+			GET("/user/balance")
+			Response(StatusOK)
+			Response("User is not authenticated", StatusUnauthorized, func() {
+				Description("User is not authenticated")
+				Body(Empty)
+			})
+			Response("missing_field", StatusUnauthorized, func() {
+				Description("Missing or empty Authorization header")
+				Body(Empty)
+			})
+			Response("Internal service error", StatusInternalServerError, func() {
+				Body(Empty)
+			})
+		})
 	})
 })
 

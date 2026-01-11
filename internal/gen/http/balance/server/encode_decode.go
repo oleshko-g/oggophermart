@@ -244,6 +244,96 @@ func EncodeListUserOrderError(encoder func(context.Context, http.ResponseWriter)
 	}
 }
 
+// EncodeGetUserBalanceResponse returns an encoder for responses returned by
+// the balance GetUserBalance endpoint.
+func EncodeGetUserBalanceResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
+	return func(ctx context.Context, w http.ResponseWriter, v any) error {
+		res, _ := v.(*balance.GetUserBalanceResult)
+		enc := encoder(ctx, w)
+		body := NewGetUserBalanceResponseBody(res)
+		w.WriteHeader(http.StatusOK)
+		return enc.Encode(body)
+	}
+}
+
+// DecodeGetUserBalanceRequest returns a decoder for requests sent to the
+// balance GetUserBalance endpoint.
+func DecodeGetUserBalanceRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (*balance.GetUserBalancePayload, error) {
+	return func(r *http.Request) (*balance.GetUserBalancePayload, error) {
+		var (
+			authorization string
+			err           error
+		)
+		authorization = r.Header.Get("Authorization")
+		if authorization == "" {
+			err = goa.MergeErrors(err, goa.MissingFieldError("Authorization", "header"))
+		}
+		if err != nil {
+			return nil, err
+		}
+		payload := NewGetUserBalancePayload(authorization)
+		if strings.Contains(payload.Authorization, " ") {
+			// Remove authorization scheme prefix (e.g. "Bearer")
+			cred := strings.SplitN(payload.Authorization, " ", 2)[1]
+			payload.Authorization = cred
+		}
+
+		return payload, nil
+	}
+}
+
+// EncodeGetUserBalanceError returns an encoder for errors returned by the
+// GetUserBalance balance endpoint.
+func EncodeGetUserBalanceError(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder, formatter func(ctx context.Context, err error) goahttp.Statuser) func(context.Context, http.ResponseWriter, error) error {
+	encodeError := goahttp.ErrorEncoder(encoder, formatter)
+	return func(ctx context.Context, w http.ResponseWriter, v error) error {
+		var en goa.GoaErrorNamer
+		if !errors.As(v, &en) {
+			return encodeError(ctx, w, v)
+		}
+		switch en.GoaErrorName() {
+		case "missing_field":
+			var res *goa.ServiceError
+			errors.As(v, &res)
+			w.Header().Set("Goa-Attribute-Name", res.Name)
+			w.Header().Set("Goa-Attribute-Id", res.ID)
+			w.Header().Set("Goa-Attribute-Message", res.Message)
+			{
+				val := res.Temporary
+				temporarys := strconv.FormatBool(val)
+				w.Header().Set("Goa-Attribute-Temporary", temporarys)
+			}
+			{
+				val := res.Timeout
+				timeouts := strconv.FormatBool(val)
+				w.Header().Set("Goa-Attribute-Timeout", timeouts)
+			}
+			{
+				val := res.Fault
+				faults := strconv.FormatBool(val)
+				w.Header().Set("Goa-Attribute-Fault", faults)
+			}
+			w.Header().Set("goa-error", res.GoaErrorName())
+			w.WriteHeader(http.StatusUnauthorized)
+			return nil
+		case "User is not authenticated":
+			var res *service.GophermartError
+			errors.As(v, &res)
+			w.Header().Set("goa-error", res.GoaErrorName())
+			w.WriteHeader(http.StatusUnauthorized)
+			return nil
+		case "Internal service error":
+			var res *service.GophermartError
+			errors.As(v, &res)
+			w.Header().Set("goa-error", res.GoaErrorName())
+			w.WriteHeader(http.StatusInternalServerError)
+			return nil
+		default:
+			return encodeError(ctx, w, v)
+		}
+	}
+}
+
 // marshalBalanceOrderToOrder builds a value of type *Order from a value of
 // type *balance.Order.
 func marshalBalanceOrderToOrder(v *balance.Order) *Order {
