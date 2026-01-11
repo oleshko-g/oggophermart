@@ -16,12 +16,14 @@ import (
 // Client is the "balance" service client.
 type Client struct {
 	UploadUserOrderEndpoint goa.Endpoint
+	ListUserOrderEndpoint   goa.Endpoint
 }
 
 // NewClient initializes a "balance" service client given the endpoints.
-func NewClient(uploadUserOrder goa.Endpoint) *Client {
+func NewClient(uploadUserOrder, listUserOrder goa.Endpoint) *Client {
 	return &Client{
 		UploadUserOrderEndpoint: uploadUserOrder,
+		ListUserOrderEndpoint:   listUserOrder,
 	}
 }
 
@@ -43,4 +45,21 @@ func (c *Client) UploadUserOrder(ctx context.Context, p *UploadUserOrderPayload)
 		return
 	}
 	return ires.(*UploadUserOrderResult), nil
+}
+
+// ListUserOrder calls the "ListUserOrder" endpoint of the "balance" service.
+// ListUserOrder may return the following errors:
+//   - "missing_field" (type *goa.ServiceError)
+//   - "Invalid input parameter" (type *service.GophermartError)
+//   - "User is not authenticated" (type *service.GophermartError)
+//   - "Internal service error" (type *service.GophermartError)
+//   - "Not implemented" (type *service.GophermartError)
+//   - error: internal error
+func (c *Client) ListUserOrder(ctx context.Context, p *ListUserOrderPayload) (res *ListUserOrderResult, err error) {
+	var ires any
+	ires, err = c.ListUserOrderEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(*ListUserOrderResult), nil
 }

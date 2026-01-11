@@ -34,7 +34,7 @@ func New(storage storage.Balance, auther service.Auther) *balanceSvc {
 
 // PostOrder implements post order.
 func (s *balanceSvc) UploadUserOrder(ctx context.Context, payload *genBalance.UploadUserOrderPayload) (res *genBalance.UploadUserOrderResult, err error) {
-	ctx, err = s.Auther.JWTAuth(ctx, payload.JWTToken, nil)
+	ctx, err = s.Auther.JWTAuth(ctx, payload.Authorization, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -94,4 +94,13 @@ func checkOrderNumber(orderNumber string) error {
 	}
 
 	return nil
+}
+
+func (s *balanceSvc) ListUserOrder(context.Context, *genBalance.ListUserOrderPayload) (res *genBalance.ListUserOrderResult, err error) {
+
+	noOrders := "yes"
+	res = &genBalance.ListUserOrderResult{
+		NoOrders: &noOrders,
+	}
+	return res, nil
 }

@@ -20,6 +20,7 @@ import (
 type Server struct {
 	Mounts          []*MountPoint
 	UploadUserOrder http.Handler
+	ListUserOrder   http.Handler
 }
 
 // MountPoint holds information about the mounted endpoints.
@@ -50,8 +51,10 @@ func New(
 	return &Server{
 		Mounts: []*MountPoint{
 			{"UploadUserOrder", "POST", "/api/user/orders"},
+			{"ListUserOrder", "GET", "/api/user/orders"},
 		},
 		UploadUserOrder: NewUploadUserOrderHandler(e.UploadUserOrder, mux, decoder, encoder, errhandler, formatter),
+		ListUserOrder:   NewListUserOrderHandler(e.ListUserOrder, mux, decoder, encoder, errhandler, formatter),
 	}
 }
 
@@ -61,6 +64,7 @@ func (s *Server) Service() string { return "balance" }
 // Use wraps the server handlers with the given middleware.
 func (s *Server) Use(m func(http.Handler) http.Handler) {
 	s.UploadUserOrder = m(s.UploadUserOrder)
+	s.ListUserOrder = m(s.ListUserOrder)
 }
 
 // MethodNames returns the methods served.
@@ -69,6 +73,7 @@ func (s *Server) MethodNames() []string { return balance.MethodNames[:] }
 // Mount configures the mux to serve the balance endpoints.
 func Mount(mux goahttp.Muxer, h *Server) {
 	MountUploadUserOrderHandler(mux, h.UploadUserOrder)
+	MountListUserOrderHandler(mux, h.ListUserOrder)
 }
 
 // Mount configures the mux to serve the balance endpoints.
@@ -106,6 +111,59 @@ func NewUploadUserOrderHandler(
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
 		ctx = context.WithValue(ctx, goa.MethodKey, "UploadUserOrder")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "balance")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			if errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+		}
+	})
+}
+
+// MountListUserOrderHandler configures the mux to serve the "balance" service
+// "ListUserOrder" endpoint.
+func MountListUserOrderHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("GET", "/api/user/orders", f)
+}
+
+// NewListUserOrderHandler creates a HTTP handler which loads the HTTP request
+// and calls the "balance" service "ListUserOrder" endpoint.
+func NewListUserOrderHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeListUserOrderRequest(mux, decoder)
+		encodeResponse = EncodeListUserOrderResponse(encoder)
+		encodeError    = EncodeListUserOrderError(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "ListUserOrder")
 		ctx = context.WithValue(ctx, goa.ServiceKey, "balance")
 		payload, err := decodeRequest(r)
 		if err != nil {

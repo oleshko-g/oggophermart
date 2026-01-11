@@ -34,7 +34,6 @@ func NewClient(register, login goa.Endpoint) *Client {
 //   - "Invalid input parameter" (type *service.GophermartError)
 //   - "User is not authenticated" (type *service.GophermartError)
 //   - "Internal service error" (type *service.GophermartError)
-//   - "Not implemented" (type *service.GophermartError)
 //   - error: internal error
 func (c *Client) Register(ctx context.Context, p *LoginPassword) (res *service.JWTToken, err error) {
 	var ires any
@@ -50,7 +49,6 @@ func (c *Client) Register(ctx context.Context, p *LoginPassword) (res *service.J
 //   - "Invalid input parameter" (type *service.GophermartError)
 //   - "User is not authenticated" (type *service.GophermartError)
 //   - "Internal service error" (type *service.GophermartError)
-//   - "Not implemented" (type *service.GophermartError)
 //   - error: internal error
 func (c *Client) Login(ctx context.Context, p *LoginPassword) (res *service.JWTToken, err error) {
 	var ires any

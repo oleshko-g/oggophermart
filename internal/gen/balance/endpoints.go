@@ -17,6 +17,7 @@ import (
 // Endpoints wraps the "balance" service endpoints.
 type Endpoints struct {
 	UploadUserOrder goa.Endpoint
+	ListUserOrder   goa.Endpoint
 }
 
 // NewEndpoints wraps the methods of the "balance" service with endpoints.
@@ -25,12 +26,14 @@ func NewEndpoints(s Service) *Endpoints {
 	a := s.(Auther)
 	return &Endpoints{
 		UploadUserOrder: NewUploadUserOrderEndpoint(s, a.JWTAuth),
+		ListUserOrder:   NewListUserOrderEndpoint(s, a.JWTAuth),
 	}
 }
 
 // Use applies the given middleware to all the "balance" service endpoints.
 func (e *Endpoints) Use(m func(goa.Endpoint) goa.Endpoint) {
 	e.UploadUserOrder = m(e.UploadUserOrder)
+	e.ListUserOrder = m(e.ListUserOrder)
 }
 
 // NewUploadUserOrderEndpoint returns an endpoint function that calls the
@@ -44,10 +47,29 @@ func NewUploadUserOrderEndpoint(s Service, authJWTFn security.AuthJWTFunc) goa.E
 			Scopes:         []string{},
 			RequiredScopes: []string{},
 		}
-		ctx, err = authJWTFn(ctx, p.JWTToken, &sc)
+		ctx, err = authJWTFn(ctx, p.Authorization, &sc)
 		if err != nil {
 			return nil, err
 		}
 		return s.UploadUserOrder(ctx, p)
+	}
+}
+
+// NewListUserOrderEndpoint returns an endpoint function that calls the method
+// "ListUserOrder" of service "balance".
+func NewListUserOrderEndpoint(s Service, authJWTFn security.AuthJWTFunc) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		p := req.(*ListUserOrderPayload)
+		var err error
+		sc := security.JWTScheme{
+			Name:           "jwt",
+			Scopes:         []string{},
+			RequiredScopes: []string{},
+		}
+		ctx, err = authJWTFn(ctx, p.Authorization, &sc)
+		if err != nil {
+			return nil, err
+		}
+		return s.ListUserOrder(ctx, p)
 	}
 }

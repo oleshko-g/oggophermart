@@ -11,14 +11,49 @@ import (
 	balance "github.com/oleshko-g/oggophermart/internal/gen/balance"
 )
 
+// ListUserOrderResponseBody is the type of the "balance" service
+// "ListUserOrder" endpoint HTTP response body.
+type ListUserOrderResponseBody []*Order
+
+// Order is used to define fields on response body types.
+type Order struct {
+	Number     string `form:"number" json:"number" xml:"number"`
+	Status     string `form:"status" json:"status" xml:"status"`
+	Accrual    *uint  `form:"accrual,omitempty" json:"accrual,omitempty" xml:"accrual,omitempty"`
+	UploadedAt string `form:"uploaded_at" json:"uploaded_at" xml:"uploaded_at"`
+}
+
+// NewListUserOrderResponseBody builds the HTTP response body from the result
+// of the "ListUserOrder" endpoint of the "balance" service.
+func NewListUserOrderResponseBody(res *balance.ListUserOrderResult) ListUserOrderResponseBody {
+	body := make([]*Order, len(res.Orders))
+	for i, val := range res.Orders {
+		if val == nil {
+			body[i] = nil
+			continue
+		}
+		body[i] = marshalBalanceOrderToOrder(val)
+	}
+	return body
+}
+
 // NewUploadUserOrderPayload builds a balance service UploadUserOrder endpoint
 // payload.
-func NewUploadUserOrderPayload(body string, jWTToken string) *balance.UploadUserOrderPayload {
+func NewUploadUserOrderPayload(body string, authorization string) *balance.UploadUserOrderPayload {
 	v := body
 	res := &balance.UploadUserOrderPayload{
 		OrderNumber: v,
 	}
-	res.JWTToken = jWTToken
+	res.Authorization = authorization
 
 	return res
+}
+
+// NewListUserOrderPayload builds a balance service ListUserOrder endpoint
+// payload.
+func NewListUserOrderPayload(authorization string) *balance.ListUserOrderPayload {
+	v := &balance.ListUserOrderPayload{}
+	v.Authorization = authorization
+
+	return v
 }

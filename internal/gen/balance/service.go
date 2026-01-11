@@ -18,6 +18,8 @@ import (
 type Service interface {
 	// Upload user order
 	UploadUserOrder(context.Context, *UploadUserOrderPayload) (res *UploadUserOrderResult, err error)
+	// List user orders
+	ListUserOrder(context.Context, *ListUserOrderPayload) (res *ListUserOrderResult, err error)
 }
 
 // Auther defines the authorization functions to be implemented by the service.
@@ -40,13 +42,34 @@ const ServiceName = "balance"
 // MethodNames lists the service method names as defined in the design. These
 // are the same values that are set in the endpoint request contexts under the
 // MethodKey key.
-var MethodNames = [1]string{"UploadUserOrder"}
+var MethodNames = [2]string{"UploadUserOrder", "ListUserOrder"}
+
+// ListUserOrderPayload is the payload type of the balance service
+// ListUserOrder method.
+type ListUserOrderPayload struct {
+	// A JWT token used to authenticate a request
+	Authorization string
+}
+
+// ListUserOrderResult is the result type of the balance service ListUserOrder
+// method.
+type ListUserOrderResult struct {
+	Orders   []*Order
+	NoOrders *string `json:"-"`
+}
+
+type Order struct {
+	Number     string
+	Status     string
+	Accrual    *uint
+	UploadedAt string
+}
 
 // UploadUserOrderPayload is the payload type of the balance service
 // UploadUserOrder method.
 type UploadUserOrderPayload struct {
 	// A JWT token used to authenticate a request
-	JWTToken string
+	Authorization string
 	// Unique user order number
 	OrderNumber string
 }
