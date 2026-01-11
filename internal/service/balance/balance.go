@@ -131,3 +131,24 @@ func (s *balanceSvc) ListUserOrder(ctx context.Context, payload *genBalance.List
 
 	return res, nil
 }
+
+func (s *balanceSvc) GetUserBalance(ctx context.Context, payload *genBalance.GetUserBalancePayload) (res *genBalance.GetUserBalanceResult, err error) {
+	ctx, err = s.Auther.JWTAuth(ctx, payload.Authorization, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	userID, err := s.Auther.UserIDFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	userBalance, err := s.Balance.Retrieve(ctx, userID)
+	if err != nil {
+		return &genBalance.GetUserBalanceResult{}, err
+	}
+	return &genBalance.GetUserBalanceResult{
+		Current:   float64((userBalance.Current / 100)),
+		Withdrawn: float64((userBalance.WithdrawnSum / 100)),
+	}, nil
+}
