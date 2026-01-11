@@ -15,17 +15,19 @@ import (
 
 // Client is the "balance" service client.
 type Client struct {
-	UploadUserOrderEndpoint goa.Endpoint
-	ListUserOrderEndpoint   goa.Endpoint
-	GetUserBalanceEndpoint  goa.Endpoint
+	UploadUserOrderEndpoint     goa.Endpoint
+	ListUserOrderEndpoint       goa.Endpoint
+	GetUserBalanceEndpoint      goa.Endpoint
+	WithdrawUserBalanceEndpoint goa.Endpoint
 }
 
 // NewClient initializes a "balance" service client given the endpoints.
-func NewClient(uploadUserOrder, listUserOrder, getUserBalance goa.Endpoint) *Client {
+func NewClient(uploadUserOrder, listUserOrder, getUserBalance, withdrawUserBalance goa.Endpoint) *Client {
 	return &Client{
-		UploadUserOrderEndpoint: uploadUserOrder,
-		ListUserOrderEndpoint:   listUserOrder,
-		GetUserBalanceEndpoint:  getUserBalance,
+		UploadUserOrderEndpoint:     uploadUserOrder,
+		ListUserOrderEndpoint:       listUserOrder,
+		GetUserBalanceEndpoint:      getUserBalance,
+		WithdrawUserBalanceEndpoint: withdrawUserBalance,
 	}
 }
 
@@ -81,4 +83,20 @@ func (c *Client) GetUserBalance(ctx context.Context, p *GetUserBalancePayload) (
 		return
 	}
 	return ires.(*GetUserBalanceResult), nil
+}
+
+// WithdrawUserBalance calls the "WithdrawUserBalance" endpoint of the
+// "balance" service.
+// WithdrawUserBalance may return the following errors:
+//   - "Insufficient funds" (type *service.GophermartError)
+//   - "Invalid order number" (type *service.GophermartError)
+//   - "Invalid input parameter" (type *service.GophermartError)
+//   - "User is not authenticated" (type *service.GophermartError)
+//   - "Internal service error" (type *service.GophermartError)
+//   - "Not implemented" (type *service.GophermartError)
+//   - "missing_field" (type *goa.ServiceError)
+//   - error: internal error
+func (c *Client) WithdrawUserBalance(ctx context.Context, p *WithdrawUserBalancePayload) (err error) {
+	_, err = c.WithdrawUserBalanceEndpoint(ctx, p)
+	return
 }

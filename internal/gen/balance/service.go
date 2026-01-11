@@ -22,6 +22,8 @@ type Service interface {
 	ListUserOrder(context.Context, *ListUserOrderPayload) (res *ListUserOrderResult, err error)
 	// Get user balance
 	GetUserBalance(context.Context, *GetUserBalancePayload) (res *GetUserBalanceResult, err error)
+	// WithdrawUserBalance implements WithdrawUserBalance.
+	WithdrawUserBalance(context.Context, *WithdrawUserBalancePayload) (err error)
 }
 
 // Auther defines the authorization functions to be implemented by the service.
@@ -44,7 +46,7 @@ const ServiceName = "balance"
 // MethodNames lists the service method names as defined in the design. These
 // are the same values that are set in the endpoint request contexts under the
 // MethodKey key.
-var MethodNames = [3]string{"UploadUserOrder", "ListUserOrder", "GetUserBalance"}
+var MethodNames = [4]string{"UploadUserOrder", "ListUserOrder", "GetUserBalance", "WithdrawUserBalance"}
 
 // GetUserBalancePayload is the payload type of the balance service
 // GetUserBalance method.
@@ -94,6 +96,15 @@ type UploadUserOrderPayload struct {
 // UploadUserOrder method.
 type UploadUserOrderResult struct {
 	Accepted *string `json:"-"`
+}
+
+// WithdrawUserBalancePayload is the payload type of the balance service
+// WithdrawUserBalance method.
+type WithdrawUserBalancePayload struct {
+	// A JWT token used to authenticate a request
+	Authorization string
+	Order         string
+	Sum           float64
 }
 
 // MakeMissingField builds a goa.ServiceError from an error.

@@ -18,10 +18,11 @@ import (
 
 // Server lists the balance service endpoint HTTP handlers.
 type Server struct {
-	Mounts          []*MountPoint
-	UploadUserOrder http.Handler
-	ListUserOrder   http.Handler
-	GetUserBalance  http.Handler
+	Mounts              []*MountPoint
+	UploadUserOrder     http.Handler
+	ListUserOrder       http.Handler
+	GetUserBalance      http.Handler
+	WithdrawUserBalance http.Handler
 }
 
 // MountPoint holds information about the mounted endpoints.
@@ -54,10 +55,12 @@ func New(
 			{"UploadUserOrder", "POST", "/api/user/orders"},
 			{"ListUserOrder", "GET", "/api/user/orders"},
 			{"GetUserBalance", "GET", "/api/user/balance"},
+			{"WithdrawUserBalance", "POST", "/api/user/balance/withdraw"},
 		},
-		UploadUserOrder: NewUploadUserOrderHandler(e.UploadUserOrder, mux, decoder, encoder, errhandler, formatter),
-		ListUserOrder:   NewListUserOrderHandler(e.ListUserOrder, mux, decoder, encoder, errhandler, formatter),
-		GetUserBalance:  NewGetUserBalanceHandler(e.GetUserBalance, mux, decoder, encoder, errhandler, formatter),
+		UploadUserOrder:     NewUploadUserOrderHandler(e.UploadUserOrder, mux, decoder, encoder, errhandler, formatter),
+		ListUserOrder:       NewListUserOrderHandler(e.ListUserOrder, mux, decoder, encoder, errhandler, formatter),
+		GetUserBalance:      NewGetUserBalanceHandler(e.GetUserBalance, mux, decoder, encoder, errhandler, formatter),
+		WithdrawUserBalance: NewWithdrawUserBalanceHandler(e.WithdrawUserBalance, mux, decoder, encoder, errhandler, formatter),
 	}
 }
 
@@ -69,6 +72,7 @@ func (s *Server) Use(m func(http.Handler) http.Handler) {
 	s.UploadUserOrder = m(s.UploadUserOrder)
 	s.ListUserOrder = m(s.ListUserOrder)
 	s.GetUserBalance = m(s.GetUserBalance)
+	s.WithdrawUserBalance = m(s.WithdrawUserBalance)
 }
 
 // MethodNames returns the methods served.
@@ -79,6 +83,7 @@ func Mount(mux goahttp.Muxer, h *Server) {
 	MountUploadUserOrderHandler(mux, h.UploadUserOrder)
 	MountListUserOrderHandler(mux, h.ListUserOrder)
 	MountGetUserBalanceHandler(mux, h.GetUserBalance)
+	MountWithdrawUserBalanceHandler(mux, h.WithdrawUserBalance)
 }
 
 // Mount configures the mux to serve the balance endpoints.
@@ -222,6 +227,59 @@ func NewGetUserBalanceHandler(
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
 		ctx = context.WithValue(ctx, goa.MethodKey, "GetUserBalance")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "balance")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			if errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+		}
+	})
+}
+
+// MountWithdrawUserBalanceHandler configures the mux to serve the "balance"
+// service "WithdrawUserBalance" endpoint.
+func MountWithdrawUserBalanceHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("POST", "/api/user/balance/withdraw", f)
+}
+
+// NewWithdrawUserBalanceHandler creates a HTTP handler which loads the HTTP
+// request and calls the "balance" service "WithdrawUserBalance" endpoint.
+func NewWithdrawUserBalanceHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeWithdrawUserBalanceRequest(mux, decoder)
+		encodeResponse = EncodeWithdrawUserBalanceResponse(encoder)
+		encodeError    = EncodeWithdrawUserBalanceError(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "WithdrawUserBalance")
 		ctx = context.WithValue(ctx, goa.ServiceKey, "balance")
 		payload, err := decodeRequest(r)
 		if err != nil {

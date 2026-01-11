@@ -16,9 +16,10 @@ import (
 
 // Endpoints wraps the "balance" service endpoints.
 type Endpoints struct {
-	UploadUserOrder goa.Endpoint
-	ListUserOrder   goa.Endpoint
-	GetUserBalance  goa.Endpoint
+	UploadUserOrder     goa.Endpoint
+	ListUserOrder       goa.Endpoint
+	GetUserBalance      goa.Endpoint
+	WithdrawUserBalance goa.Endpoint
 }
 
 // NewEndpoints wraps the methods of the "balance" service with endpoints.
@@ -26,9 +27,10 @@ func NewEndpoints(s Service) *Endpoints {
 	// Casting service to Auther interface
 	a := s.(Auther)
 	return &Endpoints{
-		UploadUserOrder: NewUploadUserOrderEndpoint(s, a.JWTAuth),
-		ListUserOrder:   NewListUserOrderEndpoint(s, a.JWTAuth),
-		GetUserBalance:  NewGetUserBalanceEndpoint(s, a.JWTAuth),
+		UploadUserOrder:     NewUploadUserOrderEndpoint(s, a.JWTAuth),
+		ListUserOrder:       NewListUserOrderEndpoint(s, a.JWTAuth),
+		GetUserBalance:      NewGetUserBalanceEndpoint(s, a.JWTAuth),
+		WithdrawUserBalance: NewWithdrawUserBalanceEndpoint(s, a.JWTAuth),
 	}
 }
 
@@ -37,6 +39,7 @@ func (e *Endpoints) Use(m func(goa.Endpoint) goa.Endpoint) {
 	e.UploadUserOrder = m(e.UploadUserOrder)
 	e.ListUserOrder = m(e.ListUserOrder)
 	e.GetUserBalance = m(e.GetUserBalance)
+	e.WithdrawUserBalance = m(e.WithdrawUserBalance)
 }
 
 // NewUploadUserOrderEndpoint returns an endpoint function that calls the
@@ -93,5 +96,24 @@ func NewGetUserBalanceEndpoint(s Service, authJWTFn security.AuthJWTFunc) goa.En
 			return nil, err
 		}
 		return s.GetUserBalance(ctx, p)
+	}
+}
+
+// NewWithdrawUserBalanceEndpoint returns an endpoint function that calls the
+// method "WithdrawUserBalance" of service "balance".
+func NewWithdrawUserBalanceEndpoint(s Service, authJWTFn security.AuthJWTFunc) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		p := req.(*WithdrawUserBalancePayload)
+		var err error
+		sc := security.JWTScheme{
+			Name:           "jwt",
+			Scopes:         []string{},
+			RequiredScopes: []string{},
+		}
+		ctx, err = authJWTFn(ctx, p.Authorization, &sc)
+		if err != nil {
+			return nil, err
+		}
+		return nil, s.WithdrawUserBalance(ctx, p)
 	}
 }

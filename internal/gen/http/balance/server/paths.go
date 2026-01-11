@@ -21,3 +21,8 @@ func ListUserOrderBalancePath() string {
 func GetUserBalanceBalancePath() string {
 	return "/api/user/balance"
 }
+
+// WithdrawUserBalanceBalancePath returns the URL path to the balance service WithdrawUserBalance HTTP endpoint.
+func WithdrawUserBalanceBalancePath() string {
+	return "/api/user/balance/withdraw"
+}

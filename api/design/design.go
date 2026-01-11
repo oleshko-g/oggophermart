@@ -213,7 +213,7 @@ var _ = Service("balance", func() {
 			Required("Authorization")
 		})
 		Result(func() {
-			Attribute("current", Float64, func(){
+			Attribute("current", Float64, func() {
 				Minimum(0)
 			})
 			Attribute("withdrawn", Float64, func() {
@@ -239,6 +239,55 @@ var _ = Service("balance", func() {
 				Body(Empty)
 			})
 			Response("Internal service error", StatusInternalServerError, func() {
+				Body(Empty)
+			})
+		})
+	})
+	Method("WithdrawUserBalance", func() {
+		Payload(func() {
+			Token("Authorization", String, "A JWT token used to authenticate a request", func() {
+				Example(func() {
+					Value("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30")
+				})
+			})
+			Attribute("order", String, func() {
+				Pattern("[1-9][0-9]*")
+			})
+			Attribute("sum", Float64, func() {
+				ExclusiveMinimum(0)
+			})
+			Required("Authorization", "order", "sum")
+			Example(func() {
+				Value(
+					Val{
+						"order": "2377225624",
+						"sum":   751,
+					})
+			})
+		})
+		Error("Insufficient funds", ErrorType)
+		Error("Invalid order number", ErrorType)
+		HTTP(func() {
+			POST("/user/balance/withdraw")
+			Response(StatusOK, func(){
+				Body(Empty)
+			})
+			Response("User is not authenticated", StatusUnauthorized, func() {
+				Description("User is not authenticated")
+			})
+			Response("missing_field", StatusUnauthorized, func() {
+				Body(Empty)
+				Description("Missing or empty Authorization header")
+			})
+			Response("Insufficient funds", StatusPaymentRequired, func() {
+				Body(Empty)
+				Description("Insufficient funds")
+			})
+			Response("Invalid order number", StatusUnprocessableEntity, func() {
+				Body(Empty)
+				Description("Invalid order number")
+			})
+			Response("Internal service error", StatusInternalServerError, func(){
 				Body(Empty)
 			})
 		})
