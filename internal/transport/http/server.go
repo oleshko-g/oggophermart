@@ -51,7 +51,7 @@ func newHandlers(loggingCtx context.Context, balanceEndpoints *balance.Endpoints
 	userServer.Mount(mux)
 
 	loggingMiddleware := log.HTTP(loggingCtx)
-	var handlers http.Handler = loggingMiddleware(mux)
+	var handlers = loggingMiddleware(mux)
 
 	return handlers
 
