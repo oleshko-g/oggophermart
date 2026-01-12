@@ -35,12 +35,15 @@ var MethodNames = [1]string{"GetOrder"}
 
 // GetOrderPayload is the payload type of the accrual service GetOrder method.
 type GetOrderPayload struct {
-	Number string
+	Number OrderNumber
 }
 
 // GetOrderResult is the result type of the accrual service GetOrder method.
 type GetOrderResult struct {
-	Order   *string
-	Status  *string
-	Accrual *uint
+	Order   OrderNumber
+	Status  string
+	Accrual *float64
 }
+
+// Unique user order number
+type OrderNumber string

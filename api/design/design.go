@@ -269,7 +269,7 @@ var _ = Service("balance", func() {
 		Error("Invalid order number", ErrorType)
 		HTTP(func() {
 			POST("/user/balance/withdraw")
-			Response(StatusOK, func(){
+			Response(StatusOK, func() {
 				Body(Empty)
 			})
 			Response("User is not authenticated", StatusUnauthorized, func() {
@@ -287,7 +287,7 @@ var _ = Service("balance", func() {
 				Body(Empty)
 				Description("Invalid order number")
 			})
-			Response("Internal service error", StatusInternalServerError, func(){
+			Response("Internal service error", StatusInternalServerError, func() {
 				Body(Empty)
 			})
 		})
@@ -296,17 +296,59 @@ var _ = Service("balance", func() {
 
 var _ = Service("accrual", func() {
 	Method("GetOrder", func() {
-		Error("Internal service error", ErrorType)
-		Result(GetOrderResult)
+
 		Payload(func() {
-			Attribute("number", String, func() {
-			})
+			Attribute("number", OrderNumber)
 			Required("number")
 		})
+
+		Result(func() {
+			Attribute("order", OrderNumber)
+			Attribute("status", String, func() {
+				Enum("REGISTERED", "INVALID", "PROCESSING", "PROCESSED")
+			})
+			Attribute("accrual", Float64, func() {
+				ExclusiveMinimum(0)
+			})
+			Required("order", "status")
+			Example(func() {
+				Value(Val{
+					"order":   "42",
+					"status":  "PROCESSED",
+					"accrual": 500.1,
+				})
+				Value(Val{
+					"order":  "32",
+					"status": "INVALID",
+				})
+				Value(Val{
+					"order":  "2",
+					"status": "PROCESSING",
+				})
+				Value(Val{
+					"order":  "4",
+					"status": "REGISTERED",
+				})
+			})
+		})
+
+		Error("Internal service error", ErrorType)
+		Error("The request rate limit has been exceeded", ErrorType, func() {
+			Required("retryAfter")
+		})
+
 		HTTP(func() {
 			GET("GET /orders/{number}")
 			Param("number", String)
 			Response(StatusOK)
+			Response(StatusNoContent, func() {
+				Body(Empty)
+			})
+			Response("The request rate limit has been exceeded", StatusTooManyRequests, func() {
+				Description("The request rate limit has been exceeded")
+				Header("retryAfter:Retry-After")
+				ContentType("text/plain")
+			})
 			Response("Internal service error", StatusInternalServerError, func() {
 				Body(Empty)
 			})
@@ -324,9 +366,6 @@ var UploadUserOrderResult = Type("PostOrderResult", func() {
 	Meta("openapi:example", "false")
 })
 var GetOrderResult = Type("GetOrderResult", func() {
-	Attribute("order", String)
-	Attribute("status", String)
-	Attribute("accrual", UInt)
 })
 
 var LoginPassword = Type("LoginPassword", func() {
@@ -347,6 +386,14 @@ var ErrorType = Type("GophermartError", func() {
 		Meta("struct:tag:json", "-")
 		Meta("openapi:generate", "false")
 		Meta("openapi:example", "false")
+	})
+	Attribute("retryAfter", Int, func() {
+		ExclusiveMinimum(0)
+	})
+	Attribute("message", String, func() {
+		Example(func() {
+			Value("No more than N requests per minute allowed")
+		})
 	})
 	Required("name")
 	Meta("openapi:generate", "false")
@@ -381,4 +428,9 @@ var Order = Type("Order", func() {
 		Format(FormatDateTime)
 	})
 	Required("number", "status", "uploaded_at")
+})
+
+var OrderNumber = Type("OrderNumber", String, func() {
+	Description("Unique user order number")
+	Pattern("[1-9][0-9]*")
 })

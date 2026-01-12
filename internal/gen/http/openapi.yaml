@@ -21,13 +21,28 @@ paths:
             parameters:
                 - name: number
                   in: path
+                  description: Unique user order number
                   required: true
                   type: string
             responses:
                 "200":
                     description: OK response.
                     schema:
-                        $ref: '#/definitions/GetOrderResult'
+                        $ref: '#/definitions/AccrualGetOrderOKResponseBody'
+                        required:
+                            - order
+                            - status
+                "204":
+                    description: No Content response.
+                "429":
+                    description: The request rate limit has been exceeded
+                    schema:
+                        $ref: '#/definitions/GophermartError'
+                    headers:
+                        Retry-After:
+                            type: int
+                            minimum: 0
+                            exclusiveMinimum: true
                 "500":
                     description: Internal Server Error response.
             schemes:
@@ -301,18 +316,45 @@ paths:
             schemes:
                 - http
 definitions:
+    AccrualGetOrderOKResponseBody:
+        title: AccrualGetOrderOKResponseBody
+        type: object
+        properties:
+            accrual:
+                type: number
+                example: 0.2311765057275559
+                format: double
+                exclusiveMinimum: 0
+            order:
+                type: string
+                example: "63"
+                pattern: '[1-9][0-9]*'
+            status:
+                type: string
+                example: PROCESSED
+                enum:
+                    - REGISTERED
+                    - INVALID
+                    - PROCESSING
+                    - PROCESSED
+        example:
+            order: "4"
+            status: REGISTERED
+        required:
+            - order
+            - status
     BalanceGetUserBalanceResponseBody:
         title: BalanceGetUserBalanceResponseBody
         type: object
         properties:
             current:
                 type: number
-                example: 0.21885177407856155
+                example: 0.17393165634984303
                 format: double
                 minimum: 0
             withdrawn:
                 type: number
-                example: 0.2311765057275559
+                example: 0.33680348811088484
                 format: double
                 minimum: 0
         example:
@@ -327,11 +369,11 @@ definitions:
         properties:
             order:
                 type: string
-                example: "73"
+                example: "37"
                 pattern: '[1-9][0-9]*'
             sum:
                 type: number
-                example: 0.3143055584652567
+                example: 0.0820482784418813
                 format: double
                 exclusiveMinimum: 0
         example:
@@ -340,38 +382,33 @@ definitions:
         required:
             - order
             - sum
-    GetOrderResult:
-        title: GetOrderResult
-        type: object
-        properties:
-            accrual:
-                type: integer
-                example: 14526632522361058921
-                format: int64
-            order:
-                type: string
-                example: Porro assumenda ratione sit asperiores consequuntur.
-            status:
-                type: string
-                example: Ut et.
-        example:
-            accrual: 14520640612919729376
-            order: Distinctio magnam sint odit provident iure dolor.
-            status: Eius cumque illum saepe.
     GophermartError:
         title: GophermartError
         type: object
-        example: {}
+        properties:
+            message:
+                type: string
+                example: No more than N requests per minute allowed
+            retryAfter:
+                type: integer
+                example: 7573087497501387079
+                format: int64
+                exclusiveMinimum: 0
+        example:
+            message: No more than N requests per minute allowed
+            retryAfter: 6385731172690446965
+        required:
+            - retryAfter
     LoginPassword:
         title: LoginPassword
         type: object
         properties:
             login:
                 type: string
-                example: Magnam quae dignissimos veritatis.
+                example: Id voluptate et et maxime sequi qui.
             password:
                 type: string
-                example: Magnam nihil.
+                example: Aperiam rem amet enim magnam.
         example:
             login: <login>
             password: <password>
@@ -384,15 +421,15 @@ definitions:
         properties:
             accrual:
                 type: integer
-                example: 753508728145150533
+                example: 15162918931243448596
                 format: int64
             number:
                 type: string
-                example: "545"
+                example: "94"
                 pattern: '[1-9][0-9]*'
             status:
                 type: string
-                example: PROCESSING
+                example: PROCESSED
                 enum:
                     - NEW
                     - PROCESSING
@@ -400,13 +437,13 @@ definitions:
                     - PROCESSED
             uploaded_at:
                 type: string
-                example: "2014-02-15T02:22:50Z"
+                example: "1992-05-31T08:51:44Z"
                 format: date-time
         example:
-            accrual: 14303696236861458581
-            number: "154"
+            accrual: 16060451496832791997
+            number: "930"
             status: PROCESSED
-            uploaded_at: "1987-01-04T22:48:33Z"
+            uploaded_at: "1981-11-13T01:47:34Z"
         required:
             - number
             - status

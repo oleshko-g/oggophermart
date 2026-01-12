@@ -36,7 +36,9 @@ type GetUserBalanceResponseBody struct {
 // "User is not authenticated" error.
 type WithdrawUserBalanceUserIsNotAuthenticatedResponseBody struct {
 	// identifier to map an error to HTTP status codes
-	Name string `json:"-"`
+	Name       string  `json:"-"`
+	RetryAfter int     `form:"retryAfter" json:"retryAfter" xml:"retryAfter"`
+	Message    *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
 }
 
 // Order is used to define fields on response body types.
@@ -76,7 +78,9 @@ func NewGetUserBalanceResponseBody(res *balance.GetUserBalanceResult) *GetUserBa
 // "balance" service.
 func NewWithdrawUserBalanceUserIsNotAuthenticatedResponseBody(res *service.GophermartError) *WithdrawUserBalanceUserIsNotAuthenticatedResponseBody {
 	body := &WithdrawUserBalanceUserIsNotAuthenticatedResponseBody{
-		Name: res.Name,
+		Name:       res.Name,
+		RetryAfter: res.RetryAfter,
+		Message:    res.Message,
 	}
 	return body
 }

@@ -13,9 +13,11 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 
 	accrual "github.com/oleshko-g/oggophermart/internal/gen/accrual"
 	goahttp "goa.design/goa/v3/http"
+	goa "goa.design/goa/v3/pkg"
 )
 
 // BuildGetOrderRequest instantiates a HTTP request object with method and path
@@ -29,7 +31,7 @@ func (c *Client) BuildGetOrderRequest(ctx context.Context, v any) (*http.Request
 		if !ok {
 			return nil, goahttp.ErrInvalidType("accrual", "GetOrder", "*accrual.GetOrderPayload", v)
 		}
-		number = p.Number
+		number = string(p.Number)
 	}
 	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: GetOrderAccrualPath(number)}
 	req, err := http.NewRequest("GET", u.String(), nil)
@@ -47,6 +49,7 @@ func (c *Client) BuildGetOrderRequest(ctx context.Context, v any) (*http.Request
 // accrual GetOrder endpoint. restoreBody controls whether the response body
 // should be restored after having been read.
 // DecodeGetOrderResponse may return the following errors:
+//   - "The request rate limit has been exceeded" (type *service.GophermartError): http.StatusTooManyRequests
 //   - "Internal service error" (type *service.GophermartError): http.StatusInternalServerError
 //   - error: internal error
 func DecodeGetOrderResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
@@ -66,15 +69,49 @@ func DecodeGetOrderResponse(decoder func(*http.Response) goahttp.Decoder, restor
 		switch resp.StatusCode {
 		case http.StatusOK:
 			var (
-				body GetOrderResponseBody
+				body GetOrderOKResponseBody
 				err  error
 			)
 			err = decoder(resp).Decode(&body)
 			if err != nil {
 				return nil, goahttp.ErrDecodingError("accrual", "GetOrder", err)
 			}
+			err = ValidateGetOrderOKResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("accrual", "GetOrder", err)
+			}
 			res := NewGetOrderResultOK(&body)
 			return res, nil
+		case http.StatusTooManyRequests:
+			var (
+				body GetOrderTheRequestRateLimitHasBeenExceededResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("accrual", "GetOrder", err)
+			}
+			var (
+				retryAfter int
+			)
+			{
+				retryAfterRaw := resp.Header.Get("Retry-After")
+				if retryAfterRaw == "" {
+					return nil, goahttp.ErrValidationError("accrual", "GetOrder", goa.MissingFieldError("retryAfter", "header"))
+				}
+				v, err2 := strconv.ParseInt(retryAfterRaw, 10, strconv.IntSize)
+				if err2 != nil {
+					err = goa.MergeErrors(err, goa.InvalidFieldTypeError("retryAfter", retryAfterRaw, "integer"))
+				}
+				retryAfter = int(v)
+			}
+			if retryAfter <= 0 {
+				err = goa.MergeErrors(err, goa.InvalidRangeError("retryAfter", retryAfter, 0, true))
+			}
+			if err != nil {
+				return nil, goahttp.ErrValidationError("accrual", "GetOrder", err)
+			}
+			return nil, NewGetOrderTheRequestRateLimitHasBeenExceeded(&body, retryAfter)
 		case http.StatusInternalServerError:
 			return nil, NewGetOrderInternalServiceError()
 		default:

@@ -9,7 +9,9 @@ package service
 
 type GophermartError struct {
 	// identifier to map an error to HTTP status codes
-	Name string `json:"-"`
+	Name       string `json:"-"`
+	RetryAfter int
+	Message    *string
 }
 
 // Error returns an error description.
