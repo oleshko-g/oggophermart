@@ -27,8 +27,8 @@ func NewClient(getOrder goa.Endpoint) *Client {
 
 // GetOrder calls the "GetOrder" endpoint of the "accrual" service.
 // GetOrder may return the following errors:
-//   - "Internal service error" (type *service.GophermartError)
-//   - "The request rate limit has been exceeded" (type *service.GophermartError)
+//   - "Internal service error" (type *service.AccrualError)
+//   - "The request rate limit has been exceeded" (type *service.AccrualError)
 //   - error: internal error
 func (c *Client) GetOrder(ctx context.Context, p *GetOrderPayload) (res *GetOrderResult, err error) {
 	var ires any

@@ -7,24 +7,26 @@
 
 package service
 
-type GophermartError struct {
+type AccrualError struct {
 	// identifier to map an error to HTTP status codes
-	Name string `json:"-"`
+	Name       string `json:"-"`
+	RetryAfter int
+	Message    string
 }
 
 // Error returns an error description.
-func (e *GophermartError) Error() string {
+func (e *AccrualError) Error() string {
 	return ""
 }
 
-// ErrorName returns "GophermartError".
+// ErrorName returns "AccrualError".
 //
 // Deprecated: Use GoaErrorName - https://github.com/goadesign/goa/issues/3105
-func (e *GophermartError) ErrorName() string {
+func (e *AccrualError) ErrorName() string {
 	return e.GoaErrorName()
 }
 
-// GoaErrorName returns "GophermartError".
-func (e *GophermartError) GoaErrorName() string {
+// GoaErrorName returns "AccrualError".
+func (e *AccrualError) GoaErrorName() string {
 	return e.Name
 }

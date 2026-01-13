@@ -20,9 +20,9 @@ type WithdrawUserBalanceRequestBody struct {
 	Sum   *float64 `form:"sum,omitempty" json:"sum,omitempty" xml:"sum,omitempty"`
 }
 
-// ListUserOrderResponseBody is the type of the "balance" service
-// "ListUserOrder" endpoint HTTP response body.
-type ListUserOrderResponseBody []*Order
+// ListUserOrdersResponseBody is the type of the "balance" service
+// "ListUserOrders" endpoint HTTP response body.
+type ListUserOrdersResponseBody []*Order
 
 // GetUserBalanceResponseBody is the type of the "balance" service
 // "GetUserBalance" endpoint HTTP response body.
@@ -36,9 +36,7 @@ type GetUserBalanceResponseBody struct {
 // "User is not authenticated" error.
 type WithdrawUserBalanceUserIsNotAuthenticatedResponseBody struct {
 	// identifier to map an error to HTTP status codes
-	Name       string  `json:"-"`
-	RetryAfter int     `form:"retryAfter" json:"retryAfter" xml:"retryAfter"`
-	Message    *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
+	Name string `json:"-"`
 }
 
 // Order is used to define fields on response body types.
@@ -49,9 +47,9 @@ type Order struct {
 	UploadedAt string `form:"uploaded_at" json:"uploaded_at" xml:"uploaded_at"`
 }
 
-// NewListUserOrderResponseBody builds the HTTP response body from the result
-// of the "ListUserOrder" endpoint of the "balance" service.
-func NewListUserOrderResponseBody(res *balance.ListUserOrderResult) ListUserOrderResponseBody {
+// NewListUserOrdersResponseBody builds the HTTP response body from the result
+// of the "ListUserOrders" endpoint of the "balance" service.
+func NewListUserOrdersResponseBody(res *balance.ListUserOrdersResult) ListUserOrdersResponseBody {
 	body := make([]*Order, len(res.Orders))
 	for i, val := range res.Orders {
 		if val == nil {
@@ -78,9 +76,7 @@ func NewGetUserBalanceResponseBody(res *balance.GetUserBalanceResult) *GetUserBa
 // "balance" service.
 func NewWithdrawUserBalanceUserIsNotAuthenticatedResponseBody(res *service.GophermartError) *WithdrawUserBalanceUserIsNotAuthenticatedResponseBody {
 	body := &WithdrawUserBalanceUserIsNotAuthenticatedResponseBody{
-		Name:       res.Name,
-		RetryAfter: res.RetryAfter,
-		Message:    res.Message,
+		Name: res.Name,
 	}
 	return body
 }
@@ -97,10 +93,10 @@ func NewUploadUserOrderPayload(body string, authorization string) *balance.Uploa
 	return res
 }
 
-// NewListUserOrderPayload builds a balance service ListUserOrder endpoint
+// NewListUserOrdersPayload builds a balance service ListUserOrders endpoint
 // payload.
-func NewListUserOrderPayload(authorization string) *balance.ListUserOrderPayload {
-	v := &balance.ListUserOrderPayload{}
+func NewListUserOrdersPayload(authorization string) *balance.ListUserOrdersPayload {
+	v := &balance.ListUserOrdersPayload{}
 	v.Authorization = authorization
 
 	return v

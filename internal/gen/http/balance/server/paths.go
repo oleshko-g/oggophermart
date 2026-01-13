@@ -12,8 +12,8 @@ func UploadUserOrderBalancePath() string {
 	return "/api/user/orders"
 }
 
-// ListUserOrderBalancePath returns the URL path to the balance service ListUserOrder HTTP endpoint.
-func ListUserOrderBalancePath() string {
+// ListUserOrdersBalancePath returns the URL path to the balance service ListUserOrders HTTP endpoint.
+func ListUserOrdersBalancePath() string {
 	return "/api/user/orders"
 }
 

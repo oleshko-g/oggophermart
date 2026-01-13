@@ -49,8 +49,8 @@ func (c *Client) BuildGetOrderRequest(ctx context.Context, v any) (*http.Request
 // accrual GetOrder endpoint. restoreBody controls whether the response body
 // should be restored after having been read.
 // DecodeGetOrderResponse may return the following errors:
-//   - "The request rate limit has been exceeded" (type *service.GophermartError): http.StatusTooManyRequests
-//   - "Internal service error" (type *service.GophermartError): http.StatusInternalServerError
+//   - "The request rate limit has been exceeded" (type *service.AccrualError): http.StatusTooManyRequests
+//   - "Internal service error" (type *service.AccrualError): http.StatusInternalServerError
 //   - error: internal error
 func DecodeGetOrderResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
 	return func(resp *http.Response) (any, error) {
@@ -90,6 +90,10 @@ func DecodeGetOrderResponse(decoder func(*http.Response) goahttp.Decoder, restor
 			err = decoder(resp).Decode(&body)
 			if err != nil {
 				return nil, goahttp.ErrDecodingError("accrual", "GetOrder", err)
+			}
+			err = ValidateGetOrderTheRequestRateLimitHasBeenExceededResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("accrual", "GetOrder", err)
 			}
 			var (
 				retryAfter int

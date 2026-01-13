@@ -44,10 +44,10 @@ func NewGetOrderResultOK(body *GetOrderOKResponseBody) *accrual.GetOrderResult {
 
 // NewGetOrderTheRequestRateLimitHasBeenExceeded builds a accrual service
 // GetOrder endpoint The request rate limit has been exceeded error.
-func NewGetOrderTheRequestRateLimitHasBeenExceeded(body *GetOrderTheRequestRateLimitHasBeenExceededResponseBody, retryAfter int) *service.GophermartError {
-	v := &service.GophermartError{
+func NewGetOrderTheRequestRateLimitHasBeenExceeded(body *GetOrderTheRequestRateLimitHasBeenExceededResponseBody, retryAfter int) *service.AccrualError {
+	v := &service.AccrualError{
 		Name:    body.Name,
-		Message: body.Message,
+		Message: *body.Message,
 	}
 	v.RetryAfter = retryAfter
 
@@ -56,8 +56,8 @@ func NewGetOrderTheRequestRateLimitHasBeenExceeded(body *GetOrderTheRequestRateL
 
 // NewGetOrderInternalServiceError builds a accrual service GetOrder endpoint
 // Internal service error error.
-func NewGetOrderInternalServiceError() *service.GophermartError {
-	v := &service.GophermartError{}
+func NewGetOrderInternalServiceError() *service.AccrualError {
+	v := &service.AccrualError{}
 
 	return v
 }
@@ -83,6 +83,16 @@ func ValidateGetOrderOKResponseBody(body *GetOrderOKResponseBody) (err error) {
 		if *body.Accrual <= 0 {
 			err = goa.MergeErrors(err, goa.InvalidRangeError("body.accrual", *body.Accrual, 0, true))
 		}
+	}
+	return
+}
+
+// ValidateGetOrderTheRequestRateLimitHasBeenExceededResponseBody runs the
+// validations defined on GetOrder_The request rate limit has been
+// exceeded_Response_Body
+func ValidateGetOrderTheRequestRateLimitHasBeenExceededResponseBody(body *GetOrderTheRequestRateLimitHasBeenExceededResponseBody) (err error) {
+	if body.Message == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
 	}
 	return
 }

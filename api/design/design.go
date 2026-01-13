@@ -10,6 +10,7 @@ var _ = API("gophermart", func() {
 	})
 })
 
+// INFO: User
 var _ = Service("user", func() {
 	Error("Invalid input parameter", ErrorType)
 	Error("User is not authenticated", ErrorType)
@@ -61,6 +62,7 @@ var _ = Service("user", func() {
 	})
 })
 
+// INFO: Balance
 var _ = Service("balance", func() {
 	Security(JWTAuth)
 	Error("Invalid input parameter", ErrorType)
@@ -141,7 +143,7 @@ var _ = Service("balance", func() {
 			})
 		})
 	})
-	Method("ListUserOrder", func() {
+	Method("ListUserOrders", func() {
 		Description("List user orders")
 		Payload(func() {
 			Token("Authorization", String, "A JWT token used to authenticate a request", func() {
@@ -294,6 +296,7 @@ var _ = Service("balance", func() {
 	})
 })
 
+// INFO: Accrual
 var _ = Service("accrual", func() {
 	Method("GetOrder", func() {
 
@@ -310,6 +313,7 @@ var _ = Service("accrual", func() {
 			Attribute("accrual", Float64, func() {
 				ExclusiveMinimum(0)
 			})
+
 			Required("order", "status")
 			Example(func() {
 				Value(Val{
@@ -332,9 +336,9 @@ var _ = Service("accrual", func() {
 			})
 		})
 
-		Error("Internal service error", ErrorType)
-		Error("The request rate limit has been exceeded", ErrorType, func() {
-			Required("retryAfter")
+		Error("Internal service error", AccrualErrorType)
+		Error("The request rate limit has been exceeded", AccrualErrorType, func() {
+			Required("retryAfter", "message")
 		})
 
 		HTTP(func() {
@@ -387,14 +391,6 @@ var ErrorType = Type("GophermartError", func() {
 		Meta("openapi:generate", "false")
 		Meta("openapi:example", "false")
 	})
-	Attribute("retryAfter", Int, func() {
-		ExclusiveMinimum(0)
-	})
-	Attribute("message", String, func() {
-		Example(func() {
-			Value("No more than N requests per minute allowed")
-		})
-	})
 	Required("name")
 	Meta("openapi:generate", "false")
 	Meta("openapi:example", "false")
@@ -433,4 +429,25 @@ var Order = Type("Order", func() {
 var OrderNumber = Type("OrderNumber", String, func() {
 	Description("Unique user order number")
 	Pattern("[1-9][0-9]*")
+})
+
+var AccrualErrorType = Type("AccrualError", func() {
+	ErrorName("name", func() {
+		Description("identifier to map an error to HTTP status codes")
+		Meta("struct:tag:json", "-")
+		Meta("openapi:generate", "false")
+		Meta("openapi:example", "false")
+	})
+
+	Attribute("retryAfter", Int, func() {
+		ExclusiveMinimum(0)
+	})
+
+	Attribute("message", String)
+
+	Meta("openapi:generate", "false")
+	Meta("openapi:example", "false")
+	Meta("struct:pkg:path", "service")
+
+	Required("name")
 })

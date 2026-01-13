@@ -16,16 +16,16 @@ import (
 // Client is the "balance" service client.
 type Client struct {
 	UploadUserOrderEndpoint     goa.Endpoint
-	ListUserOrderEndpoint       goa.Endpoint
+	ListUserOrdersEndpoint      goa.Endpoint
 	GetUserBalanceEndpoint      goa.Endpoint
 	WithdrawUserBalanceEndpoint goa.Endpoint
 }
 
 // NewClient initializes a "balance" service client given the endpoints.
-func NewClient(uploadUserOrder, listUserOrder, getUserBalance, withdrawUserBalance goa.Endpoint) *Client {
+func NewClient(uploadUserOrder, listUserOrders, getUserBalance, withdrawUserBalance goa.Endpoint) *Client {
 	return &Client{
 		UploadUserOrderEndpoint:     uploadUserOrder,
-		ListUserOrderEndpoint:       listUserOrder,
+		ListUserOrdersEndpoint:      listUserOrders,
 		GetUserBalanceEndpoint:      getUserBalance,
 		WithdrawUserBalanceEndpoint: withdrawUserBalance,
 	}
@@ -51,21 +51,21 @@ func (c *Client) UploadUserOrder(ctx context.Context, p *UploadUserOrderPayload)
 	return ires.(*UploadUserOrderResult), nil
 }
 
-// ListUserOrder calls the "ListUserOrder" endpoint of the "balance" service.
-// ListUserOrder may return the following errors:
+// ListUserOrders calls the "ListUserOrders" endpoint of the "balance" service.
+// ListUserOrders may return the following errors:
 //   - "Invalid input parameter" (type *service.GophermartError)
 //   - "User is not authenticated" (type *service.GophermartError)
 //   - "Internal service error" (type *service.GophermartError)
 //   - "Not implemented" (type *service.GophermartError)
 //   - "missing_field" (type *goa.ServiceError)
 //   - error: internal error
-func (c *Client) ListUserOrder(ctx context.Context, p *ListUserOrderPayload) (res *ListUserOrderResult, err error) {
+func (c *Client) ListUserOrders(ctx context.Context, p *ListUserOrdersPayload) (res *ListUserOrdersResult, err error) {
 	var ires any
-	ires, err = c.ListUserOrderEndpoint(ctx, p)
+	ires, err = c.ListUserOrdersEndpoint(ctx, p)
 	if err != nil {
 		return
 	}
-	return ires.(*ListUserOrderResult), nil
+	return ires.(*ListUserOrdersResult), nil
 }
 
 // GetUserBalance calls the "GetUserBalance" endpoint of the "balance" service.

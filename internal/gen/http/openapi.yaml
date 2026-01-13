@@ -37,7 +37,9 @@ paths:
                 "429":
                     description: The request rate limit has been exceeded
                     schema:
-                        $ref: '#/definitions/GophermartError'
+                        $ref: '#/definitions/AccrualError'
+                        required:
+                            - message
                     headers:
                         Retry-After:
                             type: int
@@ -183,9 +185,9 @@ paths:
         get:
             tags:
                 - balance
-            summary: ListUserOrder balance
+            summary: ListUserOrders balance
             description: List user orders
-            operationId: balance#ListUserOrder
+            operationId: balance#ListUserOrders
             parameters:
                 - name: Authorization
                   in: header
@@ -316,6 +318,17 @@ paths:
             schemes:
                 - http
 definitions:
+    AccrualError:
+        title: AccrualError
+        type: object
+        properties:
+            message:
+                type: string
+                example: Repellat temporibus sit consequatur.
+        example:
+            message: Assumenda ratione sit asperiores consequuntur earum.
+        required:
+            - message
     AccrualGetOrderOKResponseBody:
         title: AccrualGetOrderOKResponseBody
         type: object
@@ -369,11 +382,11 @@ definitions:
         properties:
             order:
                 type: string
-                example: "37"
+                example: "886"
                 pattern: '[1-9][0-9]*'
             sum:
                 type: number
-                example: 0.0820482784418813
+                example: 0.3539816693068508
                 format: double
                 exclusiveMinimum: 0
         example:
@@ -385,30 +398,17 @@ definitions:
     GophermartError:
         title: GophermartError
         type: object
-        properties:
-            message:
-                type: string
-                example: No more than N requests per minute allowed
-            retryAfter:
-                type: integer
-                example: 7573087497501387079
-                format: int64
-                exclusiveMinimum: 0
-        example:
-            message: No more than N requests per minute allowed
-            retryAfter: 6385731172690446965
-        required:
-            - retryAfter
+        example: {}
     LoginPassword:
         title: LoginPassword
         type: object
         properties:
             login:
                 type: string
-                example: Id voluptate et et maxime sequi qui.
+                example: Ea id voluptate et et maxime.
             password:
                 type: string
-                example: Aperiam rem amet enim magnam.
+                example: Qui accusamus aperiam rem amet enim magnam.
         example:
             login: <login>
             password: <password>
@@ -421,15 +421,15 @@ definitions:
         properties:
             accrual:
                 type: integer
-                example: 15162918931243448596
+                example: 13776325716155642653
                 format: int64
             number:
                 type: string
-                example: "94"
+                example: "5"
                 pattern: '[1-9][0-9]*'
             status:
                 type: string
-                example: PROCESSED
+                example: NEW
                 enum:
                     - NEW
                     - PROCESSING

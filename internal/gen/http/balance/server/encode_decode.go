@@ -150,26 +150,26 @@ func EncodeUploadUserOrderError(encoder func(context.Context, http.ResponseWrite
 	}
 }
 
-// EncodeListUserOrderResponse returns an encoder for responses returned by the
-// balance ListUserOrder endpoint.
-func EncodeListUserOrderResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
+// EncodeListUserOrdersResponse returns an encoder for responses returned by
+// the balance ListUserOrders endpoint.
+func EncodeListUserOrdersResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
 	return func(ctx context.Context, w http.ResponseWriter, v any) error {
-		res, _ := v.(*balance.ListUserOrderResult)
+		res, _ := v.(*balance.ListUserOrdersResult)
 		if res.NoOrders != nil && *res.NoOrders == "yes" {
 			w.WriteHeader(http.StatusNoContent)
 			return nil
 		}
 		enc := encoder(ctx, w)
-		body := NewListUserOrderResponseBody(res)
+		body := NewListUserOrdersResponseBody(res)
 		w.WriteHeader(http.StatusOK)
 		return enc.Encode(body)
 	}
 }
 
-// DecodeListUserOrderRequest returns a decoder for requests sent to the
-// balance ListUserOrder endpoint.
-func DecodeListUserOrderRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (*balance.ListUserOrderPayload, error) {
-	return func(r *http.Request) (*balance.ListUserOrderPayload, error) {
+// DecodeListUserOrdersRequest returns a decoder for requests sent to the
+// balance ListUserOrders endpoint.
+func DecodeListUserOrdersRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (*balance.ListUserOrdersPayload, error) {
+	return func(r *http.Request) (*balance.ListUserOrdersPayload, error) {
 		var (
 			authorization string
 			err           error
@@ -181,7 +181,7 @@ func DecodeListUserOrderRequest(mux goahttp.Muxer, decoder func(*http.Request) g
 		if err != nil {
 			return nil, err
 		}
-		payload := NewListUserOrderPayload(authorization)
+		payload := NewListUserOrdersPayload(authorization)
 		if strings.Contains(payload.Authorization, " ") {
 			// Remove authorization scheme prefix (e.g. "Bearer")
 			cred := strings.SplitN(payload.Authorization, " ", 2)[1]
@@ -192,9 +192,9 @@ func DecodeListUserOrderRequest(mux goahttp.Muxer, decoder func(*http.Request) g
 	}
 }
 
-// EncodeListUserOrderError returns an encoder for errors returned by the
-// ListUserOrder balance endpoint.
-func EncodeListUserOrderError(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder, formatter func(ctx context.Context, err error) goahttp.Statuser) func(context.Context, http.ResponseWriter, error) error {
+// EncodeListUserOrdersError returns an encoder for errors returned by the
+// ListUserOrders balance endpoint.
+func EncodeListUserOrdersError(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder, formatter func(ctx context.Context, err error) goahttp.Statuser) func(context.Context, http.ResponseWriter, error) error {
 	encodeError := goahttp.ErrorEncoder(encoder, formatter)
 	return func(ctx context.Context, w http.ResponseWriter, v error) error {
 		var en goa.GoaErrorNamer
