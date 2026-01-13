@@ -338,7 +338,7 @@ var _ = Service("accrual", func() {
 
 		Error("Internal service error", AccrualErrorType)
 		Error("The request rate limit has been exceeded", AccrualErrorType, func() {
-			Required("retryAfter", "message")
+			Required("name", "retryAfter", "message")
 		})
 
 		HTTP(func() {

@@ -46,7 +46,7 @@ func NewGetOrderResultOK(body *GetOrderOKResponseBody) *accrual.GetOrderResult {
 // GetOrder endpoint The request rate limit has been exceeded error.
 func NewGetOrderTheRequestRateLimitHasBeenExceeded(body *GetOrderTheRequestRateLimitHasBeenExceededResponseBody, retryAfter int) *service.AccrualError {
 	v := &service.AccrualError{
-		Name:    body.Name,
+		Name:    *body.Name,
 		Message: *body.Message,
 	}
 	v.RetryAfter = retryAfter
@@ -91,6 +91,9 @@ func ValidateGetOrderOKResponseBody(body *GetOrderOKResponseBody) (err error) {
 // validations defined on GetOrder_The request rate limit has been
 // exceeded_Response_Body
 func ValidateGetOrderTheRequestRateLimitHasBeenExceededResponseBody(body *GetOrderTheRequestRateLimitHasBeenExceededResponseBody) (err error) {
+	if body.Name == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
+	}
 	if body.Message == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
 	}
