@@ -4,7 +4,12 @@ import (
 	"context"
 	"errors"
 	"flag"
+	"fmt"
 	"os"
+	"os/signal"
+	"sync"
+	"syscall"
+	"time"
 
 	"github.com/joho/godotenv"
 	genAccrualHTTPClient "github.com/oleshko-g/oggophermart/internal/gen/http/accrual/client"
@@ -17,7 +22,6 @@ import (
 	"github.com/oleshko-g/oggophermart/internal/transport/http"
 	"goa.design/clue/log"
 	goahttp "goa.design/goa/v3/http"
-	"golang.org/x/sync/errgroup"
 )
 
 type gophermart struct {
@@ -206,20 +210,40 @@ func (g *gophermart) run() (err error) {
 	if !g.readyToRun {
 		return errSetupGophermartNotReadyToRun
 	}
-	errGroup, _ := errgroup.WithContext(g.loggingCtx)
 
-	errGroup.Go(func() error {
-		log.Infof(g.loggingCtx, "in HTTP server")
-		return g.transport.http.Server.ListenAndServe()
+	var wg sync.WaitGroup
+
+	runCtx, runCancel := context.WithCancelCause(g.loggingCtx)
+	defer runCancel(nil)
+
+	osSignals := make(chan os.Signal, 1)
+	wg.Go(func() {
+		log.Infof(g.loggingCtx, "in os.Signal goroutine")
+		signal.Notify(osSignals, syscall.SIGINT, syscall.SIGTERM)
+		err = fmt.Errorf("recieved OS signal: %s", <-osSignals)
+		runCancel(err)
 	})
 
-	// TODO: make accrual worker
+	wg.Go(func() {
+		log.Infof(g.loggingCtx, "in HTTP server")
+		errHTTP := g.transport.http.Server.ListenAndServe()
+		if errHTTP != nil {
+			runCancel(errHTTP)
+		}
+		log.Printf(g.loggingCtx, "gophermart HTTP server is listening on %s", g.transport.http.Address().String())
 
-	// TODO: add os.Signal handling
-	// TODO: add graceful shutdown
+		<-runCtx.Done()
 
-	log.Printf(g.loggingCtx, "gophermart HTTP server is listening on %s", g.transport.http.Address().String())
-	return errGroup.Wait()
+		ctx := context.Background()
+		shutdownCtx, shutdownCancel := context.WithTimeout(ctx, 30*time.Second)
+		defer shutdownCancel()
+		g.transport.http.Server.Shutdown(shutdownCtx)
+		err = runCtx.Err()
+	})
+
+	wg.Wait()
+
+	return err
 }
 
 var errSetupGophermartNotConfigured = errors.New("can't setup. gophermart isn't configured")

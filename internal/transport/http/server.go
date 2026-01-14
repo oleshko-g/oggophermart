@@ -19,6 +19,7 @@ import (
 
 type Server interface {
 	ListenAndServe() error
+	Shutdown(context.Context) error
 }
 
 type server struct {
