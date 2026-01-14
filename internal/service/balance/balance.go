@@ -14,8 +14,6 @@ import (
 	storageErrors "github.com/oleshko-g/oggophermart/internal/storage/errors"
 )
 
-// balance service example implementation.
-// The example methods log the requests and return zero values.
 type balanceSvc struct {
 	storage.Balance
 	service.Auther
@@ -96,7 +94,7 @@ func checkOrderNumber(orderNumber string) error {
 	return nil
 }
 
-func (s *balanceSvc) ListUserOrder(ctx context.Context, payload *genBalance.ListUserOrderPayload) (res *genBalance.ListUserOrderResult, err error) {
+func (s *balanceSvc) ListUserOrders(ctx context.Context, payload *genBalance.ListUserOrdersPayload) (res *genBalance.ListUserOrdersResult, err error) {
 
 	ctx, err = s.Auther.JWTAuth(ctx, payload.Authorization, nil)
 	if err != nil {
@@ -113,7 +111,7 @@ func (s *balanceSvc) ListUserOrder(ctx context.Context, payload *genBalance.List
 		return nil, err
 	}
 
-	res = new(genBalance.ListUserOrderResult)
+	res = new(genBalance.ListUserOrdersResult)
 	if ordersByUserID == nil {
 		noOrders := "yes"
 		res.NoOrders = &noOrders
@@ -151,4 +149,8 @@ func (s *balanceSvc) GetUserBalance(ctx context.Context, payload *genBalance.Get
 		Current:   float64((userBalance.Current / 100)),
 		Withdrawn: float64((userBalance.WithdrawnSum / 100)),
 	}, nil
+}
+
+func (s *balanceSvc) WithdrawUserBalance(context.Context, *genBalance.WithdrawUserBalancePayload) (err error) {
+	return nil
 }
