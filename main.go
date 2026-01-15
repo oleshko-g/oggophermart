@@ -191,14 +191,13 @@ func (g *gophermart) setup() (err error) {
 	g.transport.http.Server = http.NewServer(g.loggingCtx, g.transport.http.Config, g.Service)
 
 	// 4. Instanicates the Accrual system HTTP client
-	// err = genAccrual.NewGetOrderEndpoint(a)
 	g.transport.http.client.accrual = genAccrualHTTPClient.NewClient(
 		g.transport.http.AccrualAddress().Host,
 		g.transport.http.AccrualAddress().Port,
 		&http.Client{},
 		goahttp.RequestEncoder,
 		goahttp.ResponseDecoder,
-		true,
+		true, // restoreBody after each request
 	)
 
 	g.readyToRun = true
@@ -226,11 +225,11 @@ func (g *gophermart) run() (err error) {
 
 	wg.Go(func() {
 		log.Infof(g.loggingCtx, "in HTTP server")
+		log.Printf(g.loggingCtx, "gophermart HTTP server is listening on %s", g.transport.http.Address().String())
 		errHTTP := g.transport.http.Server.ListenAndServe()
 		if errHTTP != nil {
 			runCancel(errHTTP)
 		}
-		log.Printf(g.loggingCtx, "gophermart HTTP server is listening on %s", g.transport.http.Address().String())
 
 		<-runCtx.Done()
 
@@ -238,7 +237,15 @@ func (g *gophermart) run() (err error) {
 		shutdownCtx, shutdownCancel := context.WithTimeout(ctx, 30*time.Second)
 		defer shutdownCancel()
 		g.transport.http.Server.Shutdown(shutdownCtx)
-		err = runCtx.Err()
+		err = shutdownCtx.Err()
+	})
+
+	wg.Go(func() {
+		errProcessAccruals := g.Service.Balance.ProcessAccruals(runCtx, *g.transport.http.client.accrual)
+		if err != nil {
+			runCancel(errProcessAccruals)
+			err = errProcessAccruals
+		}
 	})
 
 	wg.Wait()

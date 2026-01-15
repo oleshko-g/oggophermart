@@ -8,6 +8,7 @@ import (
 
 	"github.com/EClaesson/go-luhn"
 	genBalance "github.com/oleshko-g/oggophermart/internal/gen/balance"
+	genAccrualHTTPClient "github.com/oleshko-g/oggophermart/internal/gen/http/accrual/client"
 	"github.com/oleshko-g/oggophermart/internal/service"
 	svcErrors "github.com/oleshko-g/oggophermart/internal/service/errors"
 	"github.com/oleshko-g/oggophermart/internal/storage"
@@ -152,5 +153,11 @@ func (s *balanceSvc) GetUserBalance(ctx context.Context, payload *genBalance.Get
 }
 
 func (s *balanceSvc) WithdrawUserBalance(context.Context, *genBalance.WithdrawUserBalancePayload) (err error) {
+	return nil
+}
+
+func (s *balanceSvc) ProcessAccruals(ctx context.Context, client genAccrualHTTPClient.Client) error {
+	_ = client
+	<-ctx.Done()
 	return nil
 }
