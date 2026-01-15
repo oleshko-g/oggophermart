@@ -218,9 +218,15 @@ func (g *gophermart) run() (err error) {
 	osSignals := make(chan os.Signal, 1)
 	wg.Go(func() {
 		log.Infof(g.loggingCtx, "in os.Signal goroutine")
-		signal.Notify(osSignals, syscall.SIGINT, syscall.SIGTERM)
-		err = fmt.Errorf("recieved OS signal: %s", <-osSignals)
-		runCancel(err)
+		signal.Notify(osSignals, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+		select {
+		case sig := <-osSignals:
+			err = fmt.Errorf("recieved OS signal: %s", sig)
+			runCancel(err)
+			return
+		case <-runCtx.Done():
+			return
+		}
 	})
 
 	wg.Go(func() {
@@ -232,7 +238,7 @@ func (g *gophermart) run() (err error) {
 		}
 
 		<-runCtx.Done()
-
+		log.Infof(g.loggingCtx, "Shutting down HTTP server because %s", context.Cause(runCtx))
 		ctx := context.Background()
 		shutdownCtx, shutdownCancel := context.WithTimeout(ctx, 30*time.Second)
 		defer shutdownCancel()
