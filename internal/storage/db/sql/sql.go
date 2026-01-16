@@ -191,3 +191,14 @@ func (s *Storage) Retrieve(ctx context.Context, userID uuid.UUID) (genDBSQL.Sele
 	}
 	return userBalance, nil
 }
+
+func (s *Storage) RetrieveOrderIDsForAccrual(ctx context.Context) ([]uuid.UUID, error) {
+	statuses := []string{schema.OrderStatusNew, schema.OrderStatusProcessing}
+
+	orderIDs, err := s.queries.SelectOrdersIDsByStatuses(ctx, statuses)
+	if err != nil {
+		return nil, err
+	}
+
+	return orderIDs, nil
+}
