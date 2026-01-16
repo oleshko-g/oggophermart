@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/EClaesson/go-luhn"
+	"github.com/google/uuid"
 	genBalance "github.com/oleshko-g/oggophermart/internal/gen/balance"
 	genAccrualHTTPClient "github.com/oleshko-g/oggophermart/internal/gen/http/accrual/client"
 	"github.com/oleshko-g/oggophermart/internal/service"
@@ -18,6 +19,7 @@ import (
 type balanceSvc struct {
 	storage.Balance
 	service.Auther
+	accrualOrdersToProcess chan uuid.UUID
 }
 
 var _ genBalance.Service = (*balanceSvc)(nil)
@@ -26,8 +28,9 @@ var _ genBalance.Auther = (*balanceSvc)(nil)
 // New returns the balance service implementation.
 func New(storage storage.Balance, auther service.Auther) *balanceSvc {
 	return &balanceSvc{
-		Balance: storage,
-		Auther:  auther,
+		Balance:                storage,
+		Auther:                 auther,
+		accrualOrdersToProcess: make(chan uuid.UUID),
 	}
 }
 
@@ -157,7 +160,37 @@ func (s *balanceSvc) WithdrawUserBalance(context.Context, *genBalance.WithdrawUs
 }
 
 func (s *balanceSvc) ProcessAccruals(ctx context.Context, client genAccrualHTTPClient.Client) error {
-	_ = client
-	<-ctx.Done()
+	errCh := make(chan error, 1)
+	s.accrualOrdersToProcess = make(chan uuid.UUID)
+
+	go func() {
+		orderIDs, err := s.RetrieveOrderIDsForAccrual(ctx)
+		if err != nil {
+			errCh <- err
+		}
+		errCh <- s.sendAccrualOrdersToProcess(orderIDs)
+	}()
+
+	for {
+		select {
+		case <-s.accrualOrdersToProcess:
+		case <-ctx.Done():
+			return context.Cause(ctx)
+		case err := <-errCh:
+			return err
+		}
+	}
+
+}
+
+func (s *balanceSvc) sendAccrualOrdersToProcess(orderIDs []uuid.UUID) error {
+	if s.accrualOrdersToProcess == nil { // guards against no reader on the channel
+		return svcErrors.ErrAccrualProcessingNotStarted
+	}
+
+	for _, orderID := range orderIDs {
+		s.accrualOrdersToProcess <- orderID
+	}
+
 	return nil
 }
