@@ -298,7 +298,7 @@ var _ = Service("balance", func() {
 
 // INFO: Accrual
 var _ = Service("accrual", func() {
-	Method("GetOrder", func() {
+	Method("GetOrderAccrual", func() {
 
 		Payload(func() {
 			Attribute("number", OrderNumber)

@@ -32,4 +32,5 @@ type Balance interface {
 	RetrieaveUserOrders(ctx context.Context, userID uuid.UUID) ([]genDBSQL.SelectOrdersByUserIDRow, error)
 	Retrieve(ctx context.Context, userID uuid.UUID) (genDBSQL.SelectBalanceByUserIDRow, error)
 	RetrieveOrderIDsForAccrual(ctx context.Context) ([]uuid.UUID, error)
+	RetrieveOrderNumberForAccrual(ctx context.Context, orderID uuid.UUID) (string, error)
 }

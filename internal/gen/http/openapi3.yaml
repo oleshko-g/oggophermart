@@ -10,8 +10,8 @@ paths:
         get:
             tags:
                 - accrual
-            summary: GetOrder accrual
-            operationId: accrual#GetOrder
+            summary: GetOrderAccrual accrual
+            operationId: accrual#GetOrderAccrual
             parameters:
                 - name: number
                   in: path
@@ -28,7 +28,7 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/GetOrderOKResponseBody'
+                                $ref: '#/components/schemas/GetOrderAccrualOKResponseBody'
                             example:
                                 order: "4"
                                 status: REGISTERED
@@ -445,7 +445,7 @@ components:
                 message: Laudantium dolorem.
             required:
                 - message
-        GetOrderOKResponseBody:
+        GetOrderAccrualOKResponseBody:
             type: object
             properties:
                 accrual:

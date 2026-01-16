@@ -11,7 +11,7 @@ import (
 	"fmt"
 )
 
-// GetOrderAccrualPath returns the URL path to the accrual service GetOrder HTTP endpoint.
-func GetOrderAccrualPath(number string) string {
+// GetOrderAccrualAccrualPath returns the URL path to the accrual service GetOrderAccrual HTTP endpoint.
+func GetOrderAccrualAccrualPath(number string) string {
 	return fmt.Sprintf("/api/GET /orders/%v", number)
 }

@@ -173,7 +173,10 @@ func (s *balanceSvc) ProcessAccruals(ctx context.Context, client genAccrualHTTPC
 
 	for {
 		select {
-		case <-s.accrualOrdersToProcess:
+		case orderID := <-s.accrualOrdersToProcess:
+			go func() {
+				errCh <- s.proccessAccrual(ctx, orderID, client)
+			}()
 		case <-ctx.Done():
 			return context.Cause(ctx)
 		case err := <-errCh:
@@ -185,7 +188,7 @@ func (s *balanceSvc) ProcessAccruals(ctx context.Context, client genAccrualHTTPC
 
 func (s *balanceSvc) sendAccrualOrdersToProcess(orderIDs []uuid.UUID) error {
 	if s.accrualOrdersToProcess == nil { // guards against no reader on the channel
-		return svcErrors.ErrAccrualProcessingNotStarted
+		return ErrAccrualProcessingNotStarted
 	}
 
 	for _, orderID := range orderIDs {
@@ -193,4 +196,45 @@ func (s *balanceSvc) sendAccrualOrdersToProcess(orderIDs []uuid.UUID) error {
 	}
 
 	return nil
+}
+
+func (s *balanceSvc) proccessAccrual(ctx context.Context, orderID uuid.UUID, client genAccrualHTTPClient.Client) error {
+	errCh := make(chan error, 1)
+	orderNumber, err := s.RetrieveOrderNumberForAccrual(ctx, orderID)
+	if err != nil {
+		return err
+	}
+	go func() {
+		orderAccrual, err := getOrderAccrual(ctx, orderNumber, client)
+		_ = orderAccrual
+		errCh <- err
+	}()
+	select {
+	case err := <-errCh:
+		return err
+	case <-ctx.Done():
+		return context.Cause(ctx)
+	}
+
+}
+
+func getOrderAccrual(ctx context.Context, orderNumber string, client genAccrualHTTPClient.Client) (genAccrualHTTPClient.GetOrderAccrualOKResponseBody, error) {
+	getOrderAccrual := client.GetOrderAccrual()
+
+	reqBody, err := genAccrualHTTPClient.BuildGetOrderAccrualPayload(orderNumber)
+	if err != nil {
+		return genAccrualHTTPClient.GetOrderAccrualOKResponseBody{}, err
+	}
+
+	orderAccrual, err := getOrderAccrual(ctx, reqBody)
+	if err != nil {
+		return genAccrualHTTPClient.GetOrderAccrualOKResponseBody{}, err
+	}
+
+	v, ok := orderAccrual.(genAccrualHTTPClient.GetOrderAccrualOKResponseBody)
+	if !ok {
+		return genAccrualHTTPClient.GetOrderAccrualOKResponseBody{}, ErrFailedToGetOrderAccrual
+	}
+
+	return v, nil
 }

@@ -202,3 +202,14 @@ func (s *Storage) RetrieveOrderIDsForAccrual(ctx context.Context) ([]uuid.UUID, 
 
 	return orderIDs, nil
 }
+
+func (s *Storage) 	RetrieveOrderNumberForAccrual(ctx context.Context, orderID uuid.UUID) (string, error) {
+	_, _ = ctx, orderID
+	order, err := s.queries.SelectOrderNumberAndStatusByID(ctx, orderID)
+	if err != nil {
+		return "", nil
+	}
+
+
+	return order.Number, nil
+}

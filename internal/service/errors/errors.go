@@ -2,8 +2,6 @@
 package errors
 
 import (
-	"errors"
-
 	genSvc "github.com/oleshko-g/oggophermart/internal/gen/service"
 )
 
@@ -23,7 +21,4 @@ var (
 	ErrInternalServiceError = New("Internal service error")
 	// ErrNotImplemented is the error value which is used to map to the 501 Not Implemented HTTP Status code
 	ErrNotImplemented = New("Not Implemented")
-
-	// ErrAccrualNotStarted is the error returned when new accrual order arrives while accrual proccessing hasn't started yet
-	ErrAccrualProcessingNotStarted = errors.New("Accrual processing hasn't started yet")
 )

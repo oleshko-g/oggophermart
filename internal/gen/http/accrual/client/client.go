@@ -17,9 +17,9 @@ import (
 
 // Client lists the accrual service endpoint HTTP clients.
 type Client struct {
-	// GetOrder Doer is the HTTP client used to make requests to the GetOrder
-	// endpoint.
-	GetOrderDoer goahttp.Doer
+	// GetOrderAccrual Doer is the HTTP client used to make requests to the
+	// GetOrderAccrual endpoint.
+	GetOrderAccrualDoer goahttp.Doer
 
 	// RestoreResponseBody controls whether the response bodies are reset after
 	// decoding so they can be read again.
@@ -41,7 +41,7 @@ func NewClient(
 	restoreBody bool,
 ) *Client {
 	return &Client{
-		GetOrderDoer:        doer,
+		GetOrderAccrualDoer: doer,
 		RestoreResponseBody: restoreBody,
 		scheme:              scheme,
 		host:                host,
@@ -50,20 +50,20 @@ func NewClient(
 	}
 }
 
-// GetOrder returns an endpoint that makes HTTP requests to the accrual service
-// GetOrder server.
-func (c *Client) GetOrder() goa.Endpoint {
+// GetOrderAccrual returns an endpoint that makes HTTP requests to the accrual
+// service GetOrderAccrual server.
+func (c *Client) GetOrderAccrual() goa.Endpoint {
 	var (
-		decodeResponse = DecodeGetOrderResponse(c.decoder, c.RestoreResponseBody)
+		decodeResponse = DecodeGetOrderAccrualResponse(c.decoder, c.RestoreResponseBody)
 	)
 	return func(ctx context.Context, v any) (any, error) {
-		req, err := c.BuildGetOrderRequest(ctx, v)
+		req, err := c.BuildGetOrderAccrualRequest(ctx, v)
 		if err != nil {
 			return nil, err
 		}
-		resp, err := c.GetOrderDoer.Do(req)
+		resp, err := c.GetOrderAccrualDoer.Do(req)
 		if err != nil {
-			return nil, goahttp.ErrRequestError("accrual", "GetOrder", err)
+			return nil, goahttp.ErrRequestError("accrual", "GetOrderAccrual", err)
 		}
 		return decodeResponse(resp)
 	}

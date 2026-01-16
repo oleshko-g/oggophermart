@@ -16,8 +16,8 @@ paths:
         get:
             tags:
                 - accrual
-            summary: GetOrder accrual
-            operationId: accrual#GetOrder
+            summary: GetOrderAccrual accrual
+            operationId: accrual#GetOrderAccrual
             parameters:
                 - name: number
                   in: path
@@ -28,7 +28,7 @@ paths:
                 "200":
                     description: OK response.
                     schema:
-                        $ref: '#/definitions/AccrualGetOrderOKResponseBody'
+                        $ref: '#/definitions/AccrualGetOrderAccrualOKResponseBody'
                         required:
                             - order
                             - status
@@ -329,8 +329,8 @@ definitions:
             message: Assumenda ratione sit asperiores consequuntur earum.
         required:
             - message
-    AccrualGetOrderOKResponseBody:
-        title: AccrualGetOrderOKResponseBody
+    AccrualGetOrderAccrualOKResponseBody:
+        title: AccrualGetOrderAccrualOKResponseBody
         type: object
         properties:
             accrual:
