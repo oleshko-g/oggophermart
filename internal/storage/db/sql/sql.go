@@ -203,13 +203,32 @@ func (s *Storage) RetrieveOrderIDsForAccrual(ctx context.Context) ([]uuid.UUID, 
 	return orderIDs, nil
 }
 
-func (s *Storage) 	RetrieveOrderNumberForAccrual(ctx context.Context, orderID uuid.UUID) (string, error) {
+func (s *Storage) RetrieveOrderNumberForAccrual(ctx context.Context, orderID uuid.UUID) (string, error) {
+
 	_, _ = ctx, orderID
 	order, err := s.queries.SelectOrderNumberAndStatusByID(ctx, orderID)
 	if err != nil {
 		return "", nil
 	}
 
-
 	return order.Number, nil
+}
+
+type Tx struct {
+	*storage.Tx
+	*storage.Storage
+}
+
+// BeginTx is the implementation of [storage.Transacter]. It wraps [database/sql.BeginTx]
+func (s *Storage) BeginTx(ctx context.Context) (*storage.Tx, error) {
+	tx, _ := s.db.BeginTx(ctx, nil)
+	sTx := &Storage{
+		queries: s.queries.WithTx(tx),
+	}
+
+	return &storage.Tx{
+		Tx:      tx,
+		Balance: sTx,
+	}, nil
+
 }

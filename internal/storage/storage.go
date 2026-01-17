@@ -9,9 +9,15 @@ import (
 	genDBSQL "github.com/oleshko-g/oggophermart/internal/gen/storage/db/sql"
 )
 
-type Storage struct {
+type Storager interface {
 	User    // interface
 	Balance // interface
+}
+
+type Storage struct {
+	Transacter //interface
+	User       // interface
+	Balance    // interface
 }
 
 type Order = genDBSQL.Order
@@ -25,6 +31,7 @@ type User interface {
 
 // Balance declares the storage interfce for the balance service
 type Balance interface {
+	Transacter
 	RetrieveUserBalance(ctx context.Context, userID uuid.UUID) (currentBalance, withdrawn int, err error)
 	SaveUserTransaction(ctx context.Context, userID uuid.UUID, amount int) error
 	StoreOrder(ctx context.Context, userID uuid.UUID, orderNumber, status string, createdAt time.Time) error
@@ -33,4 +40,18 @@ type Balance interface {
 	Retrieve(ctx context.Context, userID uuid.UUID) (genDBSQL.SelectBalanceByUserIDRow, error)
 	RetrieveOrderIDsForAccrual(ctx context.Context) ([]uuid.UUID, error)
 	RetrieveOrderNumberForAccrual(ctx context.Context, orderID uuid.UUID) (string, error)
+}
+
+type Transaction interface {
+	Commit() error
+	Rollback() error
+}
+
+type Tx struct {
+	Tx Transaction
+	Balance
+}
+
+type Transacter interface {
+	BeginTx(context.Context) (*Tx, error)
 }

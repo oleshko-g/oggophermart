@@ -20,6 +20,7 @@ type balanceSvc struct {
 	storage.Balance
 	service.Auther
 	accrualOrdersToProcess chan uuid.UUID
+	accruedOrders          chan uuid.UUID
 }
 
 var _ genBalance.Service = (*balanceSvc)(nil)
@@ -200,22 +201,28 @@ func (s *balanceSvc) sendAccrualOrdersToProcess(orderIDs []uuid.UUID) error {
 
 func (s *balanceSvc) proccessAccrual(ctx context.Context, orderID uuid.UUID, client genAccrualHTTPClient.Client) error {
 	errCh := make(chan error, 1)
-	orderNumber, err := s.RetrieveOrderNumberForAccrual(ctx, orderID)
+	tx, err := s.Balance.BeginTx(ctx)
+	orderNumber, err := tx.RetrieveOrderNumberForAccrual(ctx, orderID)
 	if err != nil {
 		return err
 	}
+
 	go func() {
 		orderAccrual, err := getOrderAccrual(ctx, orderNumber, client)
+		s.accruedOrders <- orderID
 		_ = orderAccrual
 		errCh <- err
 	}()
+
 	select {
+	case accruedOrder := <-s.accruedOrders:
+		_ = accruedOrder
 	case err := <-errCh:
 		return err
 	case <-ctx.Done():
 		return context.Cause(ctx)
 	}
-
+	return nil
 }
 
 func getOrderAccrual(ctx context.Context, orderNumber string, client genAccrualHTTPClient.Client) (genAccrualHTTPClient.GetOrderAccrualOKResponseBody, error) {
