@@ -221,6 +221,27 @@ func (s *Storage) UpdateOrderStatus(ctx context.Context, orderID uuid.UUID, stat
 	return nil
 }
 
+func (s *Storage) StoreUserAccrual(ctx context.Context, userID uuid.UUID, orderID uuid.UUID, amount int32) error {
+	newTransactionID, err := uuid.NewV7()
+	if err != nil {
+		return nil
+	}
+	kind := "ACCRUAL"
+
+	err = s.queries.InsertBalanceTransaction(ctx, genDBSQL.InsertBalanceTransactionParams{
+		ID:      newTransactionID,
+		Kind:    kind,
+		UserID:  userID,
+		OrderID: orderID,
+		Amount:  amount,
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 type Tx struct {
 	*storage.Tx
 	*storage.Storage

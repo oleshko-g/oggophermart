@@ -41,6 +41,7 @@ type Balance interface {
 	RetrieveOrderIDsForAccrual(ctx context.Context) ([]uuid.UUID, error)
 	RetrieveOrderNumberForAccrual(ctx context.Context, orderID uuid.UUID) (string, error)
 	UpdateOrderStatus(ctx context.Context, orderID uuid.UUID, status string) error
+	StoreUserAccrual(ctx context.Context, userID uuid.UUID, orderID uuid.UUID, amount int32) error
 }
 
 type Transaction interface {

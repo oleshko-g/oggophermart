@@ -217,6 +217,7 @@ func (s *balanceSvc) proccessAccrual(ctx context.Context, orderID uuid.UUID, cli
 	defer storageTx.Tx.Rollback()
 
 	orderNumber, err := storageTx.RetrieveOrderNumberForAccrual(ctx, orderID)
+	// TODO: add status == PROCESSED check
 
 	go func() {
 		res, err := getOrderAccrual(ctx, orderNumber, client)
