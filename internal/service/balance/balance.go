@@ -4,6 +4,7 @@ package balance
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"time"
 
 	"github.com/EClaesson/go-luhn"
@@ -20,7 +21,7 @@ type balanceSvc struct {
 	storage.Balance
 	service.Auther
 	accrualOrdersToProcess chan uuid.UUID
-	accruedOrders          chan uuid.UUID
+	accruedOrders          chan processedOrder
 }
 
 var _ genBalance.Service = (*balanceSvc)(nil)
@@ -176,12 +177,17 @@ func (s *balanceSvc) ProcessAccruals(ctx context.Context, client genAccrualHTTPC
 		select {
 		case orderID := <-s.accrualOrdersToProcess:
 			go func() {
-				errCh <- s.proccessAccrual(ctx, orderID, client)
+				err := s.proccessAccrual(ctx, orderID, client)
+				if err != nil {
+					s.accrualOrdersToProcess <- orderID
+					errCh <- err
+				}
 			}()
 		case <-ctx.Done():
 			return context.Cause(ctx)
 		case err := <-errCh:
-			return err
+			slog.Error(err.Error())
+			// TODO: log err through loggingCtx
 		}
 	}
 
@@ -201,22 +207,33 @@ func (s *balanceSvc) sendAccrualOrdersToProcess(orderIDs []uuid.UUID) error {
 
 func (s *balanceSvc) proccessAccrual(ctx context.Context, orderID uuid.UUID, client genAccrualHTTPClient.Client) error {
 	errCh := make(chan error, 1)
-	tx, err := s.Balance.BeginTx(ctx)
-	orderNumber, err := tx.RetrieveOrderNumberForAccrual(ctx, orderID)
+	storageTx, err := s.Balance.BeginTx(ctx)
+	defer storageTx.Tx.Rollback()
+	orderNumber, err := storageTx.RetrieveOrderNumberForAccrual(ctx, orderID)
 	if err != nil {
 		return err
 	}
 
 	go func() {
 		orderAccrual, err := getOrderAccrual(ctx, orderNumber, client)
-		s.accruedOrders <- orderID
-		_ = orderAccrual
-		errCh <- err
+		if err != nil {
+			errCh <- err
+		}
+
+		s.accruedOrders <- processedOrder{
+			orderNumber: *orderAccrual.Order,
+			status:      *orderAccrual.Status,
+			accruel:     orderAccrual.Accrual,
+		}
 	}()
 
 	select {
 	case accruedOrder := <-s.accruedOrders:
-		_ = accruedOrder
+		switch accruedOrder.status {
+		case "INVALID":
+		case "PROCESSED":
+		case "PROCESSING", "REGISTERED":
+		}
 	case err := <-errCh:
 		return err
 	case <-ctx.Done():
@@ -244,4 +261,10 @@ func getOrderAccrual(ctx context.Context, orderNumber string, client genAccrualH
 	}
 
 	return v, nil
+}
+
+type processedOrder struct {
+	orderNumber string
+	status      string
+	accruel     *float64
 }
