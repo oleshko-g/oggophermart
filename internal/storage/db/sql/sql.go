@@ -205,13 +205,20 @@ func (s *Storage) RetrieveOrderIDsForAccrual(ctx context.Context) ([]uuid.UUID, 
 
 func (s *Storage) RetrieveOrderNumberForAccrual(ctx context.Context, orderID uuid.UUID) (string, error) {
 
-	_, _ = ctx, orderID
 	order, err := s.queries.SelectOrderNumberAndStatusByID(ctx, orderID)
 	if err != nil {
 		return "", nil
 	}
 
 	return order.Number, nil
+}
+
+func (s *Storage) UpdateOrderStatus(ctx context.Context, orderID uuid.UUID, status string) error {
+	err := s.queries.UpdateOrderStatus(ctx, genDBSQL.UpdateOrderStatusParams{ID: orderID, Status: status})
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 type Tx struct {

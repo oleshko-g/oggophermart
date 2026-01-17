@@ -21,7 +21,7 @@ type balanceSvc struct {
 	storage.Balance
 	service.Auther
 	accrualOrdersToProcess chan uuid.UUID
-	accruedOrders          chan processedOrder
+	accruedOrders          chan accrualOrder
 }
 
 var _ genBalance.Service = (*balanceSvc)(nil)
@@ -207,37 +207,46 @@ func (s *balanceSvc) sendAccrualOrdersToProcess(orderIDs []uuid.UUID) error {
 
 func (s *balanceSvc) proccessAccrual(ctx context.Context, orderID uuid.UUID, client genAccrualHTTPClient.Client) error {
 	errCh := make(chan error, 1)
+	accrualResult := make(chan accrualOrder, 1)
+
+	// start storate transaction
 	storageTx, err := s.Balance.BeginTx(ctx)
-	defer storageTx.Tx.Rollback()
-	orderNumber, err := storageTx.RetrieveOrderNumberForAccrual(ctx, orderID)
 	if err != nil {
-		return err
+		errCh <- err
 	}
+	defer storageTx.Tx.Rollback()
+
+	orderNumber, err := storageTx.RetrieveOrderNumberForAccrual(ctx, orderID)
 
 	go func() {
-		orderAccrual, err := getOrderAccrual(ctx, orderNumber, client)
+		res, err := getOrderAccrual(ctx, orderNumber, client)
 		if err != nil {
 			errCh <- err
 		}
 
-		s.accruedOrders <- processedOrder{
-			orderNumber: *orderAccrual.Order,
-			status:      *orderAccrual.Status,
-			accruel:     orderAccrual.Accrual,
+		accrualResult <- accrualOrder{
+			orderNumber: *res.Order,
+			status:      *res.Status,
+			accruel:     res.Accrual,
 		}
 	}()
 
 	select {
-	case accruedOrder := <-s.accruedOrders:
-		switch accruedOrder.status {
-		case "INVALID":
-		case "PROCESSED":
-		case "PROCESSING", "REGISTERED":
+	case accruedOrder := <-accrualResult:
+		switch {
+		case accruedOrder.status == "PROCESSED" && accruedOrder.accruel != nil:
+			// TODO: s.StoreOrderTransaction
 		}
+		storageTx.UpdateOrderStatus(ctx, orderID, accruedOrder.status)
 	case err := <-errCh:
 		return err
 	case <-ctx.Done():
 		return context.Cause(ctx)
+	}
+
+	err = storageTx.Tx.Commit()
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -263,7 +272,7 @@ func getOrderAccrual(ctx context.Context, orderNumber string, client genAccrualH
 	return v, nil
 }
 
-type processedOrder struct {
+type accrualOrder struct {
 	orderNumber string
 	status      string
 	accruel     *float64
