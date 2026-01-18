@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	stdHTTP "net/http"
 	"net/url"
 	"strconv"
 
@@ -31,7 +30,7 @@ func NewClient(
 	host string,
 ) *Client {
 	return &Client{
-		reqDoer: &stdHTTP.Client{},
+		reqDoer: &http.Client{},
 		scheme:  scheme,
 		host:    host,
 	}
