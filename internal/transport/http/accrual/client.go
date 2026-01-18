@@ -10,7 +10,7 @@ import (
 	"strconv"
 
 	_ "github.com/oleshko-g/oggophermart/internal/gen/http/balance/server"
-	_ "github.com/oleshko-g/oggophermart/internal/gen/http/user/server"
+	"github.com/oleshko-g/oggophermart/internal/transport"
 	_ "goa.design/clue/log"
 
 	goahttp "goa.design/goa/v3/http"
@@ -40,7 +40,7 @@ func NewClient(
 
 // FetchOrderAccrual returns an endpoint that makes HTTP requests to the accrual
 // service FetchOrderAccrual server.
-func (c *Client) FetchOrderAccrual(ctx context.Context, payload FetchOrderAccrualPayload) (*FetchOrderAccrualResult, error) {
+func (c *Client) FetchOrderAccrual(ctx context.Context, payload transport.FetchOrderAccrualPayload) (*transport.FetchOrderAccrualResult, error) {
 	{
 		req, err := c.buildFetchOrderAccrualRequest(ctx, payload.Number)
 		if err != nil {
@@ -76,7 +76,7 @@ func (c *Client) buildFetchOrderAccrualRequest(ctx context.Context, orderNumber 
 //   - "The request rate limit has been exceeded" (type *AccrualError): http.StatusTooManyRequests
 //   - "Internal service error" (type *AccrualError): http.StatusInternalServerError
 //   - error: internal error
-func decodeFetchOrderAccrualResponse(resp *http.Response) (*FetchOrderAccrualResult, error) {
+func decodeFetchOrderAccrualResponse(resp *http.Response) (*transport.FetchOrderAccrualResult, error) {
 	defer resp.Body.Close()
 
 	switch resp.StatusCode {
@@ -145,8 +145,8 @@ type FetchOrderAccrualOKResponseBody struct {
 
 // NewFetchOrderAccrualResultOK builds a "accrual" service "FetchOrderAccrual"
 // endpoint result from a HTTP "OK" response.
-func newFetchOrderAccrualResultOK(body *FetchOrderAccrualOKResponseBody) *FetchOrderAccrualResult {
-	v := &FetchOrderAccrualResult{
+func newFetchOrderAccrualResultOK(body *FetchOrderAccrualOKResponseBody) *transport.FetchOrderAccrualResult {
+	v := &transport.FetchOrderAccrualResult{
 		Order:   *body.Order,
 		Status:  *body.Status,
 		Accrual: body.Accrual,
@@ -203,16 +203,4 @@ func validateFetchOrderAccrualOKResponseBody(body *FetchOrderAccrualOKResponseBo
 // FetchOrderAccrualAccrualPath returns the URL path to the accrual service FetchOrderAccrual HTTP endpoint.
 func FetchOrderAccrualAccrualPath(number string) string {
 	return fmt.Sprintf("/api/orders/%v", number)
-}
-
-type FetchOrderAccrualPayload struct {
-	Number string
-}
-
-// FetchOrderAccrualResult is the result type of the accrual service
-// FetchOrderAccrual method.
-type FetchOrderAccrualResult struct {
-	Order   string
-	Status  string
-	Accrual *float64
 }
