@@ -243,7 +243,7 @@ func (s *balanceSvc) processAccrual(ctx context.Context, orderID uuid.UUID, clie
 		storageTx.UpdateOrderStatus(ctx, orderID, accruedOrder.status)
 		// TODO: add err check
 	case err := <-errCh:
-		cancelCause(err)
+		defer cancelCause(err)
 		return err
 	case <-ctx.Done():
 		return context.Cause(ctx)

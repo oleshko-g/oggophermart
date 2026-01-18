@@ -194,7 +194,7 @@ func (g *gophermart) setup() (err error) {
 	g.transport.http.client.accrual = genAccrualHTTPClient.NewClient(
 		"http",
 		g.transport.http.AccrualAddress().Host + ":" + g.transport.http.AccrualAddress().Port,
-		&http.Client{},
+		nil,
 		goahttp.RequestEncoder,
 		goahttp.ResponseDecoder,
 		true, // restoreBody after each request
