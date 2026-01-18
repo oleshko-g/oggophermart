@@ -183,3 +183,80 @@ func (s *Storage) RetrieaveUserOrders(ctx context.Context, userID uuid.UUID) (us
 
 	return rows, nil
 }
+
+func (s *Storage) Retrieve(ctx context.Context, userID uuid.UUID) (genDBSQL.SelectBalanceByUserIDRow, error) {
+	userBalance, err := s.queries.SelectBalanceByUserID(ctx, userID)
+	if err != nil {
+		return genDBSQL.SelectBalanceByUserIDRow{}, err
+	}
+	return userBalance, nil
+}
+
+func (s *Storage) RetrieveOrderIDsForAccrual(ctx context.Context) ([]uuid.UUID, error) {
+	statuses := []string{schema.OrderStatusNew, schema.OrderStatusProcessing}
+
+	orderIDs, err := s.queries.SelectOrdersIDsByStatuses(ctx, statuses)
+	if err != nil {
+		return nil, err
+	}
+
+	return orderIDs, nil
+}
+
+func (s *Storage) RetrieveOrderForAccrual(ctx context.Context, orderID uuid.UUID) (storage.Order, error) {
+
+	order, err := s.queries.SelectOrder(ctx, orderID)
+	if err != nil {
+		return storage.Order{}, nil
+	}
+
+	return order, nil
+}
+
+func (s *Storage) UpdateOrderStatus(ctx context.Context, orderID uuid.UUID, status string) error {
+	err := s.queries.UpdateOrderStatus(ctx, genDBSQL.UpdateOrderStatusParams{ID: orderID, Status: status})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Storage) StoreUserAccrual(ctx context.Context, userID uuid.UUID, orderID uuid.UUID, amount int32) error {
+	newTransactionID, err := uuid.NewV7()
+	if err != nil {
+		return nil
+	}
+	kind := "ACCRUAL"
+
+	err = s.queries.InsertBalanceTransaction(ctx, genDBSQL.InsertBalanceTransactionParams{
+		ID:      newTransactionID,
+		Kind:    kind,
+		UserID:  userID,
+		OrderID: orderID,
+		Amount:  amount,
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+type Tx struct {
+	*storage.Tx
+	*storage.Storage
+}
+
+// BeginTx is the implementation of [storage.Transacter]. It wraps [database/sql.BeginTx]
+func (s *Storage) BeginTx(ctx context.Context) (*storage.Tx, error) {
+	tx, _ := s.db.BeginTx(ctx, nil)
+	sTx := &Storage{
+		queries: s.queries.WithTx(tx),
+	}
+
+	return &storage.Tx{
+		Tx:      tx,
+		Balance: sTx,
+	}, nil
+
+}

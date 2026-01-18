@@ -9,17 +9,23 @@ package client
 
 import (
 	accrual "github.com/oleshko-g/oggophermart/internal/gen/accrual"
+	goa "goa.design/goa/v3/pkg"
 )
 
-// BuildGetOrderPayload builds the payload for the accrual GetOrder endpoint
-// from CLI flags.
-func BuildGetOrderPayload(accrualGetOrderNumber string) (*accrual.GetOrderPayload, error) {
+// BuildGetOrderAccrualPayload builds the payload for the accrual
+// GetOrderAccrual endpoint from CLI flags.
+func BuildGetOrderAccrualPayload(accrualGetOrderAccrualNumber string) (*accrual.GetOrderAccrualPayload, error) {
+	var err error
 	var number string
 	{
-		number = accrualGetOrderNumber
+		number = accrualGetOrderAccrualNumber
+		err = goa.MergeErrors(err, goa.ValidatePattern("number", number, "[1-9][0-9]*"))
+		if err != nil {
+			return nil, err
+		}
 	}
-	v := &accrual.GetOrderPayload{}
-	v.Number = number
+	v := &accrual.GetOrderAccrualPayload{}
+	v.Number = accrual.OrderNumber(number)
 
 	return v, nil
 }

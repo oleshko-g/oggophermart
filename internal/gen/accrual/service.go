@@ -13,8 +13,8 @@ import (
 
 // Service is the accrual service interface.
 type Service interface {
-	// GetOrder implements GetOrder.
-	GetOrder(context.Context, *GetOrderPayload) (res *GetOrderResult, err error)
+	// GetOrderAccrual implements GetOrderAccrual.
+	GetOrderAccrual(context.Context, *GetOrderAccrualPayload) (res *GetOrderAccrualResult, err error)
 }
 
 // APIName is the name of the API as defined in the design.
@@ -31,16 +31,21 @@ const ServiceName = "accrual"
 // MethodNames lists the service method names as defined in the design. These
 // are the same values that are set in the endpoint request contexts under the
 // MethodKey key.
-var MethodNames = [1]string{"GetOrder"}
+var MethodNames = [1]string{"GetOrderAccrual"}
 
-// GetOrderPayload is the payload type of the accrual service GetOrder method.
-type GetOrderPayload struct {
-	Number string
+// GetOrderAccrualPayload is the payload type of the accrual service
+// GetOrderAccrual method.
+type GetOrderAccrualPayload struct {
+	Number OrderNumber
 }
 
-// GetOrderResult is the result type of the accrual service GetOrder method.
-type GetOrderResult struct {
-	Order   *string
-	Status  *string
-	Accrual *uint
+// GetOrderAccrualResult is the result type of the accrual service
+// GetOrderAccrual method.
+type GetOrderAccrualResult struct {
+	Order   OrderNumber
+	Status  string
+	Accrual *float64
 }
+
+// Unique user order number
+type OrderNumber string

@@ -19,7 +19,11 @@ type Service interface {
 	// Upload user order
 	UploadUserOrder(context.Context, *UploadUserOrderPayload) (res *UploadUserOrderResult, err error)
 	// List user orders
-	ListUserOrder(context.Context, *ListUserOrderPayload) (res *ListUserOrderResult, err error)
+	ListUserOrders(context.Context, *ListUserOrdersPayload) (res *ListUserOrdersResult, err error)
+	// Get user balance
+	GetUserBalance(context.Context, *GetUserBalancePayload) (res *GetUserBalanceResult, err error)
+	// WithdrawUserBalance implements WithdrawUserBalance.
+	WithdrawUserBalance(context.Context, *WithdrawUserBalancePayload) (err error)
 }
 
 // Auther defines the authorization functions to be implemented by the service.
@@ -42,18 +46,32 @@ const ServiceName = "balance"
 // MethodNames lists the service method names as defined in the design. These
 // are the same values that are set in the endpoint request contexts under the
 // MethodKey key.
-var MethodNames = [2]string{"UploadUserOrder", "ListUserOrder"}
+var MethodNames = [4]string{"UploadUserOrder", "ListUserOrders", "GetUserBalance", "WithdrawUserBalance"}
 
-// ListUserOrderPayload is the payload type of the balance service
-// ListUserOrder method.
-type ListUserOrderPayload struct {
+// GetUserBalancePayload is the payload type of the balance service
+// GetUserBalance method.
+type GetUserBalancePayload struct {
 	// A JWT token used to authenticate a request
 	Authorization string
 }
 
-// ListUserOrderResult is the result type of the balance service ListUserOrder
-// method.
-type ListUserOrderResult struct {
+// GetUserBalanceResult is the result type of the balance service
+// GetUserBalance method.
+type GetUserBalanceResult struct {
+	Current   float64
+	Withdrawn float64
+}
+
+// ListUserOrdersPayload is the payload type of the balance service
+// ListUserOrders method.
+type ListUserOrdersPayload struct {
+	// A JWT token used to authenticate a request
+	Authorization string
+}
+
+// ListUserOrdersResult is the result type of the balance service
+// ListUserOrders method.
+type ListUserOrdersResult struct {
 	Orders   []*Order
 	NoOrders *string `json:"-"`
 }
@@ -78,6 +96,15 @@ type UploadUserOrderPayload struct {
 // UploadUserOrder method.
 type UploadUserOrderResult struct {
 	Accepted *string `json:"-"`
+}
+
+// WithdrawUserBalancePayload is the payload type of the balance service
+// WithdrawUserBalance method.
+type WithdrawUserBalancePayload struct {
+	// A JWT token used to authenticate a request
+	Authorization string
+	Order         string
+	Sum           float64
 }
 
 // MakeMissingField builds a goa.ServiceError from an error.

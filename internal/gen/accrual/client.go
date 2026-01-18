@@ -15,25 +15,27 @@ import (
 
 // Client is the "accrual" service client.
 type Client struct {
-	GetOrderEndpoint goa.Endpoint
+	GetOrderAccrualEndpoint goa.Endpoint
 }
 
 // NewClient initializes a "accrual" service client given the endpoints.
-func NewClient(getOrder goa.Endpoint) *Client {
+func NewClient(getOrderAccrual goa.Endpoint) *Client {
 	return &Client{
-		GetOrderEndpoint: getOrder,
+		GetOrderAccrualEndpoint: getOrderAccrual,
 	}
 }
 
-// GetOrder calls the "GetOrder" endpoint of the "accrual" service.
-// GetOrder may return the following errors:
-//   - "Internal service error" (type *service.GophermartError)
+// GetOrderAccrual calls the "GetOrderAccrual" endpoint of the "accrual"
+// service.
+// GetOrderAccrual may return the following errors:
+//   - "Internal service error" (type *service.AccrualError)
+//   - "The request rate limit has been exceeded" (type *service.AccrualError)
 //   - error: internal error
-func (c *Client) GetOrder(ctx context.Context, p *GetOrderPayload) (res *GetOrderResult, err error) {
+func (c *Client) GetOrderAccrual(ctx context.Context, p *GetOrderAccrualPayload) (res *GetOrderAccrualResult, err error) {
 	var ires any
-	ires, err = c.GetOrderEndpoint(ctx, p)
+	ires, err = c.GetOrderAccrualEndpoint(ctx, p)
 	if err != nil {
 		return
 	}
-	return ires.(*GetOrderResult), nil
+	return ires.(*GetOrderAccrualResult), nil
 }

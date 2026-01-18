@@ -10,32 +10,93 @@ package client
 import (
 	accrual "github.com/oleshko-g/oggophermart/internal/gen/accrual"
 	service "github.com/oleshko-g/oggophermart/internal/gen/service"
+	goa "goa.design/goa/v3/pkg"
 )
 
-// GetOrderResponseBody is the type of the "accrual" service "GetOrder"
-// endpoint HTTP response body.
-type GetOrderResponseBody struct {
-	Order   *string `form:"order,omitempty" json:"order,omitempty" xml:"order,omitempty"`
-	Status  *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
-	Accrual *uint   `form:"accrual,omitempty" json:"accrual,omitempty" xml:"accrual,omitempty"`
+// GetOrderAccrualOKResponseBody is the type of the "accrual" service
+// "GetOrderAccrual" endpoint HTTP response body.
+type GetOrderAccrualOKResponseBody struct {
+	Order   *string  `form:"order,omitempty" json:"order,omitempty" xml:"order,omitempty"`
+	Status  *string  `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
+	Accrual *float64 `form:"accrual,omitempty" json:"accrual,omitempty" xml:"accrual,omitempty"`
 }
 
-// NewGetOrderResultOK builds a "accrual" service "GetOrder" endpoint result
-// from a HTTP "OK" response.
-func NewGetOrderResultOK(body *GetOrderResponseBody) *accrual.GetOrderResult {
-	v := &accrual.GetOrderResult{
-		Order:   body.Order,
-		Status:  body.Status,
+// GetOrderAccrualTheRequestRateLimitHasBeenExceededResponseBody is the type of
+// the "accrual" service "GetOrderAccrual" endpoint HTTP response body for the
+// "The request rate limit has been exceeded" error.
+type GetOrderAccrualTheRequestRateLimitHasBeenExceededResponseBody struct {
+	// identifier to map an error to HTTP status codes
+	Name    *string `json:"-"`
+	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
+}
+
+// NewGetOrderAccrualResultOK builds a "accrual" service "GetOrderAccrual"
+// endpoint result from a HTTP "OK" response.
+func NewGetOrderAccrualResultOK(body *GetOrderAccrualOKResponseBody) *accrual.GetOrderAccrualResult {
+	v := &accrual.GetOrderAccrualResult{
+		Order:   accrual.OrderNumber(*body.Order),
+		Status:  *body.Status,
 		Accrual: body.Accrual,
 	}
 
 	return v
 }
 
-// NewGetOrderInternalServiceError builds a accrual service GetOrder endpoint
-// Internal service error error.
-func NewGetOrderInternalServiceError() *service.GophermartError {
-	v := &service.GophermartError{}
+// NewGetOrderAccrualTheRequestRateLimitHasBeenExceeded builds a accrual
+// service GetOrderAccrual endpoint The request rate limit has been exceeded
+// error.
+func NewGetOrderAccrualTheRequestRateLimitHasBeenExceeded(body *GetOrderAccrualTheRequestRateLimitHasBeenExceededResponseBody, retryAfter int) *service.AccrualError {
+	v := &service.AccrualError{
+		Name:    *body.Name,
+		Message: *body.Message,
+	}
+	v.RetryAfter = retryAfter
 
 	return v
+}
+
+// NewGetOrderAccrualInternalServiceError builds a accrual service
+// GetOrderAccrual endpoint Internal service error error.
+func NewGetOrderAccrualInternalServiceError() *service.AccrualError {
+	v := &service.AccrualError{}
+
+	return v
+}
+
+// ValidateGetOrderAccrualOKResponseBody runs the validations defined on
+// GetOrderAccrualOKResponseBody
+func ValidateGetOrderAccrualOKResponseBody(body *GetOrderAccrualOKResponseBody) (err error) {
+	if body.Order == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("order", "body"))
+	}
+	if body.Status == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("status", "body"))
+	}
+	if body.Order != nil {
+		err = goa.MergeErrors(err, goa.ValidatePattern("body.order", *body.Order, "[1-9][0-9]*"))
+	}
+	if body.Status != nil {
+		if !(*body.Status == "REGISTERED" || *body.Status == "INVALID" || *body.Status == "PROCESSING" || *body.Status == "PROCESSED") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.status", *body.Status, []any{"REGISTERED", "INVALID", "PROCESSING", "PROCESSED"}))
+		}
+	}
+	if body.Accrual != nil {
+		if *body.Accrual <= 0 {
+			err = goa.MergeErrors(err, goa.InvalidRangeError("body.accrual", *body.Accrual, 0, true))
+		}
+	}
+	return
+}
+
+// ValidateGetOrderAccrualTheRequestRateLimitHasBeenExceededResponseBody runs
+// the validations defined on GetOrderAccrual_The request rate limit has been
+// exceeded_Response_Body
+func ValidateGetOrderAccrualTheRequestRateLimitHasBeenExceededResponseBody(body *GetOrderAccrualTheRequestRateLimitHasBeenExceededResponseBody) (err error) {
+	if body.Name == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
+	}
+	if body.Message == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
+	}
+	return
 }

@@ -19,6 +19,14 @@ type Order struct {
 	CreatedAt time.Time
 }
 
+type Transaction struct {
+	ID      uuid.UUID
+	UserID  uuid.UUID
+	OrderID uuid.UUID
+	Kind    string
+	Amount  int32
+}
+
 type User struct {
 	ID             uuid.UUID
 	Login          string
@@ -26,4 +34,10 @@ type User struct {
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 	DeletedAt      sql.NullTime
+}
+
+type UserBalance struct {
+	UserID       uuid.UUID
+	Current      int32
+	WithdrawnSum int64
 }

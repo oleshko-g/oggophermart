@@ -16,8 +16,10 @@ import (
 
 // Endpoints wraps the "balance" service endpoints.
 type Endpoints struct {
-	UploadUserOrder goa.Endpoint
-	ListUserOrder   goa.Endpoint
+	UploadUserOrder     goa.Endpoint
+	ListUserOrders      goa.Endpoint
+	GetUserBalance      goa.Endpoint
+	WithdrawUserBalance goa.Endpoint
 }
 
 // NewEndpoints wraps the methods of the "balance" service with endpoints.
@@ -25,15 +27,19 @@ func NewEndpoints(s Service) *Endpoints {
 	// Casting service to Auther interface
 	a := s.(Auther)
 	return &Endpoints{
-		UploadUserOrder: NewUploadUserOrderEndpoint(s, a.JWTAuth),
-		ListUserOrder:   NewListUserOrderEndpoint(s, a.JWTAuth),
+		UploadUserOrder:     NewUploadUserOrderEndpoint(s, a.JWTAuth),
+		ListUserOrders:      NewListUserOrdersEndpoint(s, a.JWTAuth),
+		GetUserBalance:      NewGetUserBalanceEndpoint(s, a.JWTAuth),
+		WithdrawUserBalance: NewWithdrawUserBalanceEndpoint(s, a.JWTAuth),
 	}
 }
 
 // Use applies the given middleware to all the "balance" service endpoints.
 func (e *Endpoints) Use(m func(goa.Endpoint) goa.Endpoint) {
 	e.UploadUserOrder = m(e.UploadUserOrder)
-	e.ListUserOrder = m(e.ListUserOrder)
+	e.ListUserOrders = m(e.ListUserOrders)
+	e.GetUserBalance = m(e.GetUserBalance)
+	e.WithdrawUserBalance = m(e.WithdrawUserBalance)
 }
 
 // NewUploadUserOrderEndpoint returns an endpoint function that calls the
@@ -55,11 +61,11 @@ func NewUploadUserOrderEndpoint(s Service, authJWTFn security.AuthJWTFunc) goa.E
 	}
 }
 
-// NewListUserOrderEndpoint returns an endpoint function that calls the method
-// "ListUserOrder" of service "balance".
-func NewListUserOrderEndpoint(s Service, authJWTFn security.AuthJWTFunc) goa.Endpoint {
+// NewListUserOrdersEndpoint returns an endpoint function that calls the method
+// "ListUserOrders" of service "balance".
+func NewListUserOrdersEndpoint(s Service, authJWTFn security.AuthJWTFunc) goa.Endpoint {
 	return func(ctx context.Context, req any) (any, error) {
-		p := req.(*ListUserOrderPayload)
+		p := req.(*ListUserOrdersPayload)
 		var err error
 		sc := security.JWTScheme{
 			Name:           "jwt",
@@ -70,6 +76,44 @@ func NewListUserOrderEndpoint(s Service, authJWTFn security.AuthJWTFunc) goa.End
 		if err != nil {
 			return nil, err
 		}
-		return s.ListUserOrder(ctx, p)
+		return s.ListUserOrders(ctx, p)
+	}
+}
+
+// NewGetUserBalanceEndpoint returns an endpoint function that calls the method
+// "GetUserBalance" of service "balance".
+func NewGetUserBalanceEndpoint(s Service, authJWTFn security.AuthJWTFunc) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		p := req.(*GetUserBalancePayload)
+		var err error
+		sc := security.JWTScheme{
+			Name:           "jwt",
+			Scopes:         []string{},
+			RequiredScopes: []string{},
+		}
+		ctx, err = authJWTFn(ctx, p.Authorization, &sc)
+		if err != nil {
+			return nil, err
+		}
+		return s.GetUserBalance(ctx, p)
+	}
+}
+
+// NewWithdrawUserBalanceEndpoint returns an endpoint function that calls the
+// method "WithdrawUserBalance" of service "balance".
+func NewWithdrawUserBalanceEndpoint(s Service, authJWTFn security.AuthJWTFunc) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		p := req.(*WithdrawUserBalancePayload)
+		var err error
+		sc := security.JWTScheme{
+			Name:           "jwt",
+			Scopes:         []string{},
+			RequiredScopes: []string{},
+		}
+		ctx, err = authJWTFn(ctx, p.Authorization, &sc)
+		if err != nil {
+			return nil, err
+		}
+		return nil, s.WithdrawUserBalance(ctx, p)
 	}
 }

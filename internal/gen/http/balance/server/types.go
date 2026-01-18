@@ -9,11 +9,35 @@ package server
 
 import (
 	balance "github.com/oleshko-g/oggophermart/internal/gen/balance"
+	service "github.com/oleshko-g/oggophermart/internal/gen/service"
+	goa "goa.design/goa/v3/pkg"
 )
 
-// ListUserOrderResponseBody is the type of the "balance" service
-// "ListUserOrder" endpoint HTTP response body.
-type ListUserOrderResponseBody []*Order
+// WithdrawUserBalanceRequestBody is the type of the "balance" service
+// "WithdrawUserBalance" endpoint HTTP request body.
+type WithdrawUserBalanceRequestBody struct {
+	Order *string  `form:"order,omitempty" json:"order,omitempty" xml:"order,omitempty"`
+	Sum   *float64 `form:"sum,omitempty" json:"sum,omitempty" xml:"sum,omitempty"`
+}
+
+// ListUserOrdersResponseBody is the type of the "balance" service
+// "ListUserOrders" endpoint HTTP response body.
+type ListUserOrdersResponseBody []*Order
+
+// GetUserBalanceResponseBody is the type of the "balance" service
+// "GetUserBalance" endpoint HTTP response body.
+type GetUserBalanceResponseBody struct {
+	Current   float64 `form:"current" json:"current" xml:"current"`
+	Withdrawn float64 `form:"withdrawn" json:"withdrawn" xml:"withdrawn"`
+}
+
+// WithdrawUserBalanceUserIsNotAuthenticatedResponseBody is the type of the
+// "balance" service "WithdrawUserBalance" endpoint HTTP response body for the
+// "User is not authenticated" error.
+type WithdrawUserBalanceUserIsNotAuthenticatedResponseBody struct {
+	// identifier to map an error to HTTP status codes
+	Name string `json:"-"`
+}
 
 // Order is used to define fields on response body types.
 type Order struct {
@@ -23,9 +47,9 @@ type Order struct {
 	UploadedAt string `form:"uploaded_at" json:"uploaded_at" xml:"uploaded_at"`
 }
 
-// NewListUserOrderResponseBody builds the HTTP response body from the result
-// of the "ListUserOrder" endpoint of the "balance" service.
-func NewListUserOrderResponseBody(res *balance.ListUserOrderResult) ListUserOrderResponseBody {
+// NewListUserOrdersResponseBody builds the HTTP response body from the result
+// of the "ListUserOrders" endpoint of the "balance" service.
+func NewListUserOrdersResponseBody(res *balance.ListUserOrdersResult) ListUserOrdersResponseBody {
 	body := make([]*Order, len(res.Orders))
 	for i, val := range res.Orders {
 		if val == nil {
@@ -33,6 +57,26 @@ func NewListUserOrderResponseBody(res *balance.ListUserOrderResult) ListUserOrde
 			continue
 		}
 		body[i] = marshalBalanceOrderToOrder(val)
+	}
+	return body
+}
+
+// NewGetUserBalanceResponseBody builds the HTTP response body from the result
+// of the "GetUserBalance" endpoint of the "balance" service.
+func NewGetUserBalanceResponseBody(res *balance.GetUserBalanceResult) *GetUserBalanceResponseBody {
+	body := &GetUserBalanceResponseBody{
+		Current:   res.Current,
+		Withdrawn: res.Withdrawn,
+	}
+	return body
+}
+
+// NewWithdrawUserBalanceUserIsNotAuthenticatedResponseBody builds the HTTP
+// response body from the result of the "WithdrawUserBalance" endpoint of the
+// "balance" service.
+func NewWithdrawUserBalanceUserIsNotAuthenticatedResponseBody(res *service.GophermartError) *WithdrawUserBalanceUserIsNotAuthenticatedResponseBody {
+	body := &WithdrawUserBalanceUserIsNotAuthenticatedResponseBody{
+		Name: res.Name,
 	}
 	return body
 }
@@ -49,11 +93,52 @@ func NewUploadUserOrderPayload(body string, authorization string) *balance.Uploa
 	return res
 }
 
-// NewListUserOrderPayload builds a balance service ListUserOrder endpoint
+// NewListUserOrdersPayload builds a balance service ListUserOrders endpoint
 // payload.
-func NewListUserOrderPayload(authorization string) *balance.ListUserOrderPayload {
-	v := &balance.ListUserOrderPayload{}
+func NewListUserOrdersPayload(authorization string) *balance.ListUserOrdersPayload {
+	v := &balance.ListUserOrdersPayload{}
 	v.Authorization = authorization
 
 	return v
+}
+
+// NewGetUserBalancePayload builds a balance service GetUserBalance endpoint
+// payload.
+func NewGetUserBalancePayload(authorization string) *balance.GetUserBalancePayload {
+	v := &balance.GetUserBalancePayload{}
+	v.Authorization = authorization
+
+	return v
+}
+
+// NewWithdrawUserBalancePayload builds a balance service WithdrawUserBalance
+// endpoint payload.
+func NewWithdrawUserBalancePayload(body *WithdrawUserBalanceRequestBody, authorization string) *balance.WithdrawUserBalancePayload {
+	v := &balance.WithdrawUserBalancePayload{
+		Order: *body.Order,
+		Sum:   *body.Sum,
+	}
+	v.Authorization = authorization
+
+	return v
+}
+
+// ValidateWithdrawUserBalanceRequestBody runs the validations defined on
+// WithdrawUserBalanceRequestBody
+func ValidateWithdrawUserBalanceRequestBody(body *WithdrawUserBalanceRequestBody) (err error) {
+	if body.Order == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("order", "body"))
+	}
+	if body.Sum == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("sum", "body"))
+	}
+	if body.Order != nil {
+		err = goa.MergeErrors(err, goa.ValidatePattern("body.order", *body.Order, "[1-9][0-9]*"))
+	}
+	if body.Sum != nil {
+		if *body.Sum <= 0 {
+			err = goa.MergeErrors(err, goa.InvalidRangeError("body.sum", *body.Sum, 0, true))
+		}
+	}
+	return
 }

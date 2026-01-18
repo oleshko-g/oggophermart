@@ -15,26 +15,26 @@ import (
 
 // Endpoints wraps the "accrual" service endpoints.
 type Endpoints struct {
-	GetOrder goa.Endpoint
+	GetOrderAccrual goa.Endpoint
 }
 
 // NewEndpoints wraps the methods of the "accrual" service with endpoints.
 func NewEndpoints(s Service) *Endpoints {
 	return &Endpoints{
-		GetOrder: NewGetOrderEndpoint(s),
+		GetOrderAccrual: NewGetOrderAccrualEndpoint(s),
 	}
 }
 
 // Use applies the given middleware to all the "accrual" service endpoints.
 func (e *Endpoints) Use(m func(goa.Endpoint) goa.Endpoint) {
-	e.GetOrder = m(e.GetOrder)
+	e.GetOrderAccrual = m(e.GetOrderAccrual)
 }
 
-// NewGetOrderEndpoint returns an endpoint function that calls the method
-// "GetOrder" of service "accrual".
-func NewGetOrderEndpoint(s Service) goa.Endpoint {
+// NewGetOrderAccrualEndpoint returns an endpoint function that calls the
+// method "GetOrderAccrual" of service "accrual".
+func NewGetOrderAccrualEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req any) (any, error) {
-		p := req.(*GetOrderPayload)
-		return s.GetOrder(ctx, p)
+		p := req.(*GetOrderAccrualPayload)
+		return s.GetOrderAccrual(ctx, p)
 	}
 }

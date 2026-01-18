@@ -150,26 +150,26 @@ func EncodeUploadUserOrderError(encoder func(context.Context, http.ResponseWrite
 	}
 }
 
-// EncodeListUserOrderResponse returns an encoder for responses returned by the
-// balance ListUserOrder endpoint.
-func EncodeListUserOrderResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
+// EncodeListUserOrdersResponse returns an encoder for responses returned by
+// the balance ListUserOrders endpoint.
+func EncodeListUserOrdersResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
 	return func(ctx context.Context, w http.ResponseWriter, v any) error {
-		res, _ := v.(*balance.ListUserOrderResult)
+		res, _ := v.(*balance.ListUserOrdersResult)
 		if res.NoOrders != nil && *res.NoOrders == "yes" {
 			w.WriteHeader(http.StatusNoContent)
 			return nil
 		}
 		enc := encoder(ctx, w)
-		body := NewListUserOrderResponseBody(res)
+		body := NewListUserOrdersResponseBody(res)
 		w.WriteHeader(http.StatusOK)
 		return enc.Encode(body)
 	}
 }
 
-// DecodeListUserOrderRequest returns a decoder for requests sent to the
-// balance ListUserOrder endpoint.
-func DecodeListUserOrderRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (*balance.ListUserOrderPayload, error) {
-	return func(r *http.Request) (*balance.ListUserOrderPayload, error) {
+// DecodeListUserOrdersRequest returns a decoder for requests sent to the
+// balance ListUserOrders endpoint.
+func DecodeListUserOrdersRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (*balance.ListUserOrdersPayload, error) {
+	return func(r *http.Request) (*balance.ListUserOrdersPayload, error) {
 		var (
 			authorization string
 			err           error
@@ -181,7 +181,7 @@ func DecodeListUserOrderRequest(mux goahttp.Muxer, decoder func(*http.Request) g
 		if err != nil {
 			return nil, err
 		}
-		payload := NewListUserOrderPayload(authorization)
+		payload := NewListUserOrdersPayload(authorization)
 		if strings.Contains(payload.Authorization, " ") {
 			// Remove authorization scheme prefix (e.g. "Bearer")
 			cred := strings.SplitN(payload.Authorization, " ", 2)[1]
@@ -192,9 +192,9 @@ func DecodeListUserOrderRequest(mux goahttp.Muxer, decoder func(*http.Request) g
 	}
 }
 
-// EncodeListUserOrderError returns an encoder for errors returned by the
-// ListUserOrder balance endpoint.
-func EncodeListUserOrderError(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder, formatter func(ctx context.Context, err error) goahttp.Statuser) func(context.Context, http.ResponseWriter, error) error {
+// EncodeListUserOrdersError returns an encoder for errors returned by the
+// ListUserOrders balance endpoint.
+func EncodeListUserOrdersError(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder, formatter func(ctx context.Context, err error) goahttp.Statuser) func(context.Context, http.ResponseWriter, error) error {
 	encodeError := goahttp.ErrorEncoder(encoder, formatter)
 	return func(ctx context.Context, w http.ResponseWriter, v error) error {
 		var en goa.GoaErrorNamer
@@ -231,6 +231,221 @@ func EncodeListUserOrderError(encoder func(context.Context, http.ResponseWriter)
 			errors.As(v, &res)
 			w.Header().Set("goa-error", res.GoaErrorName())
 			w.WriteHeader(http.StatusUnauthorized)
+			return nil
+		case "Internal service error":
+			var res *service.GophermartError
+			errors.As(v, &res)
+			w.Header().Set("goa-error", res.GoaErrorName())
+			w.WriteHeader(http.StatusInternalServerError)
+			return nil
+		default:
+			return encodeError(ctx, w, v)
+		}
+	}
+}
+
+// EncodeGetUserBalanceResponse returns an encoder for responses returned by
+// the balance GetUserBalance endpoint.
+func EncodeGetUserBalanceResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
+	return func(ctx context.Context, w http.ResponseWriter, v any) error {
+		res, _ := v.(*balance.GetUserBalanceResult)
+		enc := encoder(ctx, w)
+		body := NewGetUserBalanceResponseBody(res)
+		w.WriteHeader(http.StatusOK)
+		return enc.Encode(body)
+	}
+}
+
+// DecodeGetUserBalanceRequest returns a decoder for requests sent to the
+// balance GetUserBalance endpoint.
+func DecodeGetUserBalanceRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (*balance.GetUserBalancePayload, error) {
+	return func(r *http.Request) (*balance.GetUserBalancePayload, error) {
+		var (
+			authorization string
+			err           error
+		)
+		authorization = r.Header.Get("Authorization")
+		if authorization == "" {
+			err = goa.MergeErrors(err, goa.MissingFieldError("Authorization", "header"))
+		}
+		if err != nil {
+			return nil, err
+		}
+		payload := NewGetUserBalancePayload(authorization)
+		if strings.Contains(payload.Authorization, " ") {
+			// Remove authorization scheme prefix (e.g. "Bearer")
+			cred := strings.SplitN(payload.Authorization, " ", 2)[1]
+			payload.Authorization = cred
+		}
+
+		return payload, nil
+	}
+}
+
+// EncodeGetUserBalanceError returns an encoder for errors returned by the
+// GetUserBalance balance endpoint.
+func EncodeGetUserBalanceError(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder, formatter func(ctx context.Context, err error) goahttp.Statuser) func(context.Context, http.ResponseWriter, error) error {
+	encodeError := goahttp.ErrorEncoder(encoder, formatter)
+	return func(ctx context.Context, w http.ResponseWriter, v error) error {
+		var en goa.GoaErrorNamer
+		if !errors.As(v, &en) {
+			return encodeError(ctx, w, v)
+		}
+		switch en.GoaErrorName() {
+		case "missing_field":
+			var res *goa.ServiceError
+			errors.As(v, &res)
+			w.Header().Set("Goa-Attribute-Name", res.Name)
+			w.Header().Set("Goa-Attribute-Id", res.ID)
+			w.Header().Set("Goa-Attribute-Message", res.Message)
+			{
+				val := res.Temporary
+				temporarys := strconv.FormatBool(val)
+				w.Header().Set("Goa-Attribute-Temporary", temporarys)
+			}
+			{
+				val := res.Timeout
+				timeouts := strconv.FormatBool(val)
+				w.Header().Set("Goa-Attribute-Timeout", timeouts)
+			}
+			{
+				val := res.Fault
+				faults := strconv.FormatBool(val)
+				w.Header().Set("Goa-Attribute-Fault", faults)
+			}
+			w.Header().Set("goa-error", res.GoaErrorName())
+			w.WriteHeader(http.StatusUnauthorized)
+			return nil
+		case "User is not authenticated":
+			var res *service.GophermartError
+			errors.As(v, &res)
+			w.Header().Set("goa-error", res.GoaErrorName())
+			w.WriteHeader(http.StatusUnauthorized)
+			return nil
+		case "Internal service error":
+			var res *service.GophermartError
+			errors.As(v, &res)
+			w.Header().Set("goa-error", res.GoaErrorName())
+			w.WriteHeader(http.StatusInternalServerError)
+			return nil
+		default:
+			return encodeError(ctx, w, v)
+		}
+	}
+}
+
+// EncodeWithdrawUserBalanceResponse returns an encoder for responses returned
+// by the balance WithdrawUserBalance endpoint.
+func EncodeWithdrawUserBalanceResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
+	return func(ctx context.Context, w http.ResponseWriter, v any) error {
+		w.WriteHeader(http.StatusOK)
+		return nil
+	}
+}
+
+// DecodeWithdrawUserBalanceRequest returns a decoder for requests sent to the
+// balance WithdrawUserBalance endpoint.
+func DecodeWithdrawUserBalanceRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (*balance.WithdrawUserBalancePayload, error) {
+	return func(r *http.Request) (*balance.WithdrawUserBalancePayload, error) {
+		var (
+			body WithdrawUserBalanceRequestBody
+			err  error
+		)
+		err = decoder(r).Decode(&body)
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				return nil, goa.MissingPayloadError()
+			}
+			var gerr *goa.ServiceError
+			if errors.As(err, &gerr) {
+				return nil, gerr
+			}
+			return nil, goa.DecodePayloadError(err.Error())
+		}
+		err = ValidateWithdrawUserBalanceRequestBody(&body)
+		if err != nil {
+			return nil, err
+		}
+
+		var (
+			authorization string
+		)
+		authorization = r.Header.Get("Authorization")
+		if authorization == "" {
+			err = goa.MergeErrors(err, goa.MissingFieldError("Authorization", "header"))
+		}
+		if err != nil {
+			return nil, err
+		}
+		payload := NewWithdrawUserBalancePayload(&body, authorization)
+		if strings.Contains(payload.Authorization, " ") {
+			// Remove authorization scheme prefix (e.g. "Bearer")
+			cred := strings.SplitN(payload.Authorization, " ", 2)[1]
+			payload.Authorization = cred
+		}
+
+		return payload, nil
+	}
+}
+
+// EncodeWithdrawUserBalanceError returns an encoder for errors returned by the
+// WithdrawUserBalance balance endpoint.
+func EncodeWithdrawUserBalanceError(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder, formatter func(ctx context.Context, err error) goahttp.Statuser) func(context.Context, http.ResponseWriter, error) error {
+	encodeError := goahttp.ErrorEncoder(encoder, formatter)
+	return func(ctx context.Context, w http.ResponseWriter, v error) error {
+		var en goa.GoaErrorNamer
+		if !errors.As(v, &en) {
+			return encodeError(ctx, w, v)
+		}
+		switch en.GoaErrorName() {
+		case "missing_field":
+			var res *goa.ServiceError
+			errors.As(v, &res)
+			w.Header().Set("Goa-Attribute-Name", res.Name)
+			w.Header().Set("Goa-Attribute-Id", res.ID)
+			w.Header().Set("Goa-Attribute-Message", res.Message)
+			{
+				val := res.Temporary
+				temporarys := strconv.FormatBool(val)
+				w.Header().Set("Goa-Attribute-Temporary", temporarys)
+			}
+			{
+				val := res.Timeout
+				timeouts := strconv.FormatBool(val)
+				w.Header().Set("Goa-Attribute-Timeout", timeouts)
+			}
+			{
+				val := res.Fault
+				faults := strconv.FormatBool(val)
+				w.Header().Set("Goa-Attribute-Fault", faults)
+			}
+			w.Header().Set("goa-error", res.GoaErrorName())
+			w.WriteHeader(http.StatusUnauthorized)
+			return nil
+		case "User is not authenticated":
+			var res *service.GophermartError
+			errors.As(v, &res)
+			enc := encoder(ctx, w)
+			var body any
+			if formatter != nil {
+				body = formatter(ctx, res)
+			} else {
+				body = NewWithdrawUserBalanceUserIsNotAuthenticatedResponseBody(res)
+			}
+			w.Header().Set("goa-error", res.GoaErrorName())
+			w.WriteHeader(http.StatusUnauthorized)
+			return enc.Encode(body)
+		case "Insufficient funds":
+			var res *service.GophermartError
+			errors.As(v, &res)
+			w.Header().Set("goa-error", res.GoaErrorName())
+			w.WriteHeader(http.StatusPaymentRequired)
+			return nil
+		case "Invalid order number":
+			var res *service.GophermartError
+			errors.As(v, &res)
+			w.Header().Set("goa-error", res.GoaErrorName())
+			w.WriteHeader(http.StatusUnprocessableEntity)
 			return nil
 		case "Internal service error":
 			var res *service.GophermartError

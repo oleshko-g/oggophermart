@@ -4,10 +4,14 @@ import (
 	"context"
 	"errors"
 	"flag"
+	"fmt"
 	"os"
+	"os/signal"
+	"sync"
+	"syscall"
+	"time"
 
 	"github.com/joho/godotenv"
-	genAccrualHTTPClient "github.com/oleshko-g/oggophermart/internal/gen/http/accrual/client"
 	"github.com/oleshko-g/oggophermart/internal/service"
 	balance "github.com/oleshko-g/oggophermart/internal/service/balance"
 	user "github.com/oleshko-g/oggophermart/internal/service/user"
@@ -15,9 +19,8 @@ import (
 	"github.com/oleshko-g/oggophermart/internal/storage/db"
 	"github.com/oleshko-g/oggophermart/internal/storage/db/sql"
 	"github.com/oleshko-g/oggophermart/internal/transport/http"
+	accrualHTTP "github.com/oleshko-g/oggophermart/internal/transport/http/accrual"
 	"goa.design/clue/log"
-	goahttp "goa.design/goa/v3/http"
-	"golang.org/x/sync/errgroup"
 )
 
 type gophermart struct {
@@ -26,7 +29,7 @@ type gophermart struct {
 			http.Server
 			http.Config
 			client struct {
-				accrual *genAccrualHTTPClient.Client
+				accrual *accrualHTTP.Client
 			}
 		}
 	}
@@ -178,24 +181,14 @@ func (g *gophermart) setup() (err error) {
 
 	// 2. Intanciates services with the set storage
 	userSvc := user.New(&g.userCfg, g.Storage.User)
+	g.transport.http.client.accrual = accrualHTTP.NewClient("http", g.transport.http.AccrualAddress().Host+":"+g.transport.http.AccrualAddress().Port)
 	g.Service = service.Service{
 		User:    userSvc,
-		Balance: balance.New(g.Storage.Balance, userSvc),
+		Balance: balance.New(g.Storage.Balance, userSvc, g.transport.http.client.accrual),
 	}
 
 	// 3. Instanciates the HTTP server
 	g.transport.http.Server = http.NewServer(g.loggingCtx, g.transport.http.Config, g.Service)
-
-	// 4. Instanicates the Accrual system HTTP client
-	// err = genAccrual.NewGetOrderEndpoint(a)
-	g.transport.http.client.accrual = genAccrualHTTPClient.NewClient(
-		g.transport.http.AccrualAddress().Host,
-		g.transport.http.AccrualAddress().Port,
-		&http.Client{},
-		goahttp.RequestEncoder,
-		goahttp.ResponseDecoder,
-		true,
-	)
 
 	g.readyToRun = true
 	return nil
@@ -206,20 +199,54 @@ func (g *gophermart) run() (err error) {
 	if !g.readyToRun {
 		return errSetupGophermartNotReadyToRun
 	}
-	errGroup, _ := errgroup.WithContext(g.loggingCtx)
 
-	errGroup.Go(func() error {
-		log.Infof(g.loggingCtx, "in HTTP server")
-		return g.transport.http.Server.ListenAndServe()
+	var wg sync.WaitGroup
+
+	runCtx, runCancel := context.WithCancelCause(g.loggingCtx)
+	defer runCancel(nil)
+
+	osSignals := make(chan os.Signal, 1)
+	wg.Go(func() {
+		log.Infof(g.loggingCtx, "in os.Signal goroutine")
+		signal.Notify(osSignals, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+		select {
+		case sig := <-osSignals:
+			err = fmt.Errorf("recieved OS signal: %s", sig)
+			runCancel(err)
+			return
+		case <-runCtx.Done():
+			return
+		}
 	})
 
-	// TODO: make accrual worker
+	wg.Go(func() {
+		log.Infof(g.loggingCtx, "in HTTP server")
+		log.Printf(g.loggingCtx, "gophermart HTTP server is listening on %s", g.transport.http.Address().String())
+		errHTTP := g.transport.http.Server.ListenAndServe()
+		if errHTTP != nil {
+			runCancel(errHTTP)
+		}
 
-	// TODO: add os.Signal handling
-	// TODO: add graceful shutdown
+		<-runCtx.Done()
+		log.Infof(g.loggingCtx, "Shutting down HTTP server because %s", context.Cause(runCtx))
+		ctx := context.Background()
+		shutdownCtx, shutdownCancel := context.WithTimeout(ctx, 30*time.Second)
+		defer shutdownCancel()
+		g.transport.http.Server.Shutdown(shutdownCtx)
+		err = shutdownCtx.Err()
+	})
 
-	log.Printf(g.loggingCtx, "gophermart HTTP server is listening on %s", g.transport.http.Address().String())
-	return errGroup.Wait()
+	wg.Go(func() {
+		errProcessAccruals := g.Service.Balance.ProcessAccruals(runCtx)
+		if err != nil {
+			runCancel(errProcessAccruals)
+			err = errProcessAccruals
+		}
+	})
+
+	wg.Wait()
+
+	return err
 }
 
 var errSetupGophermartNotConfigured = errors.New("can't setup. gophermart isn't configured")

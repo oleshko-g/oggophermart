@@ -19,6 +19,7 @@ import (
 
 type Server interface {
 	ListenAndServe() error
+	Shutdown(context.Context) error
 }
 
 type server struct {
@@ -100,5 +101,3 @@ func errorHandler(ctx context.Context, res http.ResponseWriter, err error) {
 }
 
 var errResponseWithError = errors.New("failed to response with error")
-
-type Client = http.Client

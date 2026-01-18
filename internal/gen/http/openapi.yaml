@@ -12,26 +12,145 @@ produces:
     - application/xml
     - application/gob
 paths:
-    /GET /orders/{number}:
+    /orders/{number}:
         get:
             tags:
                 - accrual
-            summary: GetOrder accrual
-            operationId: accrual#GetOrder
+            summary: GetOrderAccrual accrual
+            operationId: accrual#GetOrderAccrual
             parameters:
                 - name: number
                   in: path
+                  description: Unique user order number
                   required: true
                   type: string
             responses:
                 "200":
                     description: OK response.
                     schema:
-                        $ref: '#/definitions/GetOrderResult'
+                        $ref: '#/definitions/AccrualGetOrderAccrualOKResponseBody'
+                        required:
+                            - order
+                            - status
+                "204":
+                    description: No Content response.
+                "429":
+                    description: The request rate limit has been exceeded
+                    schema:
+                        $ref: '#/definitions/AccrualError'
+                        required:
+                            - message
+                    headers:
+                        Retry-After:
+                            type: int
+                            minimum: 0
+                            exclusiveMinimum: true
                 "500":
                     description: Internal Server Error response.
             schemes:
                 - http
+    /user/balance:
+        get:
+            tags:
+                - balance
+            summary: GetUserBalance balance
+            description: Get user balance
+            operationId: balance#GetUserBalance
+            parameters:
+                - name: Authorization
+                  in: header
+                  description: A JWT token used to authenticate a request
+                  required: true
+                  type: string
+            responses:
+                "200":
+                    description: OK response.
+                    schema:
+                        $ref: '#/definitions/BalanceGetUserBalanceResponseBody'
+                        required:
+                            - current
+                            - withdrawn
+                "401":
+                    description: Missing or empty Authorization header
+                    headers:
+                        goa-attribute-fault:
+                            description: Is the error a server-side fault?
+                            type: boolean
+                        goa-attribute-id:
+                            description: ID is a unique identifier for this particular occurrence of the problem.
+                            type: string
+                        goa-attribute-message:
+                            description: Message is a human-readable explanation specific to this occurrence of the problem.
+                            type: string
+                        goa-attribute-name:
+                            description: Name is the name of this class of errors.
+                            type: string
+                        goa-attribute-temporary:
+                            description: Is the error temporary?
+                            type: boolean
+                        goa-attribute-timeout:
+                            description: Is the error a timeout?
+                            type: boolean
+                "500":
+                    description: Internal Server Error response.
+            schemes:
+                - http
+            security:
+                - jwt_header_Authorization: []
+    /user/balance/withdraw:
+        post:
+            tags:
+                - balance
+            summary: WithdrawUserBalance balance
+            operationId: balance#WithdrawUserBalance
+            parameters:
+                - name: Authorization
+                  in: header
+                  description: A JWT token used to authenticate a request
+                  required: true
+                  type: string
+                - name: WithdrawUserBalanceRequestBody
+                  in: body
+                  required: true
+                  schema:
+                    $ref: '#/definitions/BalanceWithdrawUserBalanceRequestBody'
+                    required:
+                        - order
+                        - sum
+            responses:
+                "200":
+                    description: OK response.
+                "401":
+                    description: Missing or empty Authorization header
+                    headers:
+                        goa-attribute-fault:
+                            description: Is the error a server-side fault?
+                            type: boolean
+                        goa-attribute-id:
+                            description: ID is a unique identifier for this particular occurrence of the problem.
+                            type: string
+                        goa-attribute-message:
+                            description: Message is a human-readable explanation specific to this occurrence of the problem.
+                            type: string
+                        goa-attribute-name:
+                            description: Name is the name of this class of errors.
+                            type: string
+                        goa-attribute-temporary:
+                            description: Is the error temporary?
+                            type: boolean
+                        goa-attribute-timeout:
+                            description: Is the error a timeout?
+                            type: boolean
+                "402":
+                    description: Insufficient funds
+                "422":
+                    description: Invalid order number
+                "500":
+                    description: Internal Server Error response.
+            schemes:
+                - http
+            security:
+                - jwt_header_Authorization: []
     /user/login:
         post:
             tags:
@@ -66,9 +185,9 @@ paths:
         get:
             tags:
                 - balance
-            summary: ListUserOrder balance
+            summary: ListUserOrders balance
             description: List user orders
-            operationId: balance#ListUserOrder
+            operationId: balance#ListUserOrders
             parameters:
                 - name: Authorization
                   in: header
@@ -199,34 +318,97 @@ paths:
             schemes:
                 - http
 definitions:
-    GetOrderResult:
-        title: GetOrderResult
+    AccrualError:
+        title: AccrualError
+        type: object
+        properties:
+            message:
+                type: string
+                example: Repellat temporibus sit consequatur.
+        example:
+            message: Assumenda ratione sit asperiores consequuntur earum.
+        required:
+            - message
+    AccrualGetOrderAccrualOKResponseBody:
+        title: AccrualGetOrderAccrualOKResponseBody
         type: object
         properties:
             accrual:
-                type: integer
-                example: 839832540227140899
-                format: int64
+                type: number
+                example: 0.2311765057275559
+                format: double
+                exclusiveMinimum: 0
             order:
                 type: string
-                example: Voluptate et.
+                example: "63"
+                pattern: '[1-9][0-9]*'
             status:
                 type: string
-                example: Maxime sequi qui accusamus aperiam rem.
+                example: PROCESSED
+                enum:
+                    - REGISTERED
+                    - INVALID
+                    - PROCESSING
+                    - PROCESSED
         example:
-            accrual: 2402250044807314231
-            order: Magnam odit accusamus.
-            status: Ipsam consequuntur sed repellat temporibus sit consequatur.
+            order: "4"
+            status: REGISTERED
+        required:
+            - order
+            - status
+    BalanceGetUserBalanceResponseBody:
+        title: BalanceGetUserBalanceResponseBody
+        type: object
+        properties:
+            current:
+                type: number
+                example: 0.17393165634984303
+                format: double
+                minimum: 0
+            withdrawn:
+                type: number
+                example: 0.33680348811088484
+                format: double
+                minimum: 0
+        example:
+            current: 500.5
+            withdrawn: 42
+        required:
+            - current
+            - withdrawn
+    BalanceWithdrawUserBalanceRequestBody:
+        title: BalanceWithdrawUserBalanceRequestBody
+        type: object
+        properties:
+            order:
+                type: string
+                example: "886"
+                pattern: '[1-9][0-9]*'
+            sum:
+                type: number
+                example: 0.3539816693068508
+                format: double
+                exclusiveMinimum: 0
+        example:
+            order: "2377225624"
+            sum: 751
+        required:
+            - order
+            - sum
+    GophermartError:
+        title: GophermartError
+        type: object
+        example: {}
     LoginPassword:
         title: LoginPassword
         type: object
         properties:
             login:
                 type: string
-                example: Ratione sit asperiores consequuntur.
+                example: Ea id voluptate et et maxime.
             password:
                 type: string
-                example: Ut et.
+                example: Qui accusamus aperiam rem amet enim magnam.
         example:
             login: <login>
             password: <password>
@@ -239,11 +421,11 @@ definitions:
         properties:
             accrual:
                 type: integer
-                example: 17975470654812843867
+                example: 13776325716155642653
                 format: int64
             number:
                 type: string
-                example: "952"
+                example: "5"
                 pattern: '[1-9][0-9]*'
             status:
                 type: string
@@ -255,13 +437,13 @@ definitions:
                     - PROCESSED
             uploaded_at:
                 type: string
-                example: "2000-07-22T18:51:51Z"
+                example: "1992-05-31T08:51:44Z"
                 format: date-time
         example:
-            accrual: 786640818561411755
-            number: "772"
-            status: PROCESSING
-            uploaded_at: "1976-11-16T10:53:37Z"
+            accrual: 16060451496832791997
+            number: "930"
+            status: PROCESSED
+            uploaded_at: "1981-11-13T01:47:34Z"
         required:
             - number
             - status
