@@ -7,10 +7,11 @@ import (
 	"log/slog"
 	"time"
 
+	accrualHTTP "github.com/oleshko-g/oggophermart/internal/transport/http/accrual"
+
 	"github.com/EClaesson/go-luhn"
 	"github.com/google/uuid"
 	genBalance "github.com/oleshko-g/oggophermart/internal/gen/balance"
-	genAccrualHTTPClient "github.com/oleshko-g/oggophermart/internal/gen/http/accrual/client"
 	"github.com/oleshko-g/oggophermart/internal/service"
 	svcErrors "github.com/oleshko-g/oggophermart/internal/service/errors"
 	"github.com/oleshko-g/oggophermart/internal/storage"
@@ -20,19 +21,20 @@ import (
 type balanceSvc struct {
 	storage.Balance
 	service.Auther
+	accrualClient          *accrualHTTP.Client
 	accrualOrdersToProcess chan uuid.UUID
-	accruedOrders          chan accrualOrder
 }
 
 var _ genBalance.Service = (*balanceSvc)(nil)
 var _ genBalance.Auther = (*balanceSvc)(nil)
 
 // New returns the balance service implementation.
-func New(storage storage.Balance, auther service.Auther) *balanceSvc {
+func New(storage storage.Balance, auther service.Auther, c *accrualHTTP.Client) *balanceSvc {
 	return &balanceSvc{
 		Balance:                storage,
 		Auther:                 auther,
 		accrualOrdersToProcess: make(chan uuid.UUID),
+		accrualClient:          c,
 	}
 }
 
@@ -161,7 +163,7 @@ func (s *balanceSvc) WithdrawUserBalance(context.Context, *genBalance.WithdrawUs
 	return nil
 }
 
-func (s *balanceSvc) ProcessAccruals(ctx context.Context, client genAccrualHTTPClient.Client) error {
+func (s *balanceSvc) ProcessAccruals(ctx context.Context) error {
 	s.accrualOrdersToProcess = make(chan uuid.UUID)
 
 	orderIDs, err := s.RetrieveOrderIDsForAccrual(ctx)
@@ -178,7 +180,7 @@ func (s *balanceSvc) ProcessAccruals(ctx context.Context, client genAccrualHTTPC
 		select {
 		case orderID := <-s.accrualOrdersToProcess:
 			go func() {
-				err := s.processAccrual(ctx, orderID, client)
+				err := s.processAccrual(ctx, orderID)
 				if err != nil {
 					s.accrualOrdersToProcess <- orderID
 					errCh <- err
@@ -206,7 +208,7 @@ func (s *balanceSvc) sendAccrualOrdersToProcess(orderIDs []uuid.UUID) error {
 	return nil
 }
 
-func (s *balanceSvc) processAccrual(ctx context.Context, orderID uuid.UUID, client genAccrualHTTPClient.Client) error {
+func (s *balanceSvc) processAccrual(ctx context.Context, orderID uuid.UUID) error {
 	errCh := make(chan error, 1)
 	accrualResult := make(chan accrualOrder, 1)
 	ctx, cancelCause := context.WithCancelCause(ctx)
@@ -221,7 +223,7 @@ func (s *balanceSvc) processAccrual(ctx context.Context, orderID uuid.UUID, clie
 	// TODO: add status == PROCESSED check
 
 	go func() {
-		res, err := getOrderAccrual(ctx, orderNumber, client)
+		res, err := s.getOrderAccrual(ctx, orderNumber)
 		if err != nil {
 			errCh <- err
 			return
@@ -256,22 +258,20 @@ func (s *balanceSvc) processAccrual(ctx context.Context, orderID uuid.UUID, clie
 	return nil
 }
 
-func getOrderAccrual(ctx context.Context, orderNumber string, client genAccrualHTTPClient.Client) (genAccrualHTTPClient.GetOrderAccrualOKResponseBody, error) {
-	getOrderAccrual := client.GetOrderAccrual()
-
-	reqBody, err := genAccrualHTTPClient.BuildGetOrderAccrualPayload(orderNumber)
+func (s *balanceSvc) getOrderAccrual(ctx context.Context, orderNumber string) (accrualHTTP.GetOrderAccrualOKResponseBody, error) {
+	reqBody, err := accrualHTTP.BuildGetOrderAccrualPayload(orderNumber)
 	if err != nil {
-		return genAccrualHTTPClient.GetOrderAccrualOKResponseBody{}, err
+		return accrualHTTP.GetOrderAccrualOKResponseBody{}, err
 	}
 
-	orderAccrual, err := getOrderAccrual(ctx, reqBody)
+	orderAccrual, err := s.accrualClient.FetchOrderAccrual(ctx, reqBody)
 	if err != nil {
-		return genAccrualHTTPClient.GetOrderAccrualOKResponseBody{}, err
+		return accrualHTTP.GetOrderAccrualOKResponseBody{}, err
 	}
 
-	v, ok := orderAccrual.(genAccrualHTTPClient.GetOrderAccrualOKResponseBody)
+	v, ok := orderAccrual.(accrualHTTP.GetOrderAccrualOKResponseBody)
 	if !ok {
-		return genAccrualHTTPClient.GetOrderAccrualOKResponseBody{}, ErrFailedToGetOrderAccrual
+		return accrualHTTP.GetOrderAccrualOKResponseBody{}, ErrFailedToGetOrderAccrual
 	}
 
 	return v, nil

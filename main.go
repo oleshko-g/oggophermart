@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
-	genAccrualHTTPClient "github.com/oleshko-g/oggophermart/internal/gen/http/accrual/client"
 	"github.com/oleshko-g/oggophermart/internal/service"
 	balance "github.com/oleshko-g/oggophermart/internal/service/balance"
 	user "github.com/oleshko-g/oggophermart/internal/service/user"
@@ -20,8 +19,8 @@ import (
 	"github.com/oleshko-g/oggophermart/internal/storage/db"
 	"github.com/oleshko-g/oggophermart/internal/storage/db/sql"
 	"github.com/oleshko-g/oggophermart/internal/transport/http"
+	accrualHTTP "github.com/oleshko-g/oggophermart/internal/transport/http/accrual"
 	"goa.design/clue/log"
-	goahttp "goa.design/goa/v3/http"
 )
 
 type gophermart struct {
@@ -30,7 +29,7 @@ type gophermart struct {
 			http.Server
 			http.Config
 			client struct {
-				accrual *genAccrualHTTPClient.Client
+				accrual *accrualHTTP.Client
 			}
 		}
 	}
@@ -182,23 +181,16 @@ func (g *gophermart) setup() (err error) {
 
 	// 2. Intanciates services with the set storage
 	userSvc := user.New(&g.userCfg, g.Storage.User)
+	g.transport.http.client.accrual = accrualHTTP.NewClient("http", g.transport.http.AccrualAddress().Host+":"+g.transport.http.AccrualAddress().Port)
 	g.Service = service.Service{
-		User:    userSvc,
-		Balance: balance.New(g.Storage.Balance, userSvc),
+		User: userSvc,
+		Balance: balance.New(g.Storage.Balance,
+			userSvc,
+			g.transport.http.client.accrual),
 	}
 
 	// 3. Instanciates the HTTP server
 	g.transport.http.Server = http.NewServer(g.loggingCtx, g.transport.http.Config, g.Service)
-
-	// 4. Instanicates the Accrual system HTTP client
-	g.transport.http.client.accrual = genAccrualHTTPClient.NewClient(
-		"http",
-		g.transport.http.AccrualAddress().Host + ":" + g.transport.http.AccrualAddress().Port,
-		nil,
-		goahttp.RequestEncoder,
-		goahttp.ResponseDecoder,
-		true, // restoreBody after each request
-	)
 
 	g.readyToRun = true
 	return nil
@@ -247,7 +239,7 @@ func (g *gophermart) run() (err error) {
 	})
 
 	wg.Go(func() {
-		errProcessAccruals := g.Service.Balance.ProcessAccruals(runCtx, *g.transport.http.client.accrual)
+		errProcessAccruals := g.Service.Balance.ProcessAccruals(runCtx)
 		if err != nil {
 			runCancel(errProcessAccruals)
 			err = errProcessAccruals

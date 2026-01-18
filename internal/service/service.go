@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 	_ "github.com/oleshko-g/oggophermart/internal/gen/accrual"
 	genBalance "github.com/oleshko-g/oggophermart/internal/gen/balance"
-	genAccrualHTTPClient "github.com/oleshko-g/oggophermart/internal/gen/http/accrual/client"
 	genUser "github.com/oleshko-g/oggophermart/internal/gen/user"
 )
 
@@ -23,5 +22,5 @@ type Auther interface {
 
 type Balance interface {
 	genBalance.Service
-	ProcessAccruals(ctx context.Context, client genAccrualHTTPClient.Client) error
+	ProcessAccruals(ctx context.Context) error
 }
