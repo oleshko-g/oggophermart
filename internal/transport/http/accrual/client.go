@@ -9,7 +9,6 @@ import (
 	"net/url"
 	"strconv"
 
-	_ "github.com/oleshko-g/oggophermart/internal/gen/http/balance/server"
 	"github.com/oleshko-g/oggophermart/internal/transport"
 	_ "goa.design/clue/log"
 
@@ -158,8 +157,8 @@ func newFetchOrderAccrualResultOK(body *FetchOrderAccrualOKResponseBody) *transp
 // NewFetchOrderAccrualTheRequestRateLimitHasBeenExceeded builds a accrual
 // service FetchOrderAccrual endpoint The request rate limit has been exceeded
 // error.
-func newFetchOrderAccrualTheRequestRateLimitHasBeenExceeded(body string, retryAfter int) *AccrualError {
-	return &AccrualError{
+func newFetchOrderAccrualTheRequestRateLimitHasBeenExceeded(body string, retryAfter int) *transport.AccrualError {
+	return &transport.AccrualError{
 		Message:    body,
 		RetryAfter: retryAfter,
 	}
@@ -167,8 +166,8 @@ func newFetchOrderAccrualTheRequestRateLimitHasBeenExceeded(body string, retryAf
 
 // NewFetchOrderAccrualInternalServiceError builds a accrual service
 // FetchOrderAccrual endpoint Internal service error error.
-func newFetchOrderAccrualInternalServiceError() *AccrualError {
-	v := &AccrualError{
+func newFetchOrderAccrualInternalServiceError() *transport.AccrualError {
+	v := &transport.AccrualError{
 		Message: "Internal service",
 	}
 
