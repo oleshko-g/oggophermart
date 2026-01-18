@@ -56,7 +56,7 @@ func (c *Client) FetchOrderAccrual(ctx context.Context, payload transport.FetchO
 // BuildFetchOrderAccrualRequest instantiates a HTTP request object with method
 // and path set to call the "accrual" service "FetchOrderAccrual" endpoint
 func (c *Client) buildFetchOrderAccrualRequest(ctx context.Context, orderNumber string) (*http.Request, error) {
-	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: FetchOrderAccrualAccrualPath(orderNumber)}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: fetchOrderAccrualAccrualPath(orderNumber)}
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
 		return nil, goahttp.ErrInvalidURL("accrual", "FetchOrderAccrual", u.String(), err)
@@ -199,7 +199,7 @@ func validateFetchOrderAccrualOKResponseBody(body *FetchOrderAccrualOKResponseBo
 	return
 }
 
-// FetchOrderAccrualAccrualPath returns the URL path to the accrual service FetchOrderAccrual HTTP endpoint.
-func FetchOrderAccrualAccrualPath(number string) string {
+// fetchOrderAccrualAccrualPath returns the URL path to the accrual service FetchOrderAccrual HTTP endpoint.
+func fetchOrderAccrualAccrualPath(number string) string {
 	return fmt.Sprintf("/api/orders/%v", number)
 }
