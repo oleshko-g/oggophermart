@@ -11,7 +11,7 @@ var (
 	ErrInvalidOrderNumber = errors.New("Invalid order number")
 
 	// ErrAccrualNotStarted is the error returned when new accrual order arrives while accrual proccessing hasn't started yet
-	ErrAccrualProcessingNotStarted = errors.New("Accrual processing hasn't started yet")
+	ErrProcessAccrualsNotStarted = errors.New("Accrual processing hasn't started yet")
 
 	// ErrFailedToGetOrderAccrual is the error returned when new accrual order arrives while accrual proccessing hasn't started yet
 	ErrFailedToGetOrderAccrual = errors.New("Failed to get order accrual")

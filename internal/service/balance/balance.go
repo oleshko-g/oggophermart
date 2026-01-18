@@ -162,25 +162,23 @@ func (s *balanceSvc) WithdrawUserBalance(context.Context, *genBalance.WithdrawUs
 }
 
 func (s *balanceSvc) ProcessAccruals(ctx context.Context, client genAccrualHTTPClient.Client) error {
-	errCh := make(chan error, 1)
 	s.accrualOrdersToProcess = make(chan uuid.UUID)
 
-	go func() {
-		orderIDs, err := s.RetrieveOrderIDsForAccrual(ctx)
-		if err != nil {
-			errCh <- err
-		}
-		err = s.sendAccrualOrdersToProcess(orderIDs)
-		if err != nil {
-			errCh <- err
-		}
-	}()
+	orderIDs, err := s.RetrieveOrderIDsForAccrual(ctx)
+	if err != nil {
+		return err
+	}
+	err = s.sendAccrualOrdersToProcess(orderIDs)
+	if err != nil {
+		return err
+	}
 
+	errCh := make(chan error, 1)
 	for {
 		select {
 		case orderID := <-s.accrualOrdersToProcess:
 			go func() {
-				err := s.proccessAccrual(ctx, orderID, client)
+				err := s.processAccrual(ctx, orderID, client)
 				if err != nil {
 					s.accrualOrdersToProcess <- orderID
 					errCh <- err
@@ -198,7 +196,7 @@ func (s *balanceSvc) ProcessAccruals(ctx context.Context, client genAccrualHTTPC
 
 func (s *balanceSvc) sendAccrualOrdersToProcess(orderIDs []uuid.UUID) error {
 	if s.accrualOrdersToProcess == nil { // guards against no reader on the channel
-		return ErrAccrualProcessingNotStarted
+		return ErrProcessAccrualsNotStarted
 	}
 
 	for _, orderID := range orderIDs {
@@ -208,7 +206,7 @@ func (s *balanceSvc) sendAccrualOrdersToProcess(orderIDs []uuid.UUID) error {
 	return nil
 }
 
-func (s *balanceSvc) proccessAccrual(ctx context.Context, orderID uuid.UUID, client genAccrualHTTPClient.Client) error {
+func (s *balanceSvc) processAccrual(ctx context.Context, orderID uuid.UUID, client genAccrualHTTPClient.Client) error {
 	errCh := make(chan error, 1)
 	accrualResult := make(chan accrualOrder, 1)
 	ctx, cancelCause := context.WithCancelCause(ctx)
