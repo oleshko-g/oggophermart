@@ -210,7 +210,7 @@ func (s *balanceSvc) sendAccrualOrdersToProcess(orderIDs []uuid.UUID) error {
 
 func (s *balanceSvc) processAccrual(ctx context.Context, orderID uuid.UUID) error {
 	errCh := make(chan error, 1)
-	accrualResult := make(chan accrualOrder, 1)
+	accrualResult := make(chan orderAccrual, 1)
 	ctx, cancelCause := context.WithCancelCause(ctx)
 	defer cancelCause(nil)
 	// start storate transaction
@@ -223,23 +223,23 @@ func (s *balanceSvc) processAccrual(ctx context.Context, orderID uuid.UUID) erro
 	// TODO: add status == PROCESSED check
 
 	go func() {
-		res, err := s.getOrderAccrual(ctx, OrderNumber(orderNumber))
+		res, err := s.getOrderAccrual(ctx, orderNumber)
 		if err != nil {
 			errCh <- err
 			return
 		}
 
-		accrualResult <- accrualOrder{
-			orderNumber: res.Order,
-			status:      res.Status,
-			accruel:     res.Accrual,
+		if res == nil {
+			return
 		}
+
+		accrualResult <- *res
 	}()
 
 	select {
 	case accruedOrder := <-accrualResult:
 		switch {
-		case accruedOrder.status == "PROCESSED" && accruedOrder.accruel != nil:
+		case accruedOrder.status == "PROCESSED" && accruedOrder.amount != nil:
 			// TODO: s.StoreOrderTransaction
 		}
 		storageTx.UpdateOrderStatus(ctx, orderID, accruedOrder.status)
@@ -258,29 +258,19 @@ func (s *balanceSvc) processAccrual(ctx context.Context, orderID uuid.UUID) erro
 	return nil
 }
 
-func (s *balanceSvc) getOrderAccrual(ctx context.Context, orderNumber orderNumber) (*orderAccrual, error) {
-	orderAccrual, err := s.accrualClient.FetchOrderAccrual(ctx, orderNumber)
+func (s *balanceSvc) getOrderAccrual(ctx context.Context, orderNumber string) (*orderAccrual, error) {
+	res, err := s.accrualClient.FetchOrderAccrual(ctx, accrualHTTP.FetchOrderAccrualPayload{Number: orderNumber})
 	if err != nil {
 		return nil, err
 	}
-
-	orderAccrual = orderAccrual{
-		orderNumber: orderAccrual.Order,
-		status:      orderAccrual.Status,
-		accruel:     orderAccrual.Accrual,
+	if res == nil {
+		return nil, nil
 	}
-
-	return orderAccrual, nil
-}
-
-type order struct {
-	orderNumber
-	Status      string
+	return &orderAccrual{number: res.Order, status: res.Status, amount: res.Accrual}, nil
 }
 
 type orderAccrual struct {
-	order
-	Amount *float64
+	number string
+	status string
+	amount *float64
 }
-
-type orderNumber string
