@@ -170,7 +170,10 @@ func (s *balanceSvc) ProcessAccruals(ctx context.Context, client genAccrualHTTPC
 		if err != nil {
 			errCh <- err
 		}
-		errCh <- s.sendAccrualOrdersToProcess(orderIDs)
+		err = s.sendAccrualOrdersToProcess(orderIDs)
+		if err != nil {
+			errCh <- err
+		}
 	}()
 
 	for {

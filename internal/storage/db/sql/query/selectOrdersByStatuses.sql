@@ -4,4 +4,4 @@ SELECT
 FROM
   orders
 WHERE
-  orders.status = ALL(sqlc.arg(statuses)::TEXT[]);
+  orders.status = ANY(sqlc.arg(statuses)::TEXT[]);

@@ -18,7 +18,7 @@ SELECT
 FROM
   orders
 WHERE
-  orders.status = ALL($1::TEXT[])
+  orders.status = ANY($1::TEXT[])
 `
 
 func (q *Queries) SelectOrdersIDsByStatuses(ctx context.Context, statuses []string) ([]uuid.UUID, error) {
