@@ -154,8 +154,8 @@ func (s *balanceSvc) GetUserBalance(ctx context.Context, payload *genBalance.Get
 		return &genBalance.GetUserBalanceResult{}, err
 	}
 	return &genBalance.GetUserBalanceResult{
-		Current:   float64((userBalance.Current / 100)),
-		Withdrawn: float64((userBalance.WithdrawnSum / 100)),
+		Current:   float64((userBalance.Current) / 100),
+		Withdrawn: float64((userBalance.WithdrawnSum) / 100),
 	}, nil
 }
 
@@ -219,17 +219,25 @@ func (s *balanceSvc) processAccrual(ctx context.Context, orderID uuid.UUID) erro
 		errCh <- err
 	}
 
-	orderNumber, err := storageTx.RetrieveOrderNumberForAccrual(ctx, orderID)
-	// TODO: add status == PROCESSED check
+	order, err := storageTx.RetrieveOrderForAccrual(ctx, orderID)
+	if err != nil {
+		return err
+	}
+
+	if order.Status == OrderStatusProcessed || order.Status == OrderStatusInvalid {
+		defer cancelCause(nil)
+		return nil
+	}
 
 	go func() {
-		res, err := s.accrual.FetchOrderAccrual(ctx, transport.FetchOrderAccrualPayload{Number: orderNumber})
+		res, err := s.accrual.FetchOrderAccrual(ctx, transport.FetchOrderAccrualPayload{Number: order.Number})
 		if err != nil {
 			errCh <- err
 			return
 		}
 
 		if res == nil {
+			defer cancelCause(nil)
 			return
 		}
 

@@ -203,14 +203,14 @@ func (s *Storage) RetrieveOrderIDsForAccrual(ctx context.Context) ([]uuid.UUID, 
 	return orderIDs, nil
 }
 
-func (s *Storage) RetrieveOrderNumberForAccrual(ctx context.Context, orderID uuid.UUID) (string, error) {
+func (s *Storage) RetrieveOrderForAccrual(ctx context.Context, orderID uuid.UUID) (storage.Order, error) {
 
-	order, err := s.queries.SelectOrderNumberAndStatusByID(ctx, orderID)
+	order, err := s.queries.SelectOrder(ctx, orderID)
 	if err != nil {
-		return "", nil
+		return storage.Order{}, nil
 	}
 
-	return order.Number, nil
+	return order, nil
 }
 
 func (s *Storage) UpdateOrderStatus(ctx context.Context, orderID uuid.UUID, status string) error {
