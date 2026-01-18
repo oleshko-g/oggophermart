@@ -342,7 +342,7 @@ var _ = Service("accrual", func() {
 		})
 
 		HTTP(func() {
-			GET("GET /orders/{number}")
+			GET("/orders/{number}")
 			Param("number", String)
 			Response(StatusOK)
 			Response(StatusNoContent, func() {

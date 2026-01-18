@@ -192,8 +192,8 @@ func (g *gophermart) setup() (err error) {
 
 	// 4. Instanicates the Accrual system HTTP client
 	g.transport.http.client.accrual = genAccrualHTTPClient.NewClient(
-		g.transport.http.AccrualAddress().Host,
-		g.transport.http.AccrualAddress().Port,
+		"http",
+		g.transport.http.AccrualAddress().Host + ":" + g.transport.http.AccrualAddress().Port,
 		&http.Client{},
 		goahttp.RequestEncoder,
 		goahttp.ResponseDecoder,

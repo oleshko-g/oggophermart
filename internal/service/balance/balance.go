@@ -211,13 +211,13 @@ func (s *balanceSvc) sendAccrualOrdersToProcess(orderIDs []uuid.UUID) error {
 func (s *balanceSvc) proccessAccrual(ctx context.Context, orderID uuid.UUID, client genAccrualHTTPClient.Client) error {
 	errCh := make(chan error, 1)
 	accrualResult := make(chan accrualOrder, 1)
-
+	ctx, cancelCause := context.WithCancelCause(ctx)
+	defer cancelCause(nil)
 	// start storate transaction
 	storageTx, err := s.Balance.BeginTx(ctx)
 	if err != nil {
 		errCh <- err
 	}
-	defer storageTx.Tx.Rollback()
 
 	orderNumber, err := storageTx.RetrieveOrderNumberForAccrual(ctx, orderID)
 	// TODO: add status == PROCESSED check
@@ -226,6 +226,7 @@ func (s *balanceSvc) proccessAccrual(ctx context.Context, orderID uuid.UUID, cli
 		res, err := getOrderAccrual(ctx, orderNumber, client)
 		if err != nil {
 			errCh <- err
+			return
 		}
 
 		accrualResult <- accrualOrder{
@@ -242,7 +243,9 @@ func (s *balanceSvc) proccessAccrual(ctx context.Context, orderID uuid.UUID, cli
 			// TODO: s.StoreOrderTransaction
 		}
 		storageTx.UpdateOrderStatus(ctx, orderID, accruedOrder.status)
+		// TODO: add err check
 	case err := <-errCh:
+		cancelCause(err)
 		return err
 	case <-ctx.Done():
 		return context.Cause(ctx)
