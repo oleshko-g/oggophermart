@@ -1,10 +1,11 @@
-package http
+package accrual
 
 import (
 	"context"
 	"fmt"
 	"io"
 	"net/http"
+	stdHTTP "net/http"
 	"net/url"
 	"strconv"
 
@@ -21,38 +22,26 @@ import (
 	accrual "github.com/oleshko-g/oggophermart/internal/gen/accrual"
 )
 
-type client struct {
-	http.Client
-}
-
 // Client lists the accrual service endpoint HTTP clients.
 type Client struct {
 	// GetOrderAccrual Doer is the HTTP client used to make requests to the
 	// GetOrderAccrual endpoint.
-	GetOrderAccrualDoer goahttp.Doer
-
-	// RestoreResponseBody controls whether the response bodies are reset after
-	// decoding so they can be read again.
-	RestoreResponseBody bool
-
-	scheme  string
-	host    string
-	encoder func(*http.Request) goahttp.Encoder
-	decoder func(*http.Response) goahttp.Decoder
+	getOrderAccrualDoer goahttp.Doer
+	scheme              string
+	host                string
+	decoder             func(*http.Response) goahttp.Decoder
 }
 
 // NewClient instantiates HTTP clients for all the accrual service servers.
 func NewClient(
 	scheme string,
 	host string,
-	doer goahttp.Doer,
-	dec func(*http.Response) goahttp.Decoder,
 ) *Client {
 	return &Client{
-		GetOrderAccrualDoer: doer,
+		getOrderAccrualDoer: &stdHTTP.Client{},
 		scheme:              scheme,
 		host:                host,
-		decoder:             dec,
+		decoder:             goahttp.ResponseDecoder,
 	}
 }
 
@@ -67,7 +56,7 @@ func (c *Client) GetOrderAccrual() goa.Endpoint {
 		if err != nil {
 			return nil, err
 		}
-		resp, err := c.GetOrderAccrualDoer.Do(req)
+		resp, err := c.getOrderAccrualDoer.Do(req)
 		if err != nil {
 			return nil, goahttp.ErrRequestError("accrual", "GetOrderAccrual", err)
 		}
