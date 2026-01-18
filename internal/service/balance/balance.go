@@ -223,15 +223,15 @@ func (s *balanceSvc) processAccrual(ctx context.Context, orderID uuid.UUID) erro
 	// TODO: add status == PROCESSED check
 
 	go func() {
-		res, err := s.getOrderAccrual(ctx, orderNumber)
+		res, err := s.getOrderAccrual(ctx, OrderNumber(orderNumber))
 		if err != nil {
 			errCh <- err
 			return
 		}
 
 		accrualResult <- accrualOrder{
-			orderNumber: *res.Order,
-			status:      *res.Status,
+			orderNumber: res.Order,
+			status:      res.Status,
 			accruel:     res.Accrual,
 		}
 	}()
@@ -258,27 +258,29 @@ func (s *balanceSvc) processAccrual(ctx context.Context, orderID uuid.UUID) erro
 	return nil
 }
 
-func (s *balanceSvc) getOrderAccrual(ctx context.Context, orderNumber string) (accrualHTTP.GetOrderAccrualOKResponseBody, error) {
-	reqBody, err := accrualHTTP.BuildGetOrderAccrualPayload(orderNumber)
+func (s *balanceSvc) getOrderAccrual(ctx context.Context, orderNumber orderNumber) (*orderAccrual, error) {
+	orderAccrual, err := s.accrualClient.FetchOrderAccrual(ctx, orderNumber)
 	if err != nil {
-		return accrualHTTP.GetOrderAccrualOKResponseBody{}, err
+		return nil, err
 	}
 
-	orderAccrual, err := s.accrualClient.FetchOrderAccrual(ctx, reqBody)
-	if err != nil {
-		return accrualHTTP.GetOrderAccrualOKResponseBody{}, err
+	orderAccrual = orderAccrual{
+		orderNumber: orderAccrual.Order,
+		status:      orderAccrual.Status,
+		accruel:     orderAccrual.Accrual,
 	}
 
-	v, ok := orderAccrual.(accrualHTTP.GetOrderAccrualOKResponseBody)
-	if !ok {
-		return accrualHTTP.GetOrderAccrualOKResponseBody{}, ErrFailedToGetOrderAccrual
-	}
-
-	return v, nil
+	return orderAccrual, nil
 }
 
-type accrualOrder struct {
-	orderNumber string
-	status      string
-	accruel     *float64
+type order struct {
+	orderNumber
+	Status      string
 }
+
+type orderAccrual struct {
+	order
+	Amount *float64
+}
+
+type orderNumber string

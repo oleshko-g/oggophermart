@@ -9,21 +9,18 @@ import (
 	"net/url"
 	"strconv"
 
-	_ "github.com/oleshko-g/oggophermart/internal/gen/balance"
 	_ "github.com/oleshko-g/oggophermart/internal/gen/http/balance/server"
 	_ "github.com/oleshko-g/oggophermart/internal/gen/http/user/server"
 	_ "goa.design/clue/log"
 
 	goahttp "goa.design/goa/v3/http"
 	goa "goa.design/goa/v3/pkg"
-
-	accrual "github.com/oleshko-g/oggophermart/internal/gen/accrual"
 )
 
 // Client lists the accrual service endpoint HTTP clients.
 type Client struct {
-	// GetOrderAccrual Doer is the HTTP client used to make requests to the
-	// GetOrderAccrual endpoint.
+	// FetchOrderAccrual Doer is the HTTP client used to make requests to the
+	// FetchOrderAccrual endpoint.
 	reqDoer goahttp.Doer
 	scheme  string
 	host    string
@@ -43,37 +40,27 @@ func NewClient(
 
 // FetchOrderAccrual returns an endpoint that makes HTTP requests to the accrual
 // service FetchOrderAccrual server.
-func (c *Client) FetchOrderAccrual(ctx context.Context, v any) (any, error) {
+func (c *Client) FetchOrderAccrual(ctx context.Context, payload FetchOrderAccrualPayload) (*FetchOrderAccrualResult, error) {
 	{
-		req, err := c.BuildGetOrderAccrualRequest(ctx, v)
+		req, err := c.buildFetchOrderAccrualRequest(ctx, payload.Number)
 		if err != nil {
 			return nil, err
 		}
 		resp, err := c.reqDoer.Do(req)
 		if err != nil {
-			return nil, goahttp.ErrRequestError("accrual", "GetOrderAccrual", err)
+			return nil, goahttp.ErrRequestError("accrual", "FetchOrderAccrual", err)
 		}
-		return decodeGetOrderAccrualResponse(resp)
+		return decodeFetchOrderAccrualResponse(resp)
 	}
 }
 
-// BuildGetOrderAccrualRequest instantiates a HTTP request object with method
-// and path set to call the "accrual" service "GetOrderAccrual" endpoint
-func (c *Client) BuildGetOrderAccrualRequest(ctx context.Context, v any) (*http.Request, error) {
-	var (
-		number string
-	)
-	{
-		p, ok := v.(*accrual.GetOrderAccrualPayload)
-		if !ok {
-			return nil, goahttp.ErrInvalidType("accrual", "GetOrderAccrual", "*accrual.GetOrderAccrualPayload", v)
-		}
-		number = string(p.Number)
-	}
-	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: getOrderAccrualAccrualPath(number)}
+// BuildFetchOrderAccrualRequest instantiates a HTTP request object with method
+// and path set to call the "accrual" service "FetchOrderAccrual" endpoint
+func (c *Client) buildFetchOrderAccrualRequest(ctx context.Context, orderNumber string) (*http.Request, error) {
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: FetchOrderAccrualAccrualPath(orderNumber)}
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
-		return nil, goahttp.ErrInvalidURL("accrual", "GetOrderAccrual", u.String(), err)
+		return nil, goahttp.ErrInvalidURL("accrual", "FetchOrderAccrual", u.String(), err)
 	}
 	if ctx != nil {
 		req = req.WithContext(ctx)
@@ -82,14 +69,14 @@ func (c *Client) BuildGetOrderAccrualRequest(ctx context.Context, v any) (*http.
 	return req, nil
 }
 
-// DecodeGetOrderAccrualResponse returns a decoder for responses returned by
-// the accrual GetOrderAccrual endpoint. restoreBody controls whether the
+// DecodeFetchOrderAccrualResponse returns a decoder for responses returned by
+// the accrual FetchOrderAccrual endpoint. restoreBody controls whether the
 // response body should be restored after having been read.
-// DecodeGetOrderAccrualResponse may return the following errors:
+// DecodeFetchOrderAccrualResponse may return the following errors:
 //   - "The request rate limit has been exceeded" (type *AccrualError): http.StatusTooManyRequests
 //   - "Internal service error" (type *AccrualError): http.StatusInternalServerError
 //   - error: internal error
-func decodeGetOrderAccrualResponse(resp *http.Response) (any, error) {
+func decodeFetchOrderAccrualResponse(resp *http.Response) (*FetchOrderAccrualResult, error) {
 	defer resp.Body.Close()
 
 	switch resp.StatusCode {
@@ -97,27 +84,27 @@ func decodeGetOrderAccrualResponse(resp *http.Response) (any, error) {
 		return nil, nil
 	case http.StatusOK:
 		var (
-			body GetOrderAccrualOKResponseBody
+			body FetchOrderAccrualOKResponseBody
 			err  error
 		)
 		err = goahttp.ResponseDecoder(resp).Decode(&body)
 		if err != nil {
-			return nil, goahttp.ErrDecodingError("accrual", "GetOrderAccrual", err)
+			return nil, goahttp.ErrDecodingError("accrual", "FetchOrderAccrual", err)
 		}
-		err = ValidateGetOrderAccrualOKResponseBody(&body)
+		err = validateFetchOrderAccrualOKResponseBody(&body)
 		if err != nil {
-			return nil, goahttp.ErrValidationError("accrual", "GetOrderAccrual", err)
+			return nil, goahttp.ErrValidationError("accrual", "FetchOrderAccrual", err)
 		}
-		res := NewGetOrderAccrualResultOK(&body)
+		res := newFetchOrderAccrualResultOK(&body)
 		return res, nil
 	case http.StatusTooManyRequests:
 		var (
-			body GetOrderAccrualTheRequestRateLimitHasBeenExceededResponseBody
+			body string
 			err  error
 		)
 		err = goahttp.ResponseDecoder(resp).Decode(&body)
 		if err != nil {
-			return nil, goahttp.ErrDecodingError("accrual", "GetOrderAccrual", err)
+			return nil, goahttp.ErrDecodingError("accrual", "FetchOrderAccrual", err)
 		}
 		var (
 			retryAfter int
@@ -125,7 +112,7 @@ func decodeGetOrderAccrualResponse(resp *http.Response) (any, error) {
 		{
 			retryAfterRaw := resp.Header.Get("Retry-After")
 			if retryAfterRaw == "" {
-				return nil, goahttp.ErrValidationError("accrual", "GetOrderAccrual", goa.MissingFieldError("retryAfter", "header"))
+				return nil, goahttp.ErrValidationError("accrual", "FetchOrderAccrual", goa.MissingFieldError("retryAfter", "header"))
 			}
 			v, err2 := strconv.ParseInt(retryAfterRaw, 10, strconv.IntSize)
 			if err2 != nil {
@@ -137,37 +124,30 @@ func decodeGetOrderAccrualResponse(resp *http.Response) (any, error) {
 			err = goa.MergeErrors(err, goa.InvalidRangeError("retryAfter", retryAfter, 0, true))
 		}
 		if err != nil {
-			return nil, goahttp.ErrValidationError("accrual", "GetOrderAccrual", err)
+			return nil, goahttp.ErrValidationError("accrual", "FetchOrderAccrual", err)
 		}
-		return nil, NewGetOrderAccrualTheRequestRateLimitHasBeenExceeded(&body, retryAfter)
+		return nil, newFetchOrderAccrualTheRequestRateLimitHasBeenExceeded(body, retryAfter)
 	case http.StatusInternalServerError:
-		return nil, NewGetOrderAccrualInternalServiceError()
+		return nil, newFetchOrderAccrualInternalServiceError()
 	default:
 		body, _ := io.ReadAll(resp.Body)
-		return nil, goahttp.ErrInvalidResponse("accrual", "GetOrderAccrual", resp.StatusCode, string(body))
+		return nil, goahttp.ErrInvalidResponse("accrual", "FetchOrderAccrual", resp.StatusCode, string(body))
 	}
 }
 
-// GetOrderAccrualOKResponseBody is the type of the "accrual" service
-// "GetOrderAccrual" endpoint HTTP response body.
-type GetOrderAccrualOKResponseBody struct {
+// FetchOrderAccrualOKResponseBody is the type of the "accrual" service
+// "FetchOrderAccrual" endpoint HTTP response body.
+type FetchOrderAccrualOKResponseBody struct {
 	Order   *string  `form:"order,omitempty" json:"order,omitempty" xml:"order,omitempty"`
 	Status  *string  `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
 	Accrual *float64 `form:"accrual,omitempty" json:"accrual,omitempty" xml:"accrual,omitempty"`
 }
 
-// GetOrderAccrualTheRequestRateLimitHasBeenExceededResponseBody is the type of
-// the "accrual" service "GetOrderAccrual" endpoint HTTP response body for the
-// "The request rate limit has been exceeded" error.
-type GetOrderAccrualTheRequestRateLimitHasBeenExceededResponseBody struct {
-	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
-}
-
-// NewGetOrderAccrualResultOK builds a "accrual" service "GetOrderAccrual"
+// NewFetchOrderAccrualResultOK builds a "accrual" service "FetchOrderAccrual"
 // endpoint result from a HTTP "OK" response.
-func NewGetOrderAccrualResultOK(body *GetOrderAccrualOKResponseBody) *accrual.GetOrderAccrualResult {
-	v := &accrual.GetOrderAccrualResult{
-		Order:   accrual.OrderNumber(*body.Order),
+func newFetchOrderAccrualResultOK(body *FetchOrderAccrualOKResponseBody) *FetchOrderAccrualResult {
+	v := &FetchOrderAccrualResult{
+		Order:   *body.Order,
 		Status:  *body.Status,
 		Accrual: body.Accrual,
 	}
@@ -175,29 +155,29 @@ func NewGetOrderAccrualResultOK(body *GetOrderAccrualOKResponseBody) *accrual.Ge
 	return v
 }
 
-// NewGetOrderAccrualTheRequestRateLimitHasBeenExceeded builds a accrual
-// service GetOrderAccrual endpoint The request rate limit has been exceeded
+// NewFetchOrderAccrualTheRequestRateLimitHasBeenExceeded builds a accrual
+// service FetchOrderAccrual endpoint The request rate limit has been exceeded
 // error.
-func NewGetOrderAccrualTheRequestRateLimitHasBeenExceeded(body *GetOrderAccrualTheRequestRateLimitHasBeenExceededResponseBody, retryAfter int) *AccrualError {
-	v := &AccrualError{
-		Message: *body.Message,
+func newFetchOrderAccrualTheRequestRateLimitHasBeenExceeded(body string, retryAfter int) *AccrualError {
+	return &AccrualError{
+		Message:    body,
+		RetryAfter: retryAfter,
 	}
-	v.RetryAfter = retryAfter
+}
+
+// NewFetchOrderAccrualInternalServiceError builds a accrual service
+// FetchOrderAccrual endpoint Internal service error error.
+func newFetchOrderAccrualInternalServiceError() *AccrualError {
+	v := &AccrualError{
+		Message: "Internal service",
+	}
 
 	return v
 }
 
-// NewGetOrderAccrualInternalServiceError builds a accrual service
-// GetOrderAccrual endpoint Internal service error error.
-func NewGetOrderAccrualInternalServiceError() *AccrualError {
-	v := &AccrualError{}
-
-	return v
-}
-
-// ValidateGetOrderAccrualOKResponseBody runs the validations defined on
-// GetOrderAccrualOKResponseBody
-func ValidateGetOrderAccrualOKResponseBody(body *GetOrderAccrualOKResponseBody) (err error) {
+// ValidateFetchOrderAccrualOKResponseBody runs the validations defined on
+// FetchOrderAccrualOKResponseBody
+func validateFetchOrderAccrualOKResponseBody(body *FetchOrderAccrualOKResponseBody) (err error) {
 	if body.Order == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("order", "body"))
 	}
@@ -220,25 +200,19 @@ func ValidateGetOrderAccrualOKResponseBody(body *GetOrderAccrualOKResponseBody) 
 	return
 }
 
-// getOrderAccrualAccrualPath returns the URL path to the accrual service GetOrderAccrual HTTP endpoint.
-func getOrderAccrualAccrualPath(number string) string {
+// FetchOrderAccrualAccrualPath returns the URL path to the accrual service FetchOrderAccrual HTTP endpoint.
+func FetchOrderAccrualAccrualPath(number string) string {
 	return fmt.Sprintf("/api/orders/%v", number)
 }
 
-// BuildGetOrderAccrualPayload builds the payload for the accrual
-// GetOrderAccrual endpoint from CLI flags.
-func BuildGetOrderAccrualPayload(accrualGetOrderAccrualNumber string) (*accrual.GetOrderAccrualPayload, error) {
-	var err error
-	var number string
-	{
-		number = accrualGetOrderAccrualNumber
-		err = goa.MergeErrors(err, goa.ValidatePattern("number", number, "[1-9][0-9]*"))
-		if err != nil {
-			return nil, err
-		}
-	}
-	v := &accrual.GetOrderAccrualPayload{}
-	v.Number = accrual.OrderNumber(number)
+type FetchOrderAccrualPayload struct {
+	Number string
+}
 
-	return v, nil
+// FetchOrderAccrualResult is the result type of the accrual service
+// FetchOrderAccrual method.
+type FetchOrderAccrualResult struct {
+	Order   string
+	Status  string
+	Accrual *float64
 }
