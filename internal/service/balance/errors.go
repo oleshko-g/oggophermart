@@ -13,6 +13,9 @@ var (
 	// ErrAccrualNotStarted is the error returned when new accrual order arrives while accrual proccessing hasn't started yet
 	ErrProcessAccrualsNotStarted = errors.New("Accrual processing hasn't started yet")
 
-	// ErrFailedToGetOrderAccrual is the error returned when new accrual order arrives while accrual proccessing hasn't started yet
+	// ErrFailedToGetOrderAccrual is the error returned when accrual order while accrual proccessing hasn't started yet
 	ErrFailedToGetOrderAccrual = errors.New("Failed to get order accrual")
+
+	// ErrUnknownAccrualOrderStatus is the error return when accrual order status isn't known
+	ErrUnknownAccrualOrderStatus = errors.New("Accrual order status isn't known")
 )

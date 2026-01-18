@@ -20,7 +20,10 @@ type Storage struct {
 	Balance    // interface
 }
 
-type Order = genDBSQL.Order
+type (
+	Order              = genDBSQL.Order
+	BalanceTransaction = genDBSQL.Transaction
+)
 
 // User declares the storage interface for the user service
 type User interface {

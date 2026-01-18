@@ -17,7 +17,7 @@ type FetchOrderAccrualPayload struct {
 // FetchOrderAccrualResult is the result type of the accrual system of [FetchOrderAccrual] method
 type FetchOrderAccrualResult struct {
 	Order   string
-	Status  string
+	Status  OrderAccrualStatus
 	Accrual *float64
 }
 
@@ -31,3 +31,12 @@ type AccrualError struct {
 func (e *AccrualError) Error() string {
 	return e.Message
 }
+
+type OrderAccrualStatus string
+
+const (
+	OrderAccrualStatusRegistered = "REGISTERED"
+	OrderAccrualStatusProcessing = "PROCESSING"
+	OrderAccrualStatusProcessed  = "PROCESSED"
+	OrderAccrualStatusInvalid    = "INVALID"
+)

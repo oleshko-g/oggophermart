@@ -147,7 +147,7 @@ type FetchOrderAccrualOKResponseBody struct {
 func newFetchOrderAccrualResultOK(body *FetchOrderAccrualOKResponseBody) *transport.FetchOrderAccrualResult {
 	v := &transport.FetchOrderAccrualResult{
 		Order:   *body.Order,
-		Status:  *body.Status,
+		Status:  transport.OrderAccrualStatus(*body.Status),
 		Accrual: body.Accrual,
 	}
 

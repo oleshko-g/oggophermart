@@ -7,8 +7,6 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/oleshko-g/oggophermart/internal/transport"
-
 	"github.com/EClaesson/go-luhn"
 	"github.com/google/uuid"
 	genBalance "github.com/oleshko-g/oggophermart/internal/gen/balance"
@@ -16,6 +14,7 @@ import (
 	svcErrors "github.com/oleshko-g/oggophermart/internal/service/errors"
 	"github.com/oleshko-g/oggophermart/internal/storage"
 	storageErrors "github.com/oleshko-g/oggophermart/internal/storage/errors"
+	"github.com/oleshko-g/oggophermart/internal/transport"
 )
 
 type balanceSvc struct {
@@ -209,15 +208,17 @@ func (s *balanceSvc) sendAccrualOrdersToProcess(orderIDs []uuid.UUID) error {
 }
 
 func (s *balanceSvc) processAccrual(ctx context.Context, orderID uuid.UUID) error {
-	errCh := make(chan error, 1)
-	accrualResult := make(chan transport.FetchOrderAccrualResult, 1)
-	ctx, cancelCause := context.WithCancelCause(ctx)
-	defer cancelCause(nil)
 	// start storate transaction
 	storageTx, err := s.Balance.BeginTx(ctx)
 	if err != nil {
-		errCh <- err
+		return err
 	}
+	defer func() {
+		err := storageTx.Tx.Rollback()
+		if err != nil {
+			slog.Error(err.Error())
+		}
+	}()
 
 	order, err := storageTx.RetrieveOrderForAccrual(ctx, orderID)
 	if err != nil {
@@ -225,43 +226,51 @@ func (s *balanceSvc) processAccrual(ctx context.Context, orderID uuid.UUID) erro
 	}
 
 	if order.Status == OrderStatusProcessed || order.Status == OrderStatusInvalid {
-		defer cancelCause(nil)
 		return nil
 	}
 
-	go func() {
-		res, err := s.accrual.FetchOrderAccrual(ctx, transport.FetchOrderAccrualPayload{Number: order.Number})
-		if err != nil {
-			errCh <- err
-			return
-		}
-
-		if res == nil {
-			defer cancelCause(nil)
-			return
-		}
-
-		accrualResult <- *res
-	}()
-
-	select {
-	case v := <-accrualResult:
-		switch {
-		case v.Status == "PROCESSED" && v.Accrual != nil:
-			// TODO: s.StoreOrderTransaction
-		}
-		storageTx.UpdateOrderStatus(ctx, orderID, v.Status)
-		// TODO: add err check
-	case err := <-errCh:
-		defer cancelCause(err)
+	res, err := s.accrual.FetchOrderAccrual(ctx, transport.FetchOrderAccrualPayload{Number: order.Number})
+	if err != nil {
 		return err
-	case <-ctx.Done():
-		return context.Cause(ctx)
+	}
+
+	if res == nil {
+		return nil
+	}
+
+	if res.Status == transport.OrderAccrualStatusProcessed && res.Accrual != nil {
+		err := s.StoreUserAccrual(ctx, order.ID, order.UserID, int32(*res.Accrual*100))
+		if err != nil {
+			return err
+		}
+	}
+
+	orderStatus, err := accrualStatusToOrderStatus(res.Status)
+	if err != nil {
+		return err
+	}
+
+	err = storageTx.UpdateOrderStatus(ctx, orderID, orderStatus)
+	if err != nil {
+		return err
 	}
 
 	err = storageTx.Tx.Commit()
 	if err != nil {
 		return err
 	}
+
 	return nil
+}
+
+func accrualStatusToOrderStatus(accrualStatus transport.OrderAccrualStatus) (string, error) {
+	switch accrualStatus {
+	case transport.OrderAccrualStatusRegistered, transport.OrderAccrualStatusProcessing:
+		return OrderStatusProcessing, nil
+	case transport.OrderAccrualStatusInvalid:
+		return OrderStatusInvalid, nil
+	case transport.OrderAccrualStatusProcessed:
+		return OrderStatusProcessed, nil
+	}
+	return "", ErrUnknownAccrualOrderStatus
 }
